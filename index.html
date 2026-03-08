@@ -9,84 +9,213 @@
     <meta name="apple-mobile-web-app-title" content="꼬꼬닭">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <title>게임 모음</title>
+    <title>리리 게임 허브</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #87CEEB 0%, #E0F0FF 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+            padding: 40px 20px;
         }
-        h1 {
-            font-size: 48px;
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .header h1 {
+            font-size: 42px;
             color: #FFF;
-            text-shadow: 3px 3px 0 #E8860C, -1px -1px 0 #E8860C, 1px -1px 0 #E8860C, -1px 1px 0 #E8860C;
-            margin-bottom: 40px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+        .header p {
+            font-size: 16px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
         }
         .games {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            justify-content: center;
-            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            width: 100%;
+            padding: 0 8px;
         }
         .game-card {
-            width: 280px;
-            height: 320px;
             background: #FFF;
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            overflow: hidden;
+            text-decoration: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
         }
         .game-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.25);
         }
         .game-card:active {
             transform: scale(0.97);
         }
-        .game-icon {
-            font-size: 100px;
-            margin-bottom: 16px;
+        .game-thumbnail {
+            width: 100%;
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+        .game-thumbnail svg {
+            width: 100%;
+            height: 100%;
+        }
+        .game-info {
+            padding: 16px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .game-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .game-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
+            font-size: 22px;
+            font-weight: 800;
+            color: #222;
         }
         .game-desc {
-            font-size: 16px;
-            color: #888;
+            font-size: 14px;
+            color: #777;
+            line-height: 1.4;
+        }
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             margin-top: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            width: fit-content;
+            pointer-events: none;
         }
         .coming-soon {
-            opacity: 0.4;
+            opacity: 0.45;
             pointer-events: none;
+        }
+        .coming-soon .game-thumbnail {
+            filter: grayscale(0.6);
+        }
+        .coming-soon .play-btn {
+            background: #ccc;
+        }
+        @media (max-width: 600px) {
+            body { padding: 24px 12px; }
+            .header h1 { font-size: 30px; }
+            .games { gap: 18px; }
+            .game-thumbnail { height: 150px; }
         }
     </style>
 </head>
 <body>
-    <h1>게임 모음</h1>
+    <div class="header">
+        <h1>리리 게임 허브</h1>
+        <p>리아, 리사 자매를 위한 게임 모음!</p>
+    </div>
     <div class="games">
+        <!-- 꼬꼬닭 알 낳기 -->
         <a href="chicken-egg/" class="game-card">
-            <div class="game-icon">🐔</div>
-            <div class="game-title">꼬꼬닭 알 낳기</div>
-            <div class="game-desc">알 100개를 모아보자!</div>
+            <div class="game-thumbnail">
+                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+                    <!-- sky -->
+                    <rect width="400" height="240" fill="#87CEEB"/>
+                    <!-- clouds -->
+                    <ellipse cx="80" cy="50" rx="50" ry="22" fill="white" opacity="0.8"/>
+                    <ellipse cx="120" cy="45" rx="40" ry="18" fill="white" opacity="0.8"/>
+                    <ellipse cx="320" cy="70" rx="45" ry="20" fill="white" opacity="0.7"/>
+                    <!-- ground -->
+                    <rect x="0" y="170" width="400" height="70" fill="#7EC850"/>
+                    <rect x="0" y="175" width="400" height="65" fill="#6AB840"/>
+                    <!-- fence -->
+                    <rect x="30" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
+                    <rect x="80" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
+                    <rect x="130" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
+                    <rect x="25" y="148" width="120" height="6" rx="2" fill="#D4A574"/>
+                    <rect x="25" y="165" width="120" height="6" rx="2" fill="#D4A574"/>
+                    <!-- chicken body -->
+                    <ellipse cx="250" cy="158" rx="32" ry="28" fill="#FFF5E0"/>
+                    <ellipse cx="250" cy="160" rx="30" ry="26" fill="white"/>
+                    <!-- chicken head -->
+                    <circle cx="272" cy="136" r="16" fill="white"/>
+                    <!-- comb -->
+                    <circle cx="272" cy="120" r="5" fill="#FF4444"/>
+                    <circle cx="266" cy="122" r="4" fill="#FF4444"/>
+                    <circle cx="278" cy="122" r="4" fill="#FF4444"/>
+                    <!-- eye -->
+                    <circle cx="278" cy="133" r="3" fill="#333"/>
+                    <circle cx="279" cy="132" r="1" fill="white"/>
+                    <!-- beak -->
+                    <polygon points="288,136 298,140 288,144" fill="#FF9800"/>
+                    <!-- wing -->
+                    <ellipse cx="240" cy="155" rx="16" ry="12" fill="#F5E6C8" transform="rotate(-15,240,155)"/>
+                    <!-- legs -->
+                    <line x1="242" y1="183" x2="238" y2="200" stroke="#FF9800" stroke-width="3"/>
+                    <line x1="258" y1="183" x2="262" y2="200" stroke="#FF9800" stroke-width="3"/>
+                    <line x1="238" y1="200" x2="230" y2="203" stroke="#FF9800" stroke-width="2"/>
+                    <line x1="262" y1="200" x2="270" y2="203" stroke="#FF9800" stroke-width="2"/>
+                    <!-- tail -->
+                    <path d="M218,148 Q205,130 210,118" stroke="#D4A060" stroke-width="3" fill="none"/>
+                    <path d="M220,150 Q202,135 204,122" stroke="#C89050" stroke-width="3" fill="none"/>
+                    <!-- eggs -->
+                    <ellipse cx="310" cy="195" rx="12" ry="15" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1.5"/>
+                    <ellipse cx="335" cy="198" rx="11" ry="14" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1.5"/>
+                    <ellipse cx="355" cy="193" rx="12" ry="15" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1.5"/>
+                    <!-- sparkles -->
+                    <text x="310" y="170" font-size="16" text-anchor="middle">✨</text>
+                    <text x="350" y="160" font-size="14" text-anchor="middle">⭐</text>
+                </svg>
+            </div>
+            <div class="game-info">
+                <span class="game-badge">플레이 가능</span>
+                <div class="game-title">🐔 꼬꼬닭 알 낳기</div>
+                <div class="game-desc">꼬꼬닭을 도와 알 100개를 모아보자! 탭하면 알이 나와요~</div>
+                <div class="play-btn">▶ 게임 시작</div>
+            </div>
         </a>
+
+        <!-- 준비 중 게임 -->
         <div class="game-card coming-soon">
-            <div class="game-icon">🎮</div>
-            <div class="game-title">???</div>
-            <div class="game-desc">준비 중...</div>
+            <div class="game-thumbnail">
+                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="400" height="240" fill="#E8E8F0"/>
+                    <circle cx="200" cy="100" r="40" fill="#D0D0DC" stroke="#C0C0CC" stroke-width="2"/>
+                    <text x="200" y="108" font-size="40" text-anchor="middle" fill="#B0B0BC">?</text>
+                    <text x="200" y="170" font-size="16" text-anchor="middle" fill="#A0A0AC" font-weight="bold">COMING SOON</text>
+                    <rect x="150" y="185" width="100" height="4" rx="2" fill="#D0D0DC"/>
+                </svg>
+            </div>
+            <div class="game-info">
+                <span class="game-badge" style="background:#f5f5f5;color:#aaa;">준비중</span>
+                <div class="game-title">🎮 새 게임</div>
+                <div class="game-desc">새로운 게임이 곧 추가됩니다!</div>
+                <div class="play-btn">준비 중...</div>
+            </div>
         </div>
     </div>
     <script>
