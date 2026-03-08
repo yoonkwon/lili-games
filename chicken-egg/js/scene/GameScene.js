@@ -33,8 +33,11 @@ export class GameScene {
 
         const groundY = canvasHeight * 0.65;
 
-        this.chicken = new Chicken(canvasWidth * 0.35, groundY - 30);
-        this.nest = new Nest(canvasWidth - 120, groundY + 20);
+        // Chicken sits in the nest (same position)
+        const nestX = canvasWidth * 0.5;
+        const nestY = groundY + 10;
+        this.nest = new Nest(nestX, nestY);
+        this.chicken = new Chicken(nestX, nestY - 35);
         this.gauge = new Gauge(this.TAPS_PER_EGG);
         this.hud = new HUD();
         this.message = new Message();
@@ -112,11 +115,13 @@ export class GameScene {
         this.canvasWidth = canvasWidth;
         this.groundY = canvasHeight * 0.65;
 
-        // Reposition entities on resize
-        this.chicken.x = canvasWidth * 0.35;
-        this.chicken.baseY = this.groundY - 30;
-        this.nest.x = canvasWidth - 120;
-        this.nest.y = this.groundY + 20;
+        // Reposition entities on resize (chicken sits in nest)
+        const nestX = canvasWidth * 0.5;
+        const nestY = this.groundY + 10;
+        this.nest.x = nestX;
+        this.nest.y = nestY;
+        this.chicken.x = nestX;
+        this.chicken.baseY = nestY - 35;
 
         // Update entities
         this.chicken.update(dt);
@@ -449,21 +454,24 @@ export class GameScene {
             ctx.restore();
         }
 
-        // Nest
-        this.nest.draw(ctx, this.basketEggs);
-
-        // Flying eggs
-        for (const egg of this.eggs) {
-            egg.draw(ctx);
-        }
-
-        // Chicks
+        // Chicks (behind nest)
         for (const chick of this.chicks) {
             chick.draw(ctx);
         }
 
-        // Chicken
+        // Nest (back layer)
+        this.nest.drawBack(ctx, this.basketEggs);
+
+        // Chicken (sitting in nest)
         this.chicken.draw(ctx);
+
+        // Nest front rim (over chicken's bottom)
+        this.nest.drawFront(ctx);
+
+        // Popping eggs animation
+        for (const egg of this.eggs) {
+            egg.draw(ctx);
+        }
 
         // Predators
         for (const pred of this.predators) {
@@ -633,8 +641,9 @@ export class GameScene {
         // Screen shake on egg lay
         this._triggerShake(2, 0.15);
 
+        // Particles from nest area
         this.particles.createParticles(
-            this.chicken.x, this.chicken.y + 30,
+            this.nest.x, this.nest.y,
             golden ? '#FFD700' : '#FFF5E6', 12
         );
 
@@ -643,9 +652,13 @@ export class GameScene {
             chick.celebrate();
         }
 
+        // Egg pops out from under chicken (short pop animation)
+        const popAngle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+        const popDist = 30 + Math.random() * 20;
         const egg = new Egg(
-            this.chicken.x, this.chicken.y + 30,
-            this.nest.x, this.nest.y + 20,
+            this.nest.x, this.nest.y - 10,
+            this.nest.x + Math.cos(popAngle) * popDist,
+            this.nest.y + Math.sin(popAngle) * popDist - 20,
             golden
         );
         this.eggs.push(egg);

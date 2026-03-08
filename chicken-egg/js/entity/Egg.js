@@ -1,5 +1,5 @@
 /**
- * Egg entity - flies from chicken to basket via bezier curve
+ * Egg entity - pops out from under chicken with a bounce animation
  * Uses SpriteCache sprites with golden sparkle overlay
  */
 export class Egg {
@@ -16,18 +16,24 @@ export class Egg {
 
     this.radius = golden ? 22 : 18;
 
-    // Bezier midpoint (arc upward)
+    // Pop arc - small upward bounce
     this.midX = (startX + targetX) / 2;
-    this.midY = Math.min(startY, targetY) - 150;
+    this.midY = Math.min(startY, targetY) - 40 - Math.random() * 30;
 
     // Current draw position
     this.drawX = startX;
     this.drawY = startY;
+
+    // Pop scale animation
+    this.popScale = 0;
   }
 
   update(dt) {
-    this.progress += dt * 2.5;
+    this.progress += dt * 3.5; // faster than before
     this.sparkle += dt * 3;
+
+    // Pop scale: quick grow then settle
+    this.popScale = Math.min(1, this.progress * 3);
 
     const t = Math.min(1, this.progress);
     const mt = 1 - t;
@@ -47,6 +53,11 @@ export class Egg {
 
     ctx.save();
     ctx.translate(this.drawX, this.drawY);
+
+    // Pop scale effect
+    const s = this.popScale;
+    const bounce = s < 1 ? 0.8 + Math.sin(s * Math.PI) * 0.4 : 1;
+    ctx.scale(bounce, bounce);
 
     // Scale sprite to match entity's radius
     const baseR = this.golden ? 16 : 14;
