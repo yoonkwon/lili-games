@@ -1,6 +1,6 @@
 // Main gameplay scene
 import { Chicken } from '../entity/Chicken.js';
-import { Basket } from '../entity/Basket.js';
+import { Nest } from '../entity/Nest.js';
 import { Egg } from '../entity/Egg.js';
 import { Chick } from '../entity/Chick.js';
 import { Predator, PREDATOR_TYPES } from '../entity/Predator.js';
@@ -29,7 +29,7 @@ export class GameScene {
         const groundY = canvasHeight * 0.65;
 
         this.chicken = new Chicken(canvasWidth * 0.35, groundY - 30);
-        this.basket = new Basket(canvasWidth - 120, groundY + 20);
+        this.nest = new Nest(canvasWidth - 120, groundY + 20);
         this.gauge = new Gauge(TAPS_PER_EGG);
         this.hud = new HUD();
         this.message = new Message();
@@ -105,12 +105,12 @@ export class GameScene {
         // Reposition entities on resize
         this.chicken.x = canvasWidth * 0.35;
         this.chicken.baseY = this.groundY - 30;
-        this.basket.x = canvasWidth - 120;
-        this.basket.y = this.groundY + 20;
+        this.nest.x = canvasWidth - 120;
+        this.nest.y = this.groundY + 20;
 
         // Update entities
         this.chicken.update(dt);
-        this.basket.update(dt);
+        this.nest.update(dt);
         this.gauge.update(dt);
         this.hud.update(dt);
         this.message.update(dt);
@@ -158,7 +158,7 @@ export class GameScene {
                     egg.golden ? `+${value} ⭐${bonusText}` : `+${value}${bonusText}`,
                     egg.golden ? '#FFD700' : '#FFF'
                 );
-                this.basket.bounce = 1;
+                this.nest.bounce = 1;
                 Audio.play('collect');
                 this.eggs.splice(i, 1);
 
@@ -232,7 +232,7 @@ export class GameScene {
             } else {
                 type = Math.floor(Math.random() * 3);
             }
-            const pred = new Predator(type, this.groundY + 25, canvasWidth, this.basket.x);
+            const pred = new Predator(type, this.groundY + 25, canvasWidth, this.nest.x);
             pred.setStealAmount(this.basketEggs);
             this.predators.push(pred);
         }
@@ -253,9 +253,9 @@ export class GameScene {
                     this.message.show(`${pred.info.emoji} ${pred.info.stealMsg} (-${stolen})`);
                     Audio.play('steal');
                     this._triggerShake(4, 0.3);
-                    this.particles.createParticles(this.basket.x, this.basket.y, '#FF6B6B', 8);
+                    this.particles.createParticles(this.nest.x, this.nest.y, '#FF6B6B', 8);
                     this.particles.addFloatingText(
-                        this.basket.x, this.basket.y - 40,
+                        this.nest.x, this.nest.y - 40,
                         `-${stolen}`, '#FF4444'
                     );
                 }
@@ -340,8 +340,8 @@ export class GameScene {
         for (const pred of this.predators) {
             // Only target approaching predators within 400px of basket
             if (pred.phase !== 0) continue;
-            const distToBasket = Math.abs(pred.x - this.basket.x);
-            if (distToBasket > 400) continue;
+            const distToNest = Math.abs(pred.x - this.nest.x);
+            if (distToNest > 400) continue;
 
             // Check if predator type can be defended by current chick count
             let canAutoDefend = false;
@@ -419,8 +419,8 @@ export class GameScene {
             ctx.restore();
         }
 
-        // Basket
-        this.basket.draw(ctx, this.basketEggs);
+        // Nest
+        this.nest.draw(ctx, this.basketEggs);
 
         // Flying eggs
         for (const egg of this.eggs) {
@@ -554,7 +554,7 @@ export class GameScene {
 
         const egg = new Egg(
             this.chicken.x, this.chicken.y + 30,
-            this.basket.x, this.basket.y + 20,
+            this.nest.x, this.nest.y + 20,
             golden
         );
         this.eggs.push(egg);

@@ -14,7 +14,7 @@ export class SpriteCache {
 
   init() {
     this._renderChicken(); this._renderChicks(); this._renderEggs();
-    this._renderPredators(); this._renderBasket(); this._renderUI();
+    this._renderPredators(); this._renderNest(); this._renderUI();
     this.ready = true;
   }
 
@@ -351,34 +351,81 @@ export class SpriteCache {
     this._put(name, c);
   }
 
-  // ── Basket ──
-  _renderBasket() {
-    const c=this._mk(180,180), ctx=c.ctx; ctx.translate(90,100);
-    const w=130, h=80, hw=w/2;
-    // Handle
-    ctx.beginPath(); ctx.ellipse(0,-h*0.45,hw*0.55,h*0.4,0,Math.PI,0);
-    ctx.strokeStyle='#A0722A'; ctx.lineWidth=5; ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0,-h*0.45,hw*0.55,h*0.4,0,Math.PI+0.2,-0.2);
-    ctx.strokeStyle='rgba(255,220,150,0.4)'; ctx.lineWidth=2; ctx.stroke();
-    // Body
-    ctx.beginPath(); ctx.moveTo(-hw,-h*0.35);
-    ctx.quadraticCurveTo(-hw-5,h*0.2,-hw*0.7,h*0.45);
-    ctx.quadraticCurveTo(0,h*0.55,hw*0.7,h*0.45);
-    ctx.quadraticCurveTo(hw+5,h*0.2,hw,-h*0.35); ctx.closePath();
+  // ── Nest ──
+  _renderNest() {
+    const c=this._mk(200,160), ctx=c.ctx; ctx.translate(100,90);
+    const w=140, h=70, hw=w/2;
+
+    // Shadow under nest
+    ctx.beginPath(); ctx.ellipse(0,h*0.4,hw*0.8,10,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fill();
+
+    // Nest base - bowl shape made of twigs
+    ctx.beginPath();
+    ctx.moveTo(-hw,-h*0.15);
+    ctx.quadraticCurveTo(-hw-8,h*0.3,-hw*0.6,h*0.45);
+    ctx.quadraticCurveTo(0,h*0.6,hw*0.6,h*0.45);
+    ctx.quadraticCurveTo(hw+8,h*0.3,hw,-h*0.15);
+    ctx.closePath();
     const bg=ctx.createLinearGradient(-hw,0,hw,0);
-    bg.addColorStop(0,'#B8860B'); bg.addColorStop(0.3,'#DEB887'); bg.addColorStop(0.7,'#DEB887'); bg.addColorStop(1,'#B8860B');
-    ctx.fillStyle=bg; ctx.fill(); ctx.strokeStyle='#8B6914'; ctx.lineWidth=2; ctx.stroke();
-    // Weave
-    ctx.save(); ctx.clip(); ctx.strokeStyle='rgba(139,105,20,0.3)'; ctx.lineWidth=1.5;
-    for (let r=-h*0.3;r<h*0.5;r+=10) { ctx.beginPath(); ctx.moveTo(-hw,r); ctx.lineTo(hw,r); ctx.stroke(); }
-    for (let cl=-hw+12;cl<hw;cl+=15) { ctx.beginPath(); ctx.moveTo(cl,-h*0.35); ctx.quadraticCurveTo(cl+2,h*0.1,cl-1,h*0.5); ctx.stroke(); }
+    bg.addColorStop(0,'#8B6914'); bg.addColorStop(0.3,'#A0722A'); bg.addColorStop(0.5,'#B8860B');
+    bg.addColorStop(0.7,'#A0722A'); bg.addColorStop(1,'#8B6914');
+    ctx.fillStyle=bg; ctx.fill();
+
+    // Twig texture - curved lines
+    ctx.save(); ctx.clip();
+    ctx.strokeStyle='rgba(90,60,10,0.4)'; ctx.lineWidth=2; ctx.lineCap='round';
+    for (let i=0;i<12;i++) {
+      const y0=-h*0.1+i*6;
+      ctx.beginPath();
+      ctx.moveTo(-hw+5,y0);
+      ctx.quadraticCurveTo(-hw*0.3+Math.sin(i)*10,y0+3+Math.cos(i)*4,0,y0+2);
+      ctx.quadraticCurveTo(hw*0.3+Math.cos(i)*8,y0-2+Math.sin(i)*3,hw-5,y0+1);
+      ctx.stroke();
+    }
+    // Cross twigs
+    for (let i=0;i<8;i++) {
+      const x0=-hw*0.7+i*hw*0.2;
+      ctx.beginPath();
+      ctx.moveTo(x0,-h*0.15);
+      ctx.quadraticCurveTo(x0+Math.sin(i*2)*8,h*0.15,x0-5+Math.cos(i)*6,h*0.5);
+      ctx.stroke();
+    }
     ctx.restore();
-    // Rim
-    ctx.beginPath(); ctx.ellipse(0,-h*0.35,hw,8,0,0,Math.PI*2);
-    const rg=ctx.createLinearGradient(0,-h*0.35-8,0,-h*0.35+8);
-    rg.addColorStop(0,'#DEB887'); rg.addColorStop(0.5,'#D2A45E'); rg.addColorStop(1,'#B8860B');
-    ctx.fillStyle=rg; ctx.fill(); ctx.strokeStyle='#8B6914'; ctx.lineWidth=1.5; ctx.stroke();
-    this._put('basket-empty', c);
+
+    // Rim - messy twig ring around top
+    ctx.beginPath(); ctx.ellipse(0,-h*0.15,hw+2,12,0,0,Math.PI*2);
+    const rg=ctx.createRadialGradient(0,-h*0.15,hw*0.6,0,-h*0.15,hw+4);
+    rg.addColorStop(0,'#C49A3C'); rg.addColorStop(0.5,'#A0722A'); rg.addColorStop(1,'#7A5518');
+    ctx.fillStyle=rg; ctx.fill();
+
+    // Scattered straw/twigs on rim
+    ctx.strokeStyle='#C49A3C'; ctx.lineWidth=2.5; ctx.lineCap='round';
+    const twigs = [
+      [-hw+5,-h*0.2,-hw-12,-h*0.35], [hw-5,-h*0.2,hw+14,-h*0.3],
+      [-hw*0.5,-h*0.25,-hw*0.6,-h*0.45], [hw*0.4,-h*0.22,hw*0.55,-h*0.42],
+      [-hw*0.2,-h*0.2,-hw*0.1,-h*0.4], [hw*0.1,-h*0.22,hw*0.2,-h*0.38],
+    ];
+    for (const [x1,y1,x2,y2] of twigs) {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+    // Some lighter straw
+    ctx.strokeStyle='#D4AA4C'; ctx.lineWidth=1.5;
+    const straw = [
+      [-hw+15,-h*0.18,-hw+2,-h*0.4], [hw-12,-h*0.18,hw-3,-h*0.38],
+      [0,-h*0.2,5,-h*0.42], [-20,-h*0.2,-25,-h*0.4],
+    ];
+    for (const [x1,y1,x2,y2] of straw) {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+
+    // Soft lining inside (feathery center)
+    ctx.beginPath(); ctx.ellipse(0,h*0.05,hw*0.65,h*0.25,0,0,Math.PI*2);
+    const inner=ctx.createRadialGradient(0,0,5,0,h*0.05,hw*0.6);
+    inner.addColorStop(0,'#F5E6C8'); inner.addColorStop(0.6,'#E8D5A8'); inner.addColorStop(1,'#C49A3C');
+    ctx.fillStyle=inner; ctx.fill();
+
+    this._put('nest-empty', c);
   }
 
   // ── UI ──

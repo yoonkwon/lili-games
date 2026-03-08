@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chicken-egg-v3';
+const CACHE_NAME = 'chicken-egg-v4';
 
 const PRECACHE_URLS = [
     '/chicken-egg/',
@@ -13,7 +13,7 @@ const PRECACHE_URLS = [
     '/chicken-egg/js/SpriteCache.js',
     '/chicken-egg/js/entity/Chicken.js',
     '/chicken-egg/js/entity/Egg.js',
-    '/chicken-egg/js/entity/Basket.js',
+    '/chicken-egg/js/entity/Nest.js',
     '/chicken-egg/js/entity/Chick.js',
     '/chicken-egg/js/entity/Predator.js',
     '/chicken-egg/js/scene/TitleScene.js',

@@ -1,13 +1,13 @@
 /**
- * Basket entity - woven basket that collects eggs
- * Uses SpriteCache for base basket with dynamic egg/badge overlays
+ * Nest entity - cozy nest that collects eggs
+ * Uses SpriteCache for base nest with dynamic egg/badge overlays
  */
-export class Basket {
+export class Nest {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.w = 130;
-    this.h = 80;
+    this.w = 140;
+    this.h = 70;
     this.bounce = 0;
   }
 
@@ -29,10 +29,10 @@ export class Basket {
     const h = this.h;
     const halfW = w / 2;
 
-    // Draw cached basket sprite
-    sc.draw(ctx, 'basket-empty', 0, 0);
+    // Draw cached nest sprite
+    sc.draw(ctx, 'nest-empty', 0, 0);
 
-    // Dynamic eggs inside basket
+    // Dynamic eggs inside nest
     const showCount = Math.min(15, eggCount);
     if (showCount > 0) {
       const eggColors = ['#FFF8DC', '#FFEFD5', '#FFDAB9', '#FFE4C4', '#FFF5EE'];
@@ -40,7 +40,7 @@ export class Basket {
       const eggW = 10;
       const eggH = 13;
       const startX = -cols * eggW + eggW;
-      const startY = -h * 0.15;
+      const startY = -h * 0.2;
 
       for (let i = 0; i < showCount; i++) {
         const col = i % cols;
