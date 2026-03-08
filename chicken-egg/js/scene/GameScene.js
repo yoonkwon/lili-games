@@ -153,50 +153,12 @@ export class GameScene {
         // Stage calculation
         this.currentStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
 
-        // Update flying eggs
+        // Update eggs (pop animation + waiting for tap)
         for (let i = this.eggs.length - 1; i >= 0; i--) {
             const egg = this.eggs[i];
-            const arrived = egg.update(dt);
-            if (arrived) {
-                const bonus = this._getEggValueBonus();
-                const baseValue = egg.golden ? GOLDEN_EGG_VALUE : 1;
-                const value = baseValue + bonus;
-                const prevEggs = this.basketEggs;
-                this.basketEggs += value;
-                this.particles.createParticles(
-                    egg.targetX, egg.targetY,
-                    egg.golden ? '#FFD700' : '#FFF', 8
-                );
-                const bonusText = bonus > 0 ? ` (+${bonus}👑)` : '';
-                this.particles.addFloatingText(
-                    egg.targetX, egg.targetY - 30,
-                    egg.golden ? `+${value} ⭐${bonusText}` : `+${value}${bonusText}`,
-                    egg.golden ? '#FFD700' : '#FFF'
-                );
-                this.nest.bounce = 1;
-                Audio.play('collect');
+            const result = egg.update(dt);
+            if (result === 'expired' || egg.collected) {
                 this.eggs.splice(i, 1);
-
-                // Stage clear check
-                const prevStage = Math.min(4, Math.floor(prevEggs / this.EGGS_PER_STAGE));
-                const newStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
-                if (newStage > prevStage && this.basketEggs < this.TARGET_EGGS) {
-                    const stageInfo = STAGES[newStage];
-                    this.message.show(`${stageInfo.emoji} ${stageInfo.name}으로 이동! (${newStage + 1}/5)`);
-                    Audio.play('fanfare');
-                    this._stageTransition = 1;
-                    this._triggerShake(6, 0.5);
-                    // Chicks celebrate
-                    for (const chick of this.chicks) {
-                        chick.celebrate();
-                    }
-                }
-                // Milestone cheer every 10 eggs (not on stage boundaries)
-                else if (this.basketEggs % 10 === 0 && this.basketEggs > 0) {
-                    Audio.play('cheer');
-                    this.message.show(`🎉 ${this.basketEggs}개 달성!`);
-                    this._triggerShake(3, 0.3);
-                }
             }
         }
 
@@ -537,13 +499,13 @@ export class GameScene {
         if (!n) return;
         const a = n.ach;
 
-        // Slide in from top
+        // Slide in from bottom
         const progress = Math.min(1, (this._achNotifyDuration - n.timer) / 0.4);
         const exitProgress = Math.max(0, 1 - n.timer / 0.4);
-        const slideY = progress < 1 ? -60 + progress * 60 : (exitProgress > 0 ? -exitProgress * 60 : 0);
+        const slideY = progress < 1 ? 60 - progress * 60 : (exitProgress > 0 ? exitProgress * 60 : 0);
 
         ctx.save();
-        ctx.translate(w / 2, 100 + slideY);
+        ctx.translate(w / 2, h - 80 + slideY);
 
         // Background pill
         const pw = 260, ph = 50;
@@ -574,12 +536,59 @@ export class GameScene {
         ctx.restore();
     }
 
+    _collectEgg(egg) {
+        egg.collect();
+        const bonus = this._getEggValueBonus();
+        const baseValue = egg.golden ? GOLDEN_EGG_VALUE : 1;
+        const value = baseValue + bonus;
+        const prevEggs = this.basketEggs;
+        this.basketEggs += value;
+        this.particles.createParticles(
+            egg.drawX, egg.drawY,
+            egg.golden ? '#FFD700' : '#FFF', 8
+        );
+        const bonusText = bonus > 0 ? ` (+${bonus}👑)` : '';
+        this.particles.addFloatingText(
+            egg.drawX, egg.drawY - 30,
+            egg.golden ? `+${value} ⭐${bonusText}` : `+${value}${bonusText}`,
+            egg.golden ? '#FFD700' : '#FFF'
+        );
+        this.nest.bounce = 1;
+        Audio.play('collect');
+
+        // Stage clear check
+        const prevStage = Math.min(4, Math.floor(prevEggs / this.EGGS_PER_STAGE));
+        const newStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
+        if (newStage > prevStage && this.basketEggs < this.TARGET_EGGS) {
+            const stageInfo = STAGES[newStage];
+            this.message.show(`${stageInfo.emoji} ${stageInfo.name}으로 이동! (${newStage + 1}/5)`);
+            Audio.play('fanfare');
+            this._stageTransition = 1;
+            this._triggerShake(6, 0.5);
+            for (const chick of this.chicks) {
+                chick.celebrate();
+            }
+        } else if (this.basketEggs % 10 === 0 && this.basketEggs > 0) {
+            Audio.play('cheer');
+            this.message.show(`🎉 ${this.basketEggs}개 달성!`);
+            this._triggerShake(3, 0.3);
+        }
+    }
+
     handleTap(x, y) {
         Audio.ensureContext();
         Audio.vibrate();
         this.hud.resetIdle();
 
-        // Check predators first (priority tap target)
+        // Check eggs first (tap to collect)
+        for (let i = this.eggs.length - 1; i >= 0; i--) {
+            if (this.eggs[i].contains(x, y)) {
+                this._collectEgg(this.eggs[i]);
+                return null;
+            }
+        }
+
+        // Check predators (priority tap target)
         for (let i = this.predators.length - 1; i >= 0; i--) {
             if (this.predators[i].contains(x, y)) {
                 const result = this.predators[i].scare();

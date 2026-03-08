@@ -123,30 +123,37 @@ export class TitleScene {
             ctx.save();
             if (selected) {
                 ctx.shadowColor = d.color;
-                ctx.shadowBlur = 12;
+                ctx.shadowBlur = 15;
             }
+
+            // Shadow for depth
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.roundRect(bx + 1, diffY + 3, diffBtnW, diffBtnH, 14);
+            ctx.fill();
+
             const grad = ctx.createLinearGradient(bx, diffY, bx, diffY + diffBtnH);
             if (selected) {
                 grad.addColorStop(0, d.color);
                 grad.addColorStop(1, d.color + 'CC');
             } else {
-                grad.addColorStop(0, 'rgba(255,255,255,0.25)');
-                grad.addColorStop(1, 'rgba(255,255,255,0.1)');
+                grad.addColorStop(0, 'rgba(255,255,255,0.85)');
+                grad.addColorStop(1, 'rgba(255,255,255,0.6)');
             }
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.roundRect(bx, diffY, diffBtnW, diffBtnH, 14);
             ctx.fill();
 
-            if (selected) {
-                ctx.strokeStyle = '#FFF';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            // Border
+            ctx.strokeStyle = selected ? '#FFF' : 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = selected ? 2.5 : 1.5;
+            ctx.stroke();
+
             ctx.restore();
 
             // Label
-            ctx.fillStyle = selected ? '#FFF' : 'rgba(255,255,255,0.7)';
+            ctx.fillStyle = selected ? '#FFF' : '#555';
             ctx.font = `bold ${selected ? 16 : 14}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
