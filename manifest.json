@@ -1,12 +1,13 @@
 {
-  "name": "꼬꼬닭 게임 모음",
-  "short_name": "꼬꼬닭",
-  "description": "5-6세 아이를 위한 귀여운 게임 모음",
-  "start_url": "/",
+  "name": "리리 게임 허브",
+  "short_name": "리리게임",
+  "description": "리아, 리사 자매를 위한 게임 모음",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#87CEEB",
-  "theme_color": "#87CEEB",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
   "icons": [
     {
       "src": "icons/icon-192.png",
