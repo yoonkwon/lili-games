@@ -22,9 +22,9 @@ export class Egg {
 
     this.radius = golden ? 22 : 18;
 
-    // Pop arc - small upward bounce
+    // Pop arc - upward bounce then land
     this.midX = (startX + targetX) / 2;
-    this.midY = Math.min(startY, targetY) - 40 - Math.random() * 30;
+    this.midY = Math.min(startY, targetY) - 60 - Math.random() * 40;
 
     // Current draw position
     this.drawX = startX;
@@ -39,7 +39,7 @@ export class Egg {
 
     // Phase 1: pop animation
     if (!this.landed) {
-      this.progress += dt * 3.5;
+      this.progress += dt * 2.5;
       this.popScale = Math.min(1, this.progress * 3);
 
       const t = Math.min(1, this.progress);

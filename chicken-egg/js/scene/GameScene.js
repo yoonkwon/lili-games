@@ -838,13 +838,16 @@ export class GameScene {
             chick.celebrate();
         }
 
-        // Egg pops out from under chicken (short pop animation)
-        const popAngle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
-        const popDist = 30 + Math.random() * 20;
+        // Egg pops out to the sides (away from chicken, easy to tap)
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const popAngle = side * (0.6 + Math.random() * 0.8); // sideways + slightly down
+        const popDist = 80 + Math.random() * 60;
+        const targetX = this.nest.x + Math.cos(popAngle) * popDist;
+        const targetY = this.nest.y + 20 + Math.random() * 30; // land below nest
         const egg = new Egg(
             this.nest.x, this.nest.y - 10,
-            this.nest.x + Math.cos(popAngle) * popDist,
-            this.nest.y + Math.sin(popAngle) * popDist - 20,
+            Math.max(30, Math.min(this.canvasWidth - 30, targetX)),
+            targetY,
             golden
         );
         // Apply difficulty-based wait time
