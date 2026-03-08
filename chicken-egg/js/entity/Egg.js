@@ -1,5 +1,5 @@
 /**
- * Egg entity - pops out from under chicken with a bounce animation
+ * Egg entity - pops out from chicken with arc animation, auto-collected on landing
  * Uses SpriteCache sprites with golden sparkle overlay
  */
 export class Egg {
@@ -12,13 +12,7 @@ export class Egg {
 
     this.progress = 0;
     this.collected = false;
-    this.expired = false;
     this.sparkle = 0;
-
-    // Waiting state: after landing, wait for tap
-    this.landed = false;
-    this.waitTimer = 0;
-    this.waitMax = golden ? 4 : 3; // seconds before disappearing
 
     this.radius = golden ? 22 : 18;
 
@@ -36,67 +30,27 @@ export class Egg {
 
   update(dt) {
     this.sparkle += dt * 3;
+    this.progress += dt * 2.5;
+    this.popScale = Math.min(1, this.progress * 3);
 
-    // Phase 1: pop animation
-    if (!this.landed) {
-      this.progress += dt * 2.5;
-      this.popScale = Math.min(1, this.progress * 3);
+    const t = Math.min(1, this.progress);
+    const mt = 1 - t;
+    this.drawX = mt * mt * this.startX + 2 * mt * t * this.midX + t * t * this.targetX;
+    this.drawY = mt * mt * this.startY + 2 * mt * t * this.midY + t * t * this.targetY;
 
-      const t = Math.min(1, this.progress);
-      const mt = 1 - t;
-      this.drawX = mt * mt * this.startX + 2 * mt * t * this.midX + t * t * this.targetX;
-      this.drawY = mt * mt * this.startY + 2 * mt * t * this.midY + t * t * this.targetY;
-
-      if (this.progress >= 1) {
-        this.landed = true;
-        this.drawX = this.targetX;
-        this.drawY = this.targetY;
-      }
-      return null; // not done yet
+    if (this.progress >= 1) {
+      this.collected = true;
+      return true;
     }
-
-    // Phase 2: waiting for tap
-    this.waitTimer += dt;
-
-    // Expire if not tapped in time
-    if (!this.collected && this.waitTimer >= this.waitMax) {
-      this.expired = true;
-      return 'expired';
-    }
-    return null;
-  }
-
-  contains(x, y) {
-    if (!this.landed || this.collected || this.expired) return false;
-    const dx = x - this.drawX;
-    const dy = y - this.drawY;
-    // Generous tap area (1.5x radius)
-    const r = this.radius * 1.5;
-    return dx * dx + dy * dy <= r * r;
-  }
-
-  collect() {
-    this.collected = true;
+    return false;
   }
 
   draw(ctx) {
     const sc = window.__spriteCache;
     if (!sc || !sc.ready) return;
-    if (this.collected || this.expired) return;
 
     ctx.save();
     ctx.translate(this.drawX, this.drawY);
-
-    // Fade out when about to expire (last 1 second)
-    if (this.landed) {
-      const remaining = this.waitMax - this.waitTimer;
-      if (remaining < 1) {
-        ctx.globalAlpha = Math.max(0.2, remaining);
-      }
-      // Gentle wobble to attract attention (reuse sparkle which runs at dt*3)
-      const wobbleAngle = Math.sin(this.sparkle * 2) * 0.1;
-      ctx.rotate(wobbleAngle);
-    }
 
     // Pop scale effect
     const s = this.popScale;

@@ -162,11 +162,11 @@ export class GameScene {
         // Stage calculation
         this.currentStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
 
-        // Update eggs (pop animation + waiting for tap)
+        // Update eggs (auto-collect on landing)
         for (let i = this.eggs.length - 1; i >= 0; i--) {
             const egg = this.eggs[i];
-            const result = egg.update(dt);
-            if (result === 'expired' || egg.collected) {
+            if (egg.update(dt)) {
+                this._collectEgg(egg);
                 this.eggs.splice(i, 1);
             }
         }
@@ -757,7 +757,7 @@ export class GameScene {
             return null;
         }
 
-        // Check predators first (priority tap target - higher stakes)
+        // Check predators first (priority tap target)
         for (let i = this.predators.length - 1; i >= 0; i--) {
             if (this.predators[i].contains(x, y)) {
                 const result = this.predators[i].scare();
@@ -769,7 +769,6 @@ export class GameScene {
                     this.particles.createParticles(this.predators[i].x, this.predators[i].y, '#FFD700', 10);
                     this.particles.addFloatingText(this.predators[i].x, this.predators[i].y - 50, '도망가!', '#FFF');
                     this._triggerShake(3, 0.2);
-                    // Chicks celebrate
                     for (const chick of this.chicks) chick.celebrate();
                 } else if (result === 'hit') {
                     Audio.play('cluck');
@@ -779,14 +778,6 @@ export class GameScene {
                         `${this.predators[i].tapsRemaining}번 더!`, '#FFD700'
                     );
                 }
-                return null;
-            }
-        }
-
-        // Check eggs (tap to collect)
-        for (let i = this.eggs.length - 1; i >= 0; i--) {
-            if (this.eggs[i].contains(x, y)) {
-                this._collectEgg(this.eggs[i]);
                 return null;
             }
         }
@@ -850,10 +841,6 @@ export class GameScene {
             targetY,
             golden
         );
-        // Apply difficulty-based wait time
-        egg.waitMax = golden
-            ? (this.diff.eggGoldenWaitTime || 4)
-            : (this.diff.eggWaitTime || 3);
         this.eggs.push(egg);
         this.totalEggs++;
     }
