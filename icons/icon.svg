@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <circle cx="256" cy="256" r="256" fill="#87CEEB"/>
+  <ellipse cx="256" cy="420" rx="256" ry="110" fill="#7EC850"/>
+
+  <!-- Body -->
+  <ellipse cx="256" cy="278" rx="80" ry="70" fill="#FFCC66"/>
+  <ellipse cx="261" cy="298" rx="48" ry="42" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- Wings -->
+  <ellipse cx="191" cy="283" rx="32" ry="50" transform="rotate(17 191 283)" fill="#E8A317"/>
+  <ellipse cx="321" cy="283" rx="32" ry="50" transform="rotate(-17 321 283)" fill="#E8A317"/>
+
+  <!-- Head -->
+  <ellipse cx="261" cy="218" rx="44" ry="40" fill="#FFCC66"/>
+
+  <!-- Comb -->
+  <ellipse cx="245" cy="180" rx="12" ry="18" transform="rotate(-11 245 180)" fill="#FF4444"/>
+  <ellipse cx="261" cy="174" rx="12" ry="18" fill="#FF4444"/>
+  <ellipse cx="277" cy="180" rx="12" ry="18" transform="rotate(11 277 180)" fill="#FF4444"/>
+
+  <!-- Happy eyes (closed arcs) -->
+  <path d="M237 214 Q246 206 255 214" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M267 214 Q276 206 285 214" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Blush -->
+  <ellipse cx="236" cy="226" rx="12" ry="7" fill="rgba(255,150,150,0.45)"/>
+  <ellipse cx="286" cy="226" rx="12" ry="7" fill="rgba(255,150,150,0.45)"/>
+
+  <!-- Beak -->
+  <polygon points="261,223 278,233 261,243 246,233" fill="#FF8C00"/>
+
+  <!-- Egg -->
+  <ellipse cx="351" cy="323" rx="18" ry="24" fill="#FFFDF0" stroke="#DDD" stroke-width="2"/>
+  <ellipse cx="346" cy="315" rx="6" ry="8" transform="rotate(-17 346 315)" fill="rgba(255,255,255,0.6)"/>
+
+  <!-- Feet -->
+  <g stroke="#FF8C00" stroke-width="3" stroke-linecap="round" fill="none">
+    <line x1="236" y1="340" x2="228" y2="355"/>
+    <line x1="236" y1="340" x2="236" y2="355"/>
+    <line x1="236" y1="340" x2="244" y2="355"/>
+    <line x1="276" y1="340" x2="268" y2="355"/>
+    <line x1="276" y1="340" x2="276" y2="355"/>
+    <line x1="276" y1="340" x2="284" y2="355"/>
+  </g>
+</svg>

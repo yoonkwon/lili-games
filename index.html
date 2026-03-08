@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#87CEEB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="꼬꼬닭">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>게임 모음</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #87CEEB 0%, #E0F0FF 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+        }
+        h1 {
+            font-size: 48px;
+            color: #FFF;
+            text-shadow: 3px 3px 0 #E8860C, -1px -1px 0 #E8860C, 1px -1px 0 #E8860C, -1px 1px 0 #E8860C;
+            margin-bottom: 40px;
+        }
+        .games {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            padding: 20px;
+        }
+        .game-card {
+            width: 280px;
+            height: 320px;
+            background: #FFF;
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .game-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+        }
+        .game-card:active {
+            transform: scale(0.97);
+        }
+        .game-icon {
+            font-size: 100px;
+            margin-bottom: 16px;
+        }
+        .game-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        .game-desc {
+            font-size: 16px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .coming-soon {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>게임 모음</h1>
+    <div class="games">
+        <a href="chicken-egg/" class="game-card">
+            <div class="game-icon">🐔</div>
+            <div class="game-title">꼬꼬닭 알 낳기</div>
+            <div class="game-desc">알 100개를 모아보자!</div>
+        </a>
+        <div class="game-card coming-soon">
+            <div class="game-icon">🎮</div>
+            <div class="game-title">???</div>
+            <div class="game-desc">준비 중...</div>
+        </div>
+    </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

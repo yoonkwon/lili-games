@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#87CEEB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="꼬꼬닭">
+    <meta name="description" content="꼬꼬닭 알 낳기 - 닭이 알을 낳아 병아리를 키우는 게임">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-192.png">
+    <title>꼬꼬닭 알 낳기 🐔</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+            background: #87CEEB;
+            --sat: env(safe-area-inset-top, 0px);
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="error-display" style="display:none;position:fixed;top:10px;left:10px;right:10px;background:rgba(255,0,0,0.9);color:white;padding:15px;border-radius:8px;font-size:14px;z-index:9999;white-space:pre-wrap;max-height:50vh;overflow:auto;"></div>
+<script>
+// Visible error reporting
+window.onerror = function(msg, url, line, col, err) {
+    var d = document.getElementById('error-display');
+    d.style.display = 'block';
+    d.textContent += 'ERROR: ' + msg + '\nat ' + url + ':' + line + ':' + col + '\n' + (err && err.stack ? err.stack : '') + '\n\n';
+};
+window.addEventListener('unhandledrejection', function(e) {
+    var d = document.getElementById('error-display');
+    d.style.display = 'block';
+    d.textContent += 'UNHANDLED: ' + (e.reason && e.reason.stack ? e.reason.stack : e.reason) + '\n\n';
+});
+</script>
+<script type="module" src="js/main.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
