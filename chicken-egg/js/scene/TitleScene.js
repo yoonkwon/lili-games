@@ -8,7 +8,7 @@ export class TitleScene {
         this._btn = null;
         this._diffBtns = [];
         this._trophyBtn = null;
-        this.selectedDifficulty = 'normal';
+        this.selectedDifficulty = 'sister';
         this.achievements = new AchievementManager();
 
         // Trophy overlay
@@ -103,7 +103,7 @@ export class TitleScene {
 
         // ===== Difficulty selector =====
         const diffY = cy + 100;
-        const diffBtnW = 90, diffBtnH = 42, diffGap = 12;
+        const diffBtnW = 78, diffBtnH = 42, diffGap = 8;
         const totalDiffW = DIFFICULTY_ORDER.length * diffBtnW + (DIFFICULTY_ORDER.length - 1) * diffGap;
         const diffStartX = cx - totalDiffW / 2;
 

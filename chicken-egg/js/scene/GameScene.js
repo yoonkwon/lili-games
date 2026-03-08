@@ -4,6 +4,7 @@ import { Nest } from '../entity/Nest.js';
 import { Egg } from '../entity/Egg.js';
 import { Chick } from '../entity/Chick.js';
 import { Predator, PREDATOR_TYPES } from '../entity/Predator.js';
+import { Dog } from '../entity/Dog.js';
 import { Gauge } from '../ui/Gauge.js';
 import { HUD } from '../ui/HUD.js';
 import { Message } from '../ui/Message.js';
@@ -24,7 +25,7 @@ const STAGES = [
 ];
 
 export class GameScene {
-    constructor(canvasWidth, canvasHeight, safeTop = 0, difficultyKey = 'normal') {
+    constructor(canvasWidth, canvasHeight, safeTop = 0, difficultyKey = 'sister') {
         this.difficultyKey = difficultyKey;
         this.diff = DIFFICULTIES[difficultyKey] || DIFFICULTIES.normal;
         this.TARGET_EGGS = this.diff.targetEggs;
@@ -46,10 +47,17 @@ export class GameScene {
         this.eggs = [];
         this.chicks = [];
         this.predators = [];
+        this.dogs = [];
 
         this.basketEggs = 0;
         this.totalEggs = 0;
         this.goldenEggs = 0;
+
+        // Dog summon system
+        this.dogCharge = 0;
+        this.dogChargeMax = this.diff.dogChargeEggs || 15;
+        this._dogBtnRect = null;
+        this._lastDogChargeEggs = 0;
 
         this.predatorTimer = 0;
         this.unlockedHats = [0];
@@ -73,6 +81,7 @@ export class GameScene {
 
         // Predators scared count (for stats)
         this.predatorsScared = 0;
+        this.dogSummons = 0;
 
         // Achievement system
         this.achievements = new AchievementManager();
@@ -199,8 +208,9 @@ export class GameScene {
 
         // Predator spawning (scaled by difficulty)
         this.predatorTimer += dt;
-        const spawnInterval = Math.max(5, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
-        if (this.predatorTimer > spawnInterval && this.basketEggs > 5) {
+        const spawnInterval = Math.max(3, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
+        const maxPred = this.diff.predatorMaxConcurrent || 3;
+        if (this.predatorTimer > spawnInterval && this.basketEggs > 5 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
             let type;
             if (this.currentStage >= 3 && Math.random() < 0.4) {
@@ -240,6 +250,47 @@ export class GameScene {
             }
 
             if (!pred.active) this.predators.splice(i, 1);
+        }
+
+        // Update dogs
+        for (let i = this.dogs.length - 1; i >= 0; i--) {
+            const dog = this.dogs[i];
+            dog.canvasWidth = canvasWidth;
+            const event = dog.update(dt);
+
+            if (event && event.type === 'attack') {
+                const pred = event.predator;
+                if (pred.active && pred.phase <= 1) {
+                    // Apply scare power
+                    for (let p = 0; p < event.power; p++) {
+                        const scareResult = pred.scare();
+                        if (scareResult === 'scared') {
+                            this.predatorsScared++;
+                            this.message.show(`🐕 ${dog.info.name}가 ${pred.info.name}을 쫓아냈어!`);
+                            Audio.play('cheer');
+                            Audio.play('scared');
+                            this.particles.createParticles(pred.x, pred.y, '#FFD700', 12);
+                            this.particles.addFloatingText(pred.x, pred.y - 50, `${dog.info.name} 멍멍!`, '#FF6B00');
+                            this._triggerShake(3, 0.2);
+                            break;
+                        } else if (scareResult === 'hit') {
+                            this.particles.createParticles(pred.x, pred.y, '#FFF', 5);
+                            this.particles.addFloatingText(pred.x, pred.y - 40, '멍!', '#FF6B00');
+                        }
+                    }
+                }
+            }
+
+            if (dog.expired) this.dogs.splice(i, 1);
+        }
+
+        // Assign dogs to predators
+        this._assignDogTargets();
+
+        // Dog charge system (charge builds with collected eggs)
+        if (this.basketEggs > this._lastDogChargeEggs) {
+            this.dogCharge += this.basketEggs - this._lastDogChargeEggs;
+            this._lastDogChargeEggs = this.basketEggs;
         }
 
         // Milestone chicks (every 20 eggs = every stage)
@@ -390,6 +441,48 @@ export class GameScene {
         this.shakeTimer = duration;
     }
 
+    _assignDogTargets() {
+        for (const dog of this.dogs) {
+            if (dog.targetPredator) continue;
+            // Find closest approaching predator
+            let best = null, bestDist = Infinity;
+            for (const pred of this.predators) {
+                if (pred.phase > 1 || pred.scared) continue;
+                // Check not already targeted by another dog
+                const alreadyTargeted = this.dogs.some(d => d !== dog && d.targetPredator === pred);
+                if (alreadyTargeted) continue;
+                const d = Math.abs(dog.x - pred.x);
+                if (d < bestDist) { bestDist = d; best = pred; }
+            }
+            if (best) dog.assignTarget(best);
+        }
+    }
+
+    _summonDogs() {
+        if (this.dogCharge < this.dogChargeMax) return;
+        if (this.dogs.length > 0) return; // already active
+
+        this.dogCharge = 0;
+        const duration = this.diff.dogDuration || 10;
+        const gY = this.groundY + 15;
+
+        // 보리 enters from left
+        const bori = new Dog(0, -30, gY, this.canvasWidth, duration);
+        bori.patrolCenter = this.nest.x - 60;
+        this.dogs.push(bori);
+
+        // 좁쌀이 enters from right
+        const jopssal = new Dog(1, this.canvasWidth + 30, gY, this.canvasWidth, duration);
+        jopssal.patrolCenter = this.nest.x + 60;
+        jopssal.patrolDir = -1;
+        this.dogs.push(jopssal);
+
+        this.dogSummons++;
+        this.message.show('🐕 보리와 좁쌀이가 왔어! 🐕‍🦺');
+        Audio.play('fanfare');
+        this._triggerShake(4, 0.3);
+    }
+
     getStageTheme() {
         return STAGES[this.currentStage];
     }
@@ -435,6 +528,11 @@ export class GameScene {
             egg.draw(ctx);
         }
 
+        // Dogs
+        for (const dog of this.dogs) {
+            dog.draw(ctx);
+        }
+
         // Predators
         for (const pred of this.predators) {
             pred.draw(ctx);
@@ -474,10 +572,81 @@ export class GameScene {
 
         this.message.draw(ctx, w, h);
 
+        // Dog summon button
+        this._drawDogButton(ctx, w, h);
+
         // Achievement notification
         if (this._achNotification) {
             this._drawAchNotification(ctx, w, h);
         }
+    }
+
+    _drawDogButton(ctx, w, h) {
+        const btnSize = 54;
+        const btnX = w - btnSize - 12;
+        const btnY = h - btnSize - 12;
+        const ready = this.dogCharge >= this.dogChargeMax && this.dogs.length === 0;
+        const ratio = Math.min(1, this.dogCharge / this.dogChargeMax);
+
+        this._dogBtnRect = { x: btnX, y: btnY, w: btnSize, h: btnSize };
+
+        ctx.save();
+
+        // Button background
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnSize, btnSize, 14);
+        ctx.fillStyle = ready ? 'rgba(255,107,0,0.85)' : 'rgba(0,0,0,0.35)';
+        ctx.fill();
+
+        // Charge ring
+        if (!ready && this.dogs.length === 0) {
+            ctx.beginPath();
+            ctx.arc(btnX + btnSize / 2, btnY + btnSize / 2, btnSize / 2 - 2,
+                -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
+            ctx.strokeStyle = '#FF9800';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // Active glow
+        if (ready) {
+            ctx.shadowColor = '#FF6B00';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.roundRect(btnX, btnY, btnSize, btnSize, 14);
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        // Dog icon
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🐕', btnX + btnSize / 2 - 6, btnY + btnSize / 2 - 2);
+        ctx.font = '14px sans-serif';
+        ctx.fillText('🐕‍🦺', btnX + btnSize / 2 + 10, btnY + btnSize / 2 + 2);
+
+        // "Ready!" label
+        if (ready) {
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('호출!', btnX + btnSize / 2, btnY + btnSize - 6);
+        }
+
+        // Active dogs timer display
+        if (this.dogs.length > 0) {
+            const avgRemaining = this.dogs.reduce((s, d) => s + d.getRemainingRatio(), 0) / this.dogs.length;
+            ctx.beginPath();
+            ctx.arc(btnX + btnSize / 2, btnY + btnSize / 2, btnSize / 2 - 2,
+                -Math.PI / 2, -Math.PI / 2 + avgRemaining * Math.PI * 2);
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        ctx.restore();
     }
 
     _checkAchievements() {
@@ -488,6 +657,7 @@ export class GameScene {
             comboCount: this.comboCount,
             chickCount: this.chicks.length,
             predatorsScared: this.predatorsScared,
+            dogSummons: this.dogSummons,
             currentStage: this.currentStage,
             difficulty: this.difficultyKey,
             cleared: this.basketEggs >= this.TARGET_EGGS,
@@ -580,15 +750,14 @@ export class GameScene {
         Audio.vibrate();
         this.hud.resetIdle();
 
-        // Check eggs first (tap to collect)
-        for (let i = this.eggs.length - 1; i >= 0; i--) {
-            if (this.eggs[i].contains(x, y)) {
-                this._collectEgg(this.eggs[i]);
-                return null;
-            }
+        // Dog summon button
+        const db = this._dogBtnRect;
+        if (db && x >= db.x && x <= db.x + db.w && y >= db.y && y <= db.y + db.h) {
+            this._summonDogs();
+            return null;
         }
 
-        // Check predators (priority tap target)
+        // Check predators first (priority tap target - higher stakes)
         for (let i = this.predators.length - 1; i >= 0; i--) {
             if (this.predators[i].contains(x, y)) {
                 const result = this.predators[i].scare();
@@ -610,6 +779,14 @@ export class GameScene {
                         `${this.predators[i].tapsRemaining}번 더!`, '#FFD700'
                     );
                 }
+                return null;
+            }
+        }
+
+        // Check eggs (tap to collect)
+        for (let i = this.eggs.length - 1; i >= 0; i--) {
+            if (this.eggs[i].contains(x, y)) {
+                this._collectEgg(this.eggs[i]);
                 return null;
             }
         }
@@ -670,6 +847,10 @@ export class GameScene {
             this.nest.y + Math.sin(popAngle) * popDist - 20,
             golden
         );
+        // Apply difficulty-based wait time
+        egg.waitMax = golden
+            ? (this.diff.eggGoldenWaitTime || 4)
+            : (this.diff.eggWaitTime || 3);
         this.eggs.push(egg);
         this.totalEggs++;
     }

@@ -23,6 +23,7 @@ const ASSETS = [
   './chicken-egg/js/entity/Nest.js',
   './chicken-egg/js/entity/Chick.js',
   './chicken-egg/js/entity/Predator.js',
+  './chicken-egg/js/entity/Dog.js',
   './chicken-egg/js/scene/TitleScene.js',
   './chicken-egg/js/scene/GameScene.js',
   './chicken-egg/js/scene/EndingScene.js',

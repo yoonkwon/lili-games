@@ -19,7 +19,6 @@ export class Egg {
     this.landed = false;
     this.waitTimer = 0;
     this.waitMax = golden ? 4 : 3; // seconds before disappearing
-    this.wobble = 0;
 
     this.radius = golden ? 22 : 18;
 
@@ -58,10 +57,9 @@ export class Egg {
 
     // Phase 2: waiting for tap
     this.waitTimer += dt;
-    this.wobble += dt * 6;
 
     // Expire if not tapped in time
-    if (this.waitTimer >= this.waitMax) {
+    if (!this.collected && this.waitTimer >= this.waitMax) {
       this.expired = true;
       return 'expired';
     }
@@ -95,8 +93,8 @@ export class Egg {
       if (remaining < 1) {
         ctx.globalAlpha = Math.max(0.2, remaining);
       }
-      // Gentle wobble to attract attention
-      const wobbleAngle = Math.sin(this.wobble) * 0.1;
+      // Gentle wobble to attract attention (reuse sparkle which runs at dt*3)
+      const wobbleAngle = Math.sin(this.sparkle * 2) * 0.1;
       ctx.rotate(wobbleAngle);
     }
 

@@ -29,10 +29,15 @@ const ACHIEVEMENTS = [
   { id: 'stage_2',         emoji: '☀️', name: '여름이다!',       desc: '여름 들판에 도착!',        check: s => s.currentStage >= 1 },
   { id: 'stage_5',         emoji: '🌈', name: '무지개 마을!',    desc: '마지막 스테이지 도착!',    check: s => s.currentStage >= 4 },
 
-  // Difficulty
-  { id: 'clear_easy',      emoji: '😊', name: '쉬움 클리어',     desc: '쉬움 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'easy' },
-  { id: 'clear_normal',    emoji: '😎', name: '보통 클리어',     desc: '보통 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'normal' },
-  { id: 'clear_hard',      emoji: '🤩', name: '어려움 클리어',   desc: '어려움 난이도로 클리어!',  check: s => s.cleared && s.difficulty === 'hard' },
+  // Dogs
+  { id: 'dog_first',       emoji: '🐕', name: '멍멍이 호출!',    desc: '보리와 좁쌀이를 처음 불렀어!', check: s => s.dogSummons >= 1 },
+  { id: 'dog_5',           emoji: '🐕‍🦺', name: '강아지 대장',  desc: '강아지를 5번 호출했어!',    check: s => s.dogSummons >= 5 },
+
+  // Difficulty clears
+  { id: 'clear_baby',      emoji: '👶', name: '응애 클리어',     desc: '응애 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'baby' },
+  { id: 'clear_sister',    emoji: '🧒', name: '동생 클리어',     desc: '동생 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'sister' },
+  { id: 'clear_unni',      emoji: '👧', name: '언니 클리어',     desc: '언니 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'unni' },
+  { id: 'clear_mom',       emoji: '👩', name: '엄마 클리어',     desc: '엄마 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'mom' },
 ];
 
 const STORAGE_KEY = 'liliGames_achievements';
