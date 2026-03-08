@@ -9,11 +9,10 @@ import { HUD } from '../ui/HUD.js';
 import { Message } from '../ui/Message.js';
 import { ParticleSystem } from '../particles.js';
 import { audio as Audio } from '../AudioManager.js';
+import { DIFFICULTIES } from '../Difficulty.js';
+import { AchievementManager } from '../Achievement.js';
 
-const TARGET_EGGS = 100;
-const TAPS_PER_EGG = 5;
 const GOLDEN_EGG_VALUE = 3;
-const EGGS_PER_STAGE = 20;
 
 // Stage definitions with themes
 const STAGES = [
@@ -25,12 +24,18 @@ const STAGES = [
 ];
 
 export class GameScene {
-    constructor(canvasWidth, canvasHeight, safeTop = 0) {
+    constructor(canvasWidth, canvasHeight, safeTop = 0, difficultyKey = 'normal') {
+        this.difficultyKey = difficultyKey;
+        this.diff = DIFFICULTIES[difficultyKey] || DIFFICULTIES.normal;
+        this.TARGET_EGGS = this.diff.targetEggs;
+        this.TAPS_PER_EGG = this.diff.tapsPerEgg;
+        this.EGGS_PER_STAGE = Math.floor(this.TARGET_EGGS / 5);
+
         const groundY = canvasHeight * 0.65;
 
         this.chicken = new Chicken(canvasWidth * 0.35, groundY - 30);
         this.nest = new Nest(canvasWidth - 120, groundY + 20);
-        this.gauge = new Gauge(TAPS_PER_EGG);
+        this.gauge = new Gauge(this.TAPS_PER_EGG);
         this.hud = new HUD();
         this.message = new Message();
         this.particles = new ParticleSystem();
@@ -65,6 +70,11 @@ export class GameScene {
 
         // Predators scared count (for stats)
         this.predatorsScared = 0;
+
+        // Achievement system
+        this.achievements = new AchievementManager();
+        this._achNotification = null;  // { ach, timer }
+        this._achNotifyDuration = 3;
 
         // Load saved progress
         this._loadProgress();
@@ -136,7 +146,7 @@ export class GameScene {
         }
 
         // Stage calculation
-        this.currentStage = Math.min(4, Math.floor(this.basketEggs / EGGS_PER_STAGE));
+        this.currentStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
 
         // Update flying eggs
         for (let i = this.eggs.length - 1; i >= 0; i--) {
@@ -163,9 +173,9 @@ export class GameScene {
                 this.eggs.splice(i, 1);
 
                 // Stage clear check
-                const prevStage = Math.min(4, Math.floor(prevEggs / EGGS_PER_STAGE));
-                const newStage = Math.min(4, Math.floor(this.basketEggs / EGGS_PER_STAGE));
-                if (newStage > prevStage && this.basketEggs < TARGET_EGGS) {
+                const prevStage = Math.min(4, Math.floor(prevEggs / this.EGGS_PER_STAGE));
+                const newStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
+                if (newStage > prevStage && this.basketEggs < this.TARGET_EGGS) {
                     const stageInfo = STAGES[newStage];
                     this.message.show(`${stageInfo.emoji} ${stageInfo.name}으로 이동! (${newStage + 1}/5)`);
                     Audio.play('fanfare');
@@ -220,20 +230,21 @@ export class GameScene {
         // Chick auto-defense assignment
         this._assignChickDefenders();
 
-        // Predator spawning
+        // Predator spawning (scaled by difficulty)
         this.predatorTimer += dt;
-        const spawnInterval = Math.max(5, 12 - this.basketEggs * 0.08);
+        const spawnInterval = Math.max(5, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         if (this.predatorTimer > spawnInterval && this.basketEggs > 5) {
             this.predatorTimer = 0;
-            // Bias toward harder predators in later stages
             let type;
             if (this.currentStage >= 3 && Math.random() < 0.4) {
-                type = 2; // raccoon more common in later stages
+                type = 2;
             } else {
                 type = Math.floor(Math.random() * 3);
             }
             const pred = new Predator(type, this.groundY + 25, canvasWidth, this.nest.x);
+            pred.speed *= this.diff.predatorSpeedMult;
             pred.setStealAmount(this.basketEggs);
+            pred.stealAmount = Math.ceil(pred.stealAmount * this.diff.predatorStealMult);
             this.predators.push(pred);
         }
 
@@ -265,7 +276,7 @@ export class GameScene {
         }
 
         // Milestone chicks (every 20 eggs = every stage)
-        const chickMilestone = Math.floor(this.basketEggs / 20);
+        const chickMilestone = Math.floor(this.basketEggs / this.EGGS_PER_STAGE);
         while (this.chicks.length < chickMilestone && this.chicks.length < 5) {
             const colors = ['#FFE44D', '#FFD700', '#FFC125', '#FFAA00', '#FFB347', '#FF8C69', '#DDA0DD', '#98FB98'];
             const chick = new Chick(
@@ -318,7 +329,26 @@ export class GameScene {
         }
 
         // Win condition
-        if (this.basketEggs >= TARGET_EGGS) {
+        // Check achievements
+        this._checkAchievements();
+
+        // Update achievement notification
+        if (this._achNotification) {
+            this._achNotification.timer -= dt;
+            if (this._achNotification.timer <= 0) {
+                this._achNotification = null;
+            }
+        }
+        // Show next pending achievement
+        if (!this._achNotification) {
+            const next = this.achievements.popPending();
+            if (next) {
+                this._achNotification = { ach: next, timer: this._achNotifyDuration };
+                Audio.play('fanfare');
+            }
+        }
+
+        if (this.basketEggs >= this.TARGET_EGGS) {
             localStorage.removeItem('chickenEgg_progress');
             return 'ending';
         }
@@ -385,7 +415,7 @@ export class GameScene {
      * Ribbon: gauge needs 1 fewer tap (5 → 4)
      */
     _getEffectiveTapsPerEgg() {
-        return this.unlockedHats.includes(2) ? TAPS_PER_EGG - 1 : TAPS_PER_EGG;
+        return this.unlockedHats.includes(2) ? this.TAPS_PER_EGG - 1 : this.TAPS_PER_EGG;
     }
 
     _triggerShake(amount, duration) {
@@ -461,7 +491,7 @@ export class GameScene {
 
         this.hud.draw(ctx, w, h, {
             basketEggs: this.basketEggs,
-            targetEggs: TARGET_EGGS,
+            targetEggs: this.TARGET_EGGS,
             chickCount: this.chicks.length,
             totalEggs: this.totalEggs,
             gaugeEmpty: this.gauge.gauge === 0 && this.gauge._fullFlash <= 0,
@@ -473,6 +503,67 @@ export class GameScene {
         }, this.safeTop);
 
         this.message.draw(ctx, w, h);
+
+        // Achievement notification
+        if (this._achNotification) {
+            this._drawAchNotification(ctx, w, h);
+        }
+    }
+
+    _checkAchievements() {
+        this.achievements.check({
+            totalEggs: this.totalEggs,
+            basketEggs: this.basketEggs,
+            goldenEggs: this.goldenEggs,
+            comboCount: this.comboCount,
+            chickCount: this.chicks.length,
+            predatorsScared: this.predatorsScared,
+            currentStage: this.currentStage,
+            difficulty: this.difficultyKey,
+            cleared: this.basketEggs >= this.TARGET_EGGS,
+        });
+    }
+
+    _drawAchNotification(ctx, w, h) {
+        const n = this._achNotification;
+        if (!n) return;
+        const a = n.ach;
+
+        // Slide in from top
+        const progress = Math.min(1, (this._achNotifyDuration - n.timer) / 0.4);
+        const exitProgress = Math.max(0, 1 - n.timer / 0.4);
+        const slideY = progress < 1 ? -60 + progress * 60 : (exitProgress > 0 ? -exitProgress * 60 : 0);
+
+        ctx.save();
+        ctx.translate(w / 2, 100 + slideY);
+
+        // Background pill
+        const pw = 260, ph = 50;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.beginPath();
+        ctx.roundRect(-pw / 2, -ph / 2, pw, ph, 25);
+        ctx.fill();
+
+        // Gold border
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Emoji
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(a.emoji, -pw / 2 + 16, 0);
+
+        // Text
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('업적 달성!', -pw / 2 + 50, -10);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(a.name, -pw / 2 + 50, 10);
+
+        ctx.restore();
     }
 
     handleTap(x, y) {
@@ -524,8 +615,8 @@ export class GameScene {
 
     _layEgg() {
         // Combo boosts golden egg chance: base 12% + 2% per combo (max 30%)
-        const comboBonus = Math.min(0.18, this.comboCount * 0.02);
-        const goldenChance = 0.12 + comboBonus;
+        const comboBonus = Math.min(0.18, this.comboCount * this.diff.goldenChanceComboBonus);
+        const goldenChance = this.diff.goldenChanceBase + comboBonus;
         const golden = Math.random() < goldenChance;
         this.chicken.layEgg();
 

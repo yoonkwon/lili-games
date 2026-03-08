@@ -1,4 +1,6 @@
 // Ending Scene - Mother chicken + 100 chicks happy ending
+import { DIFFICULTIES } from '../Difficulty.js';
+
 export class EndingScene {
     constructor(canvasWidth, canvasHeight, stats) {
         this.timer = 0;
@@ -64,7 +66,8 @@ export class EndingScene {
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         const hasStats = this.stats.goldenEggs !== undefined || this.stats.totalEggs !== undefined;
         const hasPredStats = this.stats.predatorsScared !== undefined && this.stats.predatorsScared > 0;
-        const boxH = hasStats ? (hasPredStats ? 210 : 185) : 120;
+        const hasDiff = !!this.stats.difficulty;
+        const boxH = hasStats ? (hasPredStats ? 210 : 185) + (hasDiff ? 28 : 0) : 120;
         ctx.beginPath();
         ctx.roundRect(w / 2 - 220, 40, 440, boxH, 25);
         ctx.fill();
@@ -89,6 +92,13 @@ export class EndingScene {
             }
             if (this.stats.predatorsScared !== undefined && this.stats.predatorsScared > 0) {
                 ctx.fillText(`쫓아낸 천적: ${this.stats.predatorsScared}마리 💪`, w / 2, 225);
+            }
+            if (this.stats.difficulty) {
+                const d = DIFFICULTIES[this.stats.difficulty];
+                if (d) {
+                    const dy = (this.stats.predatorsScared > 0) ? 250 : 225;
+                    ctx.fillText(`난이도: ${d.emoji} ${d.label}`, w / 2, dy);
+                }
             }
         }
         ctx.globalAlpha = 1;

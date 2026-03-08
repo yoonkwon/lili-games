@@ -99,8 +99,9 @@ input.onTap((x, y) => {
     if (currentScene === 'title') {
         const result = titleScene.handleTap(x, y);
         if (result === 'start') {
+            const difficulty = titleScene.selectedDifficulty;
             startTransition(() => {
-                gameScene = new GameScene(canvas.width, canvas.height, safeTop);
+                gameScene = new GameScene(canvas.width, canvas.height, safeTop, difficulty);
                 currentScene = 'game';
                 audio.play('cheer');
                 audio.playBgm();
@@ -155,10 +156,13 @@ function gameLoop(timestamp) {
                 if (result === 'ending' && !transition.active) {
                     startTransition(() => {
                         audio.stopBgm();
-                        endingScene = new EndingScene(canvas.width, canvas.height, {
+                        // Final achievement check for clear
+                    gameScene._checkAchievements();
+                    endingScene = new EndingScene(canvas.width, canvas.height, {
                             goldenEggs: gameScene.goldenEggs,
                             totalEggs: gameScene.totalEggs,
                             predatorsScared: gameScene.predatorsScared,
+                            difficulty: gameScene.difficultyKey,
                         });
                         currentScene = 'ending';
                         audio.play('ending');
@@ -234,7 +238,7 @@ function _drawPauseOverlay(ctx, w, h) {
         ctx.fillText(`${stageInfo.emoji} ${stageInfo.name}`, w / 2, h / 2 - 60);
         ctx.fillStyle = '#FFF';
         ctx.font = '18px sans-serif';
-        ctx.fillText(`🥚 알: ${gameScene.basketEggs}/100  ⭐ 금알: ${gameScene.goldenEggs}  🐣 병아리: ${gameScene.chicks.length}`, w / 2, h / 2 - 32);
+        ctx.fillText(`🥚 알: ${gameScene.basketEggs}/${gameScene.TARGET_EGGS}  ⭐ 금알: ${gameScene.goldenEggs}  🐣 병아리: ${gameScene.chicks.length}`, w / 2, h / 2 - 32);
     }
 
     // Resume button

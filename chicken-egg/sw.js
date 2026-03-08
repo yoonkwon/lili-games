@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chicken-egg-v5';
+const CACHE_NAME = 'chicken-egg-v6';
 
 // Use relative paths for GitHub Pages compatibility
 const PRECACHE_URLS = [
@@ -12,6 +12,8 @@ const PRECACHE_URLS = [
   './js/audio.js',
   './js/AudioManager.js',
   './js/SpriteCache.js',
+  './js/Achievement.js',
+  './js/Difficulty.js',
   './js/entity/Chicken.js',
   './js/entity/Egg.js',
   './js/entity/Nest.js',
