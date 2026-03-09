@@ -600,12 +600,10 @@ export class GameScene {
         }
 
         // Dog icon
-        ctx.font = '22px sans-serif';
+        ctx.font = '26px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🐕', btnX + btnSize / 2 - 6, btnY + btnSize / 2 - 2);
-        ctx.font = '14px sans-serif';
-        ctx.fillText('🐕‍🦺', btnX + btnSize / 2 + 10, btnY + btnSize / 2 + 2);
+        ctx.fillText('🐶', btnX + btnSize / 2, btnY + btnSize / 2 - 2);
 
         // "Ready!" label
         if (ready) {
