@@ -206,7 +206,7 @@ export class GameScene {
 
         // Predator spawning (scaled by difficulty)
         this.predatorTimer += dt;
-        const spawnInterval = Math.max(3, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
+        const spawnInterval = Math.max(5, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         const maxPred = this.diff.predatorMaxConcurrent || 3;
         if (this.predatorTimer > spawnInterval && this.basketEggs > 5 && this.predators.length < maxPred) {
             this.predatorTimer = 0;

@@ -35,8 +35,8 @@ const ACHIEVEMENTS = [
 
   // Difficulty clears
   { id: 'clear_baby',      emoji: '👶', name: '응애 클리어',     desc: '응애 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'baby' },
-  { id: 'clear_sister',    emoji: '🧒', name: '동생 클리어',     desc: '동생 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'sister' },
-  { id: 'clear_unni',      emoji: '👧', name: '언니 클리어',     desc: '언니 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'unni' },
+  { id: 'clear_sister',    emoji: '👧', name: '동생 클리어',     desc: '동생 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'sister' },
+  { id: 'clear_unni',      emoji: '💁‍♀️', name: '언니 클리어',     desc: '언니 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'unni' },
   { id: 'clear_mom',       emoji: '👩', name: '엄마 클리어',     desc: '엄마 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'mom' },
 ];
 
