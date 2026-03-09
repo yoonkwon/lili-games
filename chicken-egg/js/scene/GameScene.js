@@ -788,8 +788,7 @@ export class GameScene {
             chick.celebrate();
         }
 
-        // Egg goes directly into the nest (no flight)
-        const bonus = this._getEggValueBonus();
+        // Egg goes directly into the nest
         const baseValue = golden ? GOLDEN_EGG_VALUE : 1;
         const value = baseValue + bonus;
         const prevEggs = this.basketEggs;
