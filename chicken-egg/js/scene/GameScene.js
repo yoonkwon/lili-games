@@ -1,7 +1,6 @@
 // Main gameplay scene
 import { Chicken } from '../entity/Chicken.js';
 import { Nest } from '../entity/Nest.js';
-import { Egg } from '../entity/Egg.js';
 import { Chick } from '../entity/Chick.js';
 import { Predator, PREDATOR_TYPES } from '../entity/Predator.js';
 import { Dog } from '../entity/Dog.js';
@@ -44,7 +43,6 @@ export class GameScene {
         this.message = new Message();
         this.particles = new ParticleSystem();
 
-        this.eggs = [];
         this.chicks = [];
         this.predators = [];
         this.dogs = [];
@@ -57,7 +55,6 @@ export class GameScene {
         this.dogCharge = 0;
         this.dogChargeMax = this.diff.dogChargeEggs || 15;
         this._dogBtnRect = null;
-        this._lastDogChargeEggs = 0;
 
         this.predatorTimer = 0;
         this.unlockedHats = [0];
@@ -162,12 +159,6 @@ export class GameScene {
         // Stage calculation
         this.currentStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
 
-        // Update flying eggs (golden egg animations etc.)
-        for (let i = this.eggs.length - 1; i >= 0; i--) {
-            if (this.eggs[i].update(dt)) {
-                this.eggs.splice(i, 1);
-            }
-        }
 
         // Update chicks + auto-defense
         for (const chick of this.chicks) {
@@ -206,9 +197,9 @@ export class GameScene {
 
         // Predator spawning (scaled by difficulty)
         this.predatorTimer += dt;
-        const spawnInterval = Math.max(5, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
+        const spawnInterval = Math.max(3, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         const maxPred = this.diff.predatorMaxConcurrent || 3;
-        if (this.predatorTimer > spawnInterval && this.basketEggs > 5 && this.predators.length < maxPred) {
+        if (this.predatorTimer > spawnInterval && this.basketEggs > 2 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
             let type;
             if (this.currentStage >= 3 && Math.random() < 0.4) {
@@ -279,17 +270,11 @@ export class GameScene {
                 }
             }
 
-            if (dog.expired) this.dogs.splice(i, 1);
+            if (!dog.active) this.dogs.splice(i, 1);
         }
 
         // Assign dogs to predators
         this._assignDogTargets();
-
-        // Dog charge system (charge builds with collected eggs)
-        if (this.basketEggs > this._lastDogChargeEggs) {
-            this.dogCharge += this.basketEggs - this._lastDogChargeEggs;
-            this._lastDogChargeEggs = this.basketEggs;
-        }
 
         // Milestone chicks (every 20 eggs = every stage)
         const chickMilestone = Math.floor(this.basketEggs / this.EGGS_PER_STAGE);
@@ -522,10 +507,6 @@ export class GameScene {
         this.nest.drawFront(ctx);
 
         // Popping eggs animation
-        for (const egg of this.eggs) {
-            egg.draw(ctx);
-        }
-
         // Dogs
         for (const dog of this.dogs) {
             dog.draw(ctx);
@@ -709,9 +690,10 @@ export class GameScene {
         Audio.vibrate();
         this.hud.resetIdle();
 
-        // Dog summon button
+        // Dog summon button (only consume tap when ready)
         const db = this._dogBtnRect;
-        if (db && x >= db.x && x <= db.x + db.w && y >= db.y && y <= db.y + db.h) {
+        if (db && x >= db.x && x <= db.x + db.w && y >= db.y && y <= db.y + db.h
+            && this.dogCharge >= this.dogChargeMax && this.dogs.length === 0) {
             this._summonDogs();
             return null;
         }
@@ -794,6 +776,7 @@ export class GameScene {
         const prevEggs = this.basketEggs;
         this.basketEggs += value;
         this.totalEggs++;
+        this.dogCharge += value;
 
         const bonusText = bonus > 0 ? ` (+${bonus}👑)` : '';
         this.particles.addFloatingText(
@@ -802,7 +785,6 @@ export class GameScene {
             golden ? '#FFD700' : '#FFF'
         );
         this.nest.bounce = 1;
-        Audio.play('collect');
 
         // Stage clear check
         const prevStage = Math.min(4, Math.floor(prevEggs / this.EGGS_PER_STAGE));

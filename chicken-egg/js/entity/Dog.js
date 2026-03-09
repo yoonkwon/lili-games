@@ -29,13 +29,11 @@ export class Dog {
     this.info = DOG_TYPES[type];
     this.x = x;
     this.y = groundY;
-    this.baseY = groundY;
     this.canvasWidth = canvasWidth;
 
     this.duration = duration;
     this.timer = 0;
     this.active = true;
-    this.expired = false;
 
     // Patrol state
     this.patrolCenter = x;
@@ -66,7 +64,6 @@ export class Dog {
 
     // Check expiry
     if (this.timer >= this.duration) {
-      this.expired = true;
       this.active = false;
       return 'expired';
     }
@@ -128,7 +125,7 @@ export class Dog {
   }
 
   draw(ctx) {
-    if (!this.active && this.expired) return;
+    if (!this.active) return;
 
     const enterScale = this.enterProgress < 1
       ? 0.5 + this.enterProgress * 0.5
@@ -355,7 +352,7 @@ export class Dog {
     ];
     for (const [sx, sy, srx, sry] of spots) {
       ctx.beginPath();
-      ctx.ellipse(sx, sy, srx, sry, Math.random() * 0.5, 0, Math.PI * 2);
+      ctx.ellipse(sx, sy, srx, sry, i * 0.4, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(210,180,100,0.4)';
       ctx.fill();
     }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chicken-egg-v8';
+const CACHE_NAME = 'chicken-egg-v9';
 
 // Use relative paths for GitHub Pages compatibility
 const PRECACHE_URLS = [
@@ -15,7 +15,6 @@ const PRECACHE_URLS = [
   './js/Achievement.js',
   './js/Difficulty.js',
   './js/entity/Chicken.js',
-  './js/entity/Egg.js',
   './js/entity/Nest.js',
   './js/entity/Chick.js',
   './js/entity/Predator.js',
