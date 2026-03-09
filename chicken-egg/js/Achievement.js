@@ -6,8 +6,8 @@ const ACHIEVEMENTS = [
   // Egg milestones
   { id: 'first_egg',       emoji: '🥚', name: '첫 알!',          desc: '알을 처음 낳았어!',       check: s => s.totalEggs >= 1 },
   { id: 'egg_10',          emoji: '🧺', name: '알 수집가',       desc: '알 10개를 모았어!',        check: s => s.basketEggs >= 10 },
-  { id: 'egg_50',          emoji: '🏆', name: '반이나 왔다!',    desc: '알 50개를 모았어!',        check: s => s.basketEggs >= 50 },
-  { id: 'egg_100',         emoji: '👑', name: '알 마스터',       desc: '알 100개를 모았어!',       check: s => s.basketEggs >= 100 },
+  { id: 'egg_30',          emoji: '🏆', name: '반이나 왔다!',    desc: '알 30개를 모았어!',        check: s => s.basketEggs >= 30 },
+  { id: 'egg_60',          emoji: '👑', name: '알 마스터',       desc: '알 60개를 모았어!',        check: s => s.basketEggs >= 60 },
 
   // Golden eggs
   { id: 'golden_first',    emoji: '⭐', name: '황금알!',         desc: '황금알을 처음 얻었어!',    check: s => s.goldenEggs >= 1 },

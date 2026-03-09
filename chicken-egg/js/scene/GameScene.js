@@ -299,15 +299,18 @@ export class GameScene {
             Audio.play('fanfare');
         }
 
-        // Hat unlocks (with ability description)
-        if (this.basketEggs >= 30 && !this.unlockedHats.includes(1)) {
+        // Hat unlocks at 40%, 65%, 85% of target
+        const hat1At = Math.floor(this.TARGET_EGGS * 0.4);
+        const hat2At = Math.floor(this.TARGET_EGGS * 0.65);
+        const hat3At = Math.floor(this.TARGET_EGGS * 0.85);
+        if (this.basketEggs >= hat1At && !this.unlockedHats.includes(1)) {
             this.unlockedHats.push(1);
             this.chicken.currentHat = 1;
             this.message.show('👑 왕관! 알 가치 +1 UP!');
             Audio.play('fanfare');
             this._triggerShake(4, 0.3);
         }
-        if (this.basketEggs >= 60 && !this.unlockedHats.includes(2)) {
+        if (this.basketEggs >= hat2At && !this.unlockedHats.includes(2)) {
             this.unlockedHats.push(2);
             this.chicken.currentHat = 2;
             // Ribbon: reduce gauge taps
@@ -316,7 +319,7 @@ export class GameScene {
             Audio.play('fanfare');
             this._triggerShake(4, 0.3);
         }
-        if (this.basketEggs >= 80 && !this.unlockedHats.includes(3)) {
+        if (this.basketEggs >= hat3At && !this.unlockedHats.includes(3)) {
             this.unlockedHats.push(3);
             this.chicken.currentHat = 3;
             this.message.show('🌸 꽃! 병아리 방어력 2배!');
