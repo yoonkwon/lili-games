@@ -350,9 +350,10 @@ export class Dog {
     const spots = [
       [5, -2, 8, 6], [-8, 5, 6, 5], [12, 6, 5, 4], [-3, 8, 7, 4],
     ];
-    for (const [sx, sy, srx, sry] of spots) {
+    for (let si = 0; si < spots.length; si++) {
+      const [sx, sy, srx, sry] = spots[si];
       ctx.beginPath();
-      ctx.ellipse(sx, sy, srx, sry, i * 0.4, 0, Math.PI * 2);
+      ctx.ellipse(sx, sy, srx, sry, si * 0.4, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(210,180,100,0.4)';
       ctx.fill();
     }
