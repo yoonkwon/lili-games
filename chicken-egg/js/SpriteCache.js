@@ -14,7 +14,7 @@ export class SpriteCache {
 
   init() {
     this._renderChicken(); this._renderChicks(); this._renderEggs();
-    this._renderPredators(); this._renderNest(); this._renderUI();
+    this._renderPredators(); this._renderDogs(); this._renderNest(); this._renderUI();
     this.ready = true;
   }
 
@@ -348,6 +348,131 @@ export class SpriteCache {
       const blush=ctx.createRadialGradient(28+s*18,-2,1,28+s*18,-2,6);
       blush.addColorStop(0,'rgba(255,140,150,0.35)'); blush.addColorStop(1,'rgba(255,150,160,0)');
       ctx.fillStyle=blush; ctx.fill(); } }
+    this._put(name, c);
+  }
+
+  // ── Dogs ──
+  _renderDogs() {
+    this._renderBori('dog-bori', false);
+    this._renderBori('dog-bori-attack', true);
+    this._renderJopssal('dog-jopssal', false);
+    this._renderJopssal('dog-jopssal-attack', true);
+  }
+
+  _renderBori(name, attacking=false) {
+    const c=this._mk(130,80), ctx=c.ctx; ctx.translate(55,40);
+    // Shadow
+    this._ellipse(ctx,0,20,28,6,'rgba(0,0,0,0.15)');
+    // Tail
+    ctx.save(); ctx.translate(-22,-10);
+    this._ellipse(ctx,-5,-5,12,10,'#1a1a1a');
+    this._ellipse(ctx,-3,-6,8,7,'#2a2a2a');
+    ctx.restore();
+    // Body
+    ctx.beginPath(); ctx.ellipse(0,2,30,22,0,0,Math.PI*2);
+    const bg=ctx.createRadialGradient(-5,-4,4,0,2,30);
+    bg.addColorStop(0,'#2a2a2a'); bg.addColorStop(1,'#111111');
+    ctx.fillStyle=bg; ctx.fill();
+    // Chest
+    this._ellipse(ctx,8,5,18,16,'#1e1e1e');
+    // Legs
+    for(let s=-1;s<=1;s+=2) this._ellipse(ctx,s*12,18,8,8,'#151515');
+    // Head
+    ctx.beginPath(); ctx.ellipse(22,-8,20,18,0,0,Math.PI*2);
+    const hg=ctx.createRadialGradient(18,-12,3,22,-8,20);
+    hg.addColorStop(0,'#2a2a2a'); hg.addColorStop(1,'#111111');
+    ctx.fillStyle=hg; ctx.fill();
+    // Mane
+    this._ellipse(ctx,18,-2,22,18,'#1a1a1a');
+    // Ears
+    for(let s=-1;s<=1;s+=2) {
+      ctx.beginPath(); ctx.ellipse(22+s*14,-22,6,8,s*0.3,0,Math.PI*2);
+      ctx.fillStyle='#1a1a1a'; ctx.fill();
+    }
+    // Muzzle
+    this._ellipse(ctx,34,-2,10,8,'#222222');
+    // Nose
+    this._ellipse(ctx,40,-3,4,3,'#333');
+    this._ellipse(ctx,39,-4.5,1.5,1,'rgba(255,255,255,0.3)');
+    // Eyes
+    for(let s=-1;s<=1;s+=2) {
+      const ex=26+s*7, ey=-12;
+      this._ellipse(ctx,ex,ey,4,4.5,'#FFFFFF');
+      this._ellipse(ctx,ex+1,ey,2.5,3,'#1a0a00');
+      this._ellipse(ctx,ex,ey-1.5,1.2,1.2,'#FFF');
+    }
+    // Tongue (attack frame)
+    if (attacking) {
+      ctx.beginPath(); ctx.ellipse(38,4,4,6,0.2,0,Math.PI*2);
+      ctx.fillStyle='#FF6B6B'; ctx.fill();
+    }
+    this._put(name, c);
+  }
+
+  _renderJopssal(name, attacking=false) {
+    const c=this._mk(120,80), ctx=c.ctx; ctx.translate(45,40);
+    // Shadow
+    this._ellipse(ctx,0,16,22,5,'rgba(0,0,0,0.12)');
+    // Tail
+    ctx.save(); ctx.translate(-18,-6); ctx.rotate(-0.3);
+    ctx.beginPath(); ctx.ellipse(-8,0,14,7,-0.3,0,Math.PI*2); ctx.fillStyle='#F5E6C8'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-16,0,8,5,-0.2,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+    ctx.restore();
+    // Body
+    ctx.beginPath(); ctx.ellipse(0,2,24,16,0,0,Math.PI*2);
+    const bg=ctx.createRadialGradient(-4,-3,3,0,2,24);
+    bg.addColorStop(0,'#FFFFF0'); bg.addColorStop(1,'#F5E6C8');
+    ctx.fillStyle=bg; ctx.fill();
+    // Spots
+    const spots=[[5,-2,8,6],[-8,5,6,5],[12,6,5,4],[-3,8,7,4]];
+    for(let si=0;si<spots.length;si++) {
+      const[sx,sy,srx,sry]=spots[si];
+      ctx.beginPath(); ctx.ellipse(sx,sy,srx,sry,si*0.4,0,Math.PI*2);
+      ctx.fillStyle='rgba(210,180,100,0.4)'; ctx.fill();
+    }
+    // Legs
+    for(let s=-1;s<=1;s+=2) this._ellipse(ctx,s*10,14,5,6,'#EDE0C8');
+    // Belly
+    this._ellipse(ctx,3,6,14,10,'#FFFFFF');
+    // Head
+    ctx.beginPath(); ctx.ellipse(20,-6,16,14,0,0,Math.PI*2);
+    const hg=ctx.createRadialGradient(17,-10,3,20,-6,16);
+    hg.addColorStop(0,'#FFFFF8'); hg.addColorStop(1,'#F5E6C8');
+    ctx.fillStyle=hg; ctx.fill();
+    // Head spots
+    ctx.beginPath(); ctx.ellipse(16,-12,8,6,-0.3,0,Math.PI*2);
+    ctx.fillStyle='rgba(210,180,100,0.35)'; ctx.fill();
+    // Ears
+    for(let s=-1;s<=1;s+=2) {
+      ctx.beginPath(); ctx.moveTo(20+s*10,-16); ctx.lineTo(20+s*16,-32); ctx.lineTo(20+s*5,-20); ctx.closePath();
+      ctx.fillStyle='#F5E6C8'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(20+s*10.5,-17); ctx.lineTo(20+s*14,-28); ctx.lineTo(20+s*7,-20); ctx.closePath();
+      ctx.fillStyle='#FFD0D0'; ctx.fill();
+    }
+    // Muzzle
+    this._ellipse(ctx,32,-2,9,6,'#FFFFFF');
+    // Nose
+    this._ellipse(ctx,38,-3,3.5,2.5,'#FF8080');
+    this._ellipse(ctx,37,-4,1.2,0.8,'rgba(255,255,255,0.4)');
+    // Eyes
+    for(let s=-1;s<=1;s+=2) {
+      const ex=22+s*7, ey=-10;
+      this._ellipse(ctx,ex,ey,4.5,5,'#FFFFFF');
+      this._ellipse(ctx,ex+1,ey,2.5,3,'#3a2a10');
+      this._ellipse(ctx,ex,ey-2,1.3,1.3,'#FFF');
+    }
+    // Blush
+    for(let s=-1;s<=1;s+=2) {
+      ctx.beginPath(); ctx.ellipse(22+s*14,0,5,3,0,0,Math.PI*2);
+      const blush=ctx.createRadialGradient(22+s*14,0,1,22+s*14,0,5);
+      blush.addColorStop(0,'rgba(255,150,140,0.4)'); blush.addColorStop(1,'rgba(255,150,160,0)');
+      ctx.fillStyle=blush; ctx.fill();
+    }
+    // Tongue (attack frame)
+    if (attacking) {
+      ctx.beginPath(); ctx.ellipse(36,3,3,5,0.2,0,Math.PI*2);
+      ctx.fillStyle='#FF6B6B'; ctx.fill();
+    }
     this._put(name, c);
   }
 
