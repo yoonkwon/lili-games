@@ -202,17 +202,30 @@ export class GameScene {
         const maxPred = this.diff.predatorMaxConcurrent || 3;
         if (this.predatorTimer > spawnInterval && this.basketEggs > 2 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
-            let type;
-            if (this.currentStage >= 3 && Math.random() < 0.4) {
-                type = 2;
-            } else {
-                type = Math.floor(Math.random() * 3);
+            // Burst spawn: chance to spawn 2 at once on higher difficulties
+            const burstChance = this.diff.predatorBurstChance || 0;
+            const spawnCount = (Math.random() < burstChance && this.predators.length + 1 < maxPred) ? 2 : 1;
+
+            for (let sp = 0; sp < spawnCount && this.predators.length < maxPred; sp++) {
+                let type;
+                if (this.currentStage >= 3 && Math.random() < 0.4) {
+                    type = 2;
+                } else {
+                    type = Math.floor(Math.random() * 3);
+                }
+                const pred = new Predator(type, this.groundY + 25, canvasWidth, this.nest.x);
+                pred.speed *= this.diff.predatorSpeedMult;
+                pred.setStealAmount(this.basketEggs);
+                pred.stealAmount = Math.ceil(pred.stealAmount * this.diff.predatorStealMult);
+                // Apply difficulty taps multiplier
+                const tapsMult = this.diff.predatorTapsMult || 1;
+                pred.tapsRemaining = Math.ceil(pred.info.tapsToScare * tapsMult);
+                // Apply steal delay override
+                if (this.diff.predatorStealDelay) {
+                    pred._stealDelay = this.diff.predatorStealDelay;
+                }
+                this.predators.push(pred);
             }
-            const pred = new Predator(type, this.groundY + 25, canvasWidth, this.nest.x);
-            pred.speed *= this.diff.predatorSpeedMult;
-            pred.setStealAmount(this.basketEggs);
-            pred.stealAmount = Math.ceil(pred.stealAmount * this.diff.predatorStealMult);
-            this.predators.push(pred);
         }
 
         // Update predators
