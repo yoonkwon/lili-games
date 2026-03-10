@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v7';
+const CACHE_NAME = 'lili-games-v8';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -26,6 +26,7 @@ const ASSETS = [
   './chicken-egg/js/scene/TitleScene.js',
   './chicken-egg/js/scene/GameScene.js',
   './chicken-egg/js/scene/EndingScene.js',
+  './chicken-egg/js/scene/GameOverScene.js',
   './chicken-egg/js/ui/Gauge.js',
   './chicken-egg/js/ui/HUD.js',
   './chicken-egg/js/ui/Message.js',

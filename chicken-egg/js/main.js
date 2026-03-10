@@ -4,6 +4,7 @@ import { Background } from './background.js';
 import { TitleScene } from './scene/TitleScene.js';
 import { GameScene } from './scene/GameScene.js';
 import { EndingScene } from './scene/EndingScene.js';
+import { GameOverScene } from './scene/GameOverScene.js';
 import { audio } from './AudioManager.js';
 import { SpriteCache } from './SpriteCache.js';
 
@@ -40,6 +41,7 @@ let currentScene = 'title';
 let titleScene = new TitleScene();
 let gameScene = null;
 let endingScene = null;
+let gameOverScene = null;
 
 // Scene transition
 let transition = { active: false, alpha: 0, phase: 'none', nextAction: null };
@@ -118,6 +120,15 @@ input.onTap((x, y) => {
                 currentScene = 'title';
             });
         }
+    } else if (currentScene === 'gameover') {
+        const result = gameOverScene.handleTap(x, y);
+        if (result === 'restart') {
+            startTransition(() => {
+                audio.stopBgm();
+                titleScene = new TitleScene();
+                currentScene = 'title';
+            });
+        }
     }
 });
 
@@ -167,9 +178,25 @@ function gameLoop(timestamp) {
                         currentScene = 'ending';
                         audio.play('ending');
                     });
+                } else if (result === 'gameover' && !transition.active) {
+                    startTransition(() => {
+                        audio.stopBgm();
+                        gameOverScene = new GameOverScene(canvas.width, canvas.height, {
+                            basketEggs: gameScene.basketEggs,
+                            goldenEggs: gameScene.goldenEggs,
+                            totalEggs: gameScene.totalEggs,
+                            predatorsScared: gameScene.predatorsScared,
+                            chicksLost: gameScene.chicksLost,
+                            difficulty: gameScene.difficultyKey,
+                        });
+                        currentScene = 'gameover';
+                        audio.play('warning');
+                    });
                 }
             } else if (currentScene === 'ending') {
                 endingScene.update(dt);
+            } else if (currentScene === 'gameover') {
+                gameOverScene.update(dt);
             }
         }
 
@@ -201,6 +228,8 @@ function gameLoop(timestamp) {
             }
         } else if (currentScene === 'ending') {
             endingScene.draw(ctx, canvas.width, canvas.height, bg);
+        } else if (currentScene === 'gameover') {
+            gameOverScene.draw(ctx, canvas.width, canvas.height, bg);
         }
 
         // Scene transition overlay

@@ -6,9 +6,15 @@ export class HUD {
 
   draw(ctx, canvasWidth, canvasHeight, state, safeTop = 0) {
     const { basketEggs, targetEggs, chickCount, gaugeEmpty, totalEggs,
-            comboCount, currentStage, stageName, stageEmoji, activeAbilities } = state;
+            comboCount, currentStage, stageName, stageEmoji, activeAbilities,
+            hp, maxHp } = state;
 
     this._drawEggProgress(ctx, canvasWidth, basketEggs, targetEggs, safeTop);
+
+    // HP bar below egg counter
+    if (hp !== undefined && maxHp !== undefined) {
+      this._drawHpBar(ctx, canvasWidth, hp, maxHp, safeTop);
+    }
 
     if (chickCount > 0) {
       this._drawChickCount(ctx, canvasWidth, chickCount, safeTop);
@@ -84,6 +90,59 @@ export class HUD {
       ctx.fillStyle = '#FFD700';
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW * progress, barH, 5);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  _drawHpBar(ctx, canvasWidth, hp, maxHp, safeTop) {
+    const pillX = 20;
+    const pillY = safeTop + 135;
+    const pillW = 200;
+    const pillH = 30;
+
+    ctx.save();
+
+    // Background pill
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, 10);
+    ctx.fill();
+
+    // Heart icon and HP text
+    ctx.font = 'Bold 16px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`❤️ ${hp} / ${maxHp}`, pillX + 8, pillY + 10);
+
+    // HP bar
+    const barX = pillX + 8;
+    const barY = pillY + 20;
+    const barW = pillW - 16;
+    const barH = 6;
+    const hpRatio = Math.max(0, hp / Math.max(1, maxHp));
+
+    // Bar background
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 3);
+    ctx.fill();
+
+    // Bar fill with color based on ratio
+    if (hpRatio > 0) {
+      let barColor;
+      if (hpRatio > 0.6) {
+        barColor = '#4CAF50'; // green
+      } else if (hpRatio > 0.3) {
+        barColor = '#FFC107'; // yellow
+      } else {
+        barColor = '#F44336'; // red
+      }
+      ctx.fillStyle = barColor;
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * hpRatio, barH, 3);
       ctx.fill();
     }
 

@@ -51,15 +51,23 @@ export class GameScene {
         this.totalEggs = 0;
         this.goldenEggs = 0;
 
+        // HP system
+        this.maxHp = this.diff.maxHp || 15;
+        this.hp = this.maxHp;
+        this.damageFlashTimer = 0; // red flash when taking damage
+        this.chicksLost = 0; // stat tracking
+
         // Dog summon system
         this.dogCharge = 0;
         this.dogChargeMax = this.diff.dogChargeEggs || 15;
         this._dogBtnRect = null;
 
         this.predatorTimer = 0;
+        this.gameTime = 0; // total elapsed time for grace period
         this.unlockedHats = [0];
         this.groundY = groundY;
         this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
         this.safeTop = safeTop;
 
         // Combo system
@@ -119,7 +127,9 @@ export class GameScene {
 
     update(dt, canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
         this.groundY = canvasHeight * 0.65;
+        this.gameTime += dt;
 
         // Reposition entities on resize (chicken sits in nest)
         const nestX = canvasWidth * 0.5;
@@ -149,6 +159,11 @@ export class GameScene {
         if (this.shakeTimer > 0) {
             this.shakeTimer -= dt;
             if (this.shakeTimer <= 0) this.shakeAmount = 0;
+        }
+
+        // Damage flash decay
+        if (this.damageFlashTimer > 0) {
+            this.damageFlashTimer -= dt;
         }
 
         // Stage transition
@@ -195,12 +210,12 @@ export class GameScene {
         // Chick auto-defense assignment
         this._assignChickDefenders();
 
-        // Predator spawning (scaled by difficulty)
+        // Predator spawning (scaled by difficulty) - spawn from the start after grace period
         this.predatorTimer += dt;
         const minInterval = this.diff.predatorMinInterval || 3;
         const spawnInterval = Math.max(minInterval, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         const maxPred = this.diff.predatorMaxConcurrent || 3;
-        if (this.predatorTimer > spawnInterval && this.basketEggs > 2 && this.predators.length < maxPred) {
+        if (this.predatorTimer > spawnInterval && this.gameTime > 5 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
             // Burst spawn: chance to spawn 2 at once on higher difficulties
             const burstChance = this.diff.predatorBurstChance || 0;
@@ -238,6 +253,9 @@ export class GameScene {
                 this.message.show(`${pred.info.emoji} ${pred.info.name}다! 터치해서 쫓아내!${tapHint}`);
                 Audio.play('warning');
             } else if (event === 'steal') {
+                // Check if predator captures a chick instead of (or in addition to) stealing eggs
+                const capturedChick = this._tryCapturChick(pred);
+
                 const stolen = Math.min(pred.stealAmount, this.basketEggs);
                 if (stolen > 0) {
                     this.basketEggs -= stolen;
@@ -249,6 +267,19 @@ export class GameScene {
                         this.nest.x, this.nest.y - 40,
                         `-${stolen}`, '#FF4444'
                     );
+                    // HP damage: -1 per egg stolen
+                    this._takeDamage(1, this.nest.x + 30, this.nest.y - 60);
+                }
+
+                // Predator attacking the mother hen (reached nest without being scared)
+                if (!capturedChick && stolen === 0) {
+                    // Predator reached nest but nothing to steal - attacks mother
+                    this._takeDamage(2, this.nest.x, this.nest.y - 50);
+                    this.message.show(`${pred.info.emoji} ${pred.info.name}가 공격했어!`);
+                    Audio.play('steal');
+                } else if (!capturedChick) {
+                    // Predator stole eggs but also attacks
+                    this._takeDamage(2, this.nest.x - 30, this.nest.y - 50);
                 }
             }
 
@@ -344,6 +375,12 @@ export class GameScene {
         // Auto-save every 10 eggs
         if (this.basketEggs > 0 && this.basketEggs % 10 === 0) {
             this._saveProgress();
+        }
+
+        // Game over check
+        if (this.hp <= 0) {
+            localStorage.removeItem('chickenEgg_progress');
+            return 'gameover';
         }
 
         // Win condition
@@ -541,6 +578,15 @@ export class GameScene {
         // Particles
         this.particles.draw(ctx);
 
+        // Damage red flash overlay (inside shake context)
+        if (this.damageFlashTimer > 0) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(0.4, this.damageFlashTimer * 1.5);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(0, 0, w, h);
+            ctx.restore();
+        }
+
         ctx.restore(); // end screen shake
 
         // UI (pass safeTop) - drawn outside shake
@@ -568,6 +614,8 @@ export class GameScene {
             stageName: STAGES[this.currentStage].name,
             stageEmoji: STAGES[this.currentStage].emoji,
             activeAbilities,
+            hp: this.hp,
+            maxHp: this.maxHp,
         }, this.safeTop);
 
         this.message.draw(ctx, w, h);
@@ -702,6 +750,60 @@ export class GameScene {
         ctx.fillText(a.name, -pw / 2 + 50, 10);
 
         ctx.restore();
+    }
+
+    /**
+     * Apply HP damage with visual feedback.
+     */
+    _takeDamage(amount, floatX, floatY) {
+        this.hp = Math.max(0, this.hp - amount);
+        this.damageFlashTimer = 0.3;
+        this._triggerShake(5, 0.4);
+        this.particles.addFloatingText(
+            floatX, floatY,
+            `-${amount} ❤️`, '#FF0000'
+        );
+    }
+
+    /**
+     * Try to have a predator capture a chick when it reaches the nest.
+     * Returns true if a chick was captured.
+     */
+    _tryCapturChick(pred) {
+        if (this.chicks.length === 0) return false;
+
+        // Predators prefer eggs when there are many; grab chicks when eggs are scarce
+        // Chance to capture chick: higher when fewer eggs, always possible
+        const chickCaptureChance = this.basketEggs > 5 ? 0.3 : 0.6;
+        if (Math.random() > chickCaptureChance) return false;
+
+        // Find an undefended chick (not currently defending)
+        let targetIdx = -1;
+        for (let i = 0; i < this.chicks.length; i++) {
+            if (!this.chicks[i].defendTarget) {
+                targetIdx = i;
+                break;
+            }
+        }
+        // If all chicks are defending, pick the last one
+        if (targetIdx === -1) targetIdx = this.chicks.length - 1;
+
+        const chick = this.chicks[targetIdx];
+        // Particles at chick position
+        this.particles.createParticles(chick.x, chick.y, '#FFE44D', 15);
+        this.particles.addFloatingText(chick.x, chick.y - 40, '🐣 잡혀갔어!', '#FF4444');
+
+        // Remove the chick
+        this.chicks.splice(targetIdx, 1);
+        this.chicksLost++;
+
+        this.message.show(`🐣 병아리가 잡혀갔어!`);
+        Audio.play('steal');
+
+        // HP damage for chick captured
+        this._takeDamage(3, chick.x, chick.y - 60);
+
+        return true;
     }
 
     handleTap(x, y) {
