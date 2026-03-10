@@ -266,7 +266,7 @@ export class GameScene {
                     pred.speed *= 1.2;
                 }
                 pred.setStealAmount(this.basketEggs);
-                pred.stealAmount = Math.ceil(pred.stealAmount * this.diff.predatorStealMult);
+                pred.stealAmount = Math.min(5, Math.ceil(pred.stealAmount * this.diff.predatorStealMult));
                 // Apply difficulty taps multiplier
                 const tapsMult = this.diff.predatorTapsMult || 1;
                 pred.tapsRemaining = Math.ceil(pred.info.tapsToScare * tapsMult);
@@ -469,7 +469,7 @@ export class GameScene {
         // Stage 3 (겨울 눈밭): Gauge slowly decays
         if (this.currentStage === 3) {
             if (this.gauge.gauge > 0) {
-                this.gauge.gauge = Math.max(0, this.gauge.gauge - 0.3 * dt);
+                this.gauge.gauge = Math.max(0, this.gauge.gauge - 0.15 * dt);
             }
         }
 
@@ -1158,7 +1158,8 @@ export class GameScene {
         const newStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
         if (newStage > prevStage && this.basketEggs < this.TARGET_EGGS) {
             const stageInfo = STAGES[newStage];
-            this.message.show(`${stageInfo.emoji} ${stageInfo.name}으로 이동! (${newStage + 1}/5)`);
+            const effectMsgs = ['', ' ⚡천적이 빨라져!', ' 🌪️바람 주의!', ' ❄️추위로 게이지 감소!', ' 🌈랜덤 보너스!'];
+            this.message.show(`${stageInfo.emoji} ${stageInfo.name}으로 이동!${effectMsgs[newStage]} (${newStage + 1}/5)`);
             Audio.play('fanfare');
             this._stageTransition = 1;
             this._triggerShake(6, 0.5);
