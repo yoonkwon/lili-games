@@ -251,10 +251,10 @@ export class GameScene {
 
         // Predator spawning (scaled by difficulty) - spawn from the start after grace period
         this.predatorTimer += dt;
-        const minInterval = this.diff.predatorMinInterval || 3;
+        const minInterval = this.diff.predatorMinInterval || 2.5;
         const spawnInterval = Math.max(minInterval, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         const maxPred = this.diff.predatorMaxConcurrent || 3;
-        if (this.predatorTimer > spawnInterval && this.gameTime > 5 && this.predators.length < maxPred) {
+        if (this.predatorTimer > spawnInterval && this.gameTime > 3 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
             // Burst spawn: chance to spawn 2 at once on higher difficulties
             const burstChance = this.diff.predatorBurstChance || 0;

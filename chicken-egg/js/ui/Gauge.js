@@ -132,7 +132,7 @@ export class Gauge {
     ctx.restore();
 
     // Big number "5 / 8" centered
-    const displayGauge = this._fullFlash > 0 ? this.max : this.gauge;
+    const displayGauge = this._fullFlash > 0 ? this.max : Math.round(this.gauge);
     const text = `${displayGauge} / ${this.max}`;
     ctx.font = 'Bold 32px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
