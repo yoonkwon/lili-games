@@ -197,7 +197,8 @@ export class GameScene {
 
         // Predator spawning (scaled by difficulty)
         this.predatorTimer += dt;
-        const spawnInterval = Math.max(3, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
+        const minInterval = this.diff.predatorMinInterval || 3;
+        const spawnInterval = Math.max(minInterval, this.diff.predatorSpawnBase - this.basketEggs * this.diff.predatorSpawnScale);
         const maxPred = this.diff.predatorMaxConcurrent || 3;
         if (this.predatorTimer > spawnInterval && this.basketEggs > 2 && this.predators.length < maxPred) {
             this.predatorTimer = 0;
@@ -464,9 +465,13 @@ export class GameScene {
         this.dogs.push(jopssal);
 
         this.dogSummons++;
-        this.message.show('🐕 보리와 좁쌀이가 왔어! 🐕‍🦺');
+        this.message.show('🐶 보리와 좁쌀이 등장!');
         Audio.play('fanfare');
         this._triggerShake(4, 0.3);
+
+        // Show dog names above their positions
+        this.particles.addFloatingText(bori.x, gY - 50, '🐕 보리', '#333');
+        this.particles.addFloatingText(jopssal.x, gY - 50, '🐕‍🦺 좁쌀이', '#D4AA4C');
     }
 
     getStageTheme() {
