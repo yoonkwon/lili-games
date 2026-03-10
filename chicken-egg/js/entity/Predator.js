@@ -48,6 +48,8 @@ export const PREDATOR_TYPES = [
   }
 ];
 
+const PREDATOR_TYPE_NAMES = ['fox', 'weasel', 'raccoon'];
+
 export class Predator {
   constructor(type, groundY, canvasWidth, basketX) {
     this.type = type;
@@ -170,7 +172,7 @@ export class Predator {
     ctx.translate(0, bob);
 
     // Predator sprite (type + scared state)
-    const typeName = ['fox', 'weasel', 'raccoon'][this.type];
+    const typeName = PREDATOR_TYPE_NAMES[this.type];
     const spriteName = this.scared ? `predator-${typeName}-scared` : `predator-${typeName}`;
     sc.draw(ctx, spriteName, 0, 0, this.facing, 1);
 

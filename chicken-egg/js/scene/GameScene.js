@@ -77,7 +77,7 @@ export class GameScene {
 
         this.predatorTimer = 0;
         this.gameTime = 0; // total elapsed time for grace period
-        this.unlockedHats = [0];
+        this.unlockedHats = new Set([0]);
         this.groundY = groundY;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
@@ -109,6 +109,10 @@ export class GameScene {
         // Predators scared count (for stats)
         this.predatorsScared = 0;
         this.dogSummons = 0;
+
+        // Cached dog active state (updated each frame)
+        this._boriActive = false;
+        this._jopssalActive = false;
 
         // Achievement system
         this.achievements = new AchievementManager();
@@ -168,6 +172,10 @@ export class GameScene {
         this.chicken.x = nestX;
         this.chicken.baseY = nestY - 35;
 
+        // Cache dog active state
+        this._boriActive = this.dogs.some(d => d.type === 0 && d.active);
+        this._jopssalActive = this.dogs.some(d => d.type === 1 && d.active);
+
         // Update entities
         this.chicken.update(dt);
         this.nest.update(dt);
@@ -210,7 +218,7 @@ export class GameScene {
         for (const chick of this.chicks) {
             chick.updateBounds(canvasWidth);
             // Apply flower hat bonus: halve defend cooldown
-            if (this.unlockedHats.includes(3) && chick.defendCooldown > 0) {
+            if (this.unlockedHats.has(3) && chick.defendCooldown > 0) {
                 chick.defendCooldown -= dt; // double speed decay (normal + this extra)
             }
             const event = chick.update(dt);
@@ -377,31 +385,21 @@ export class GameScene {
         }
 
         // Hat unlocks at 40%, 65%, 85% of target
-        const hat1At = Math.floor(this.TARGET_EGGS * 0.4);
-        const hat2At = Math.floor(this.TARGET_EGGS * 0.65);
-        const hat3At = Math.floor(this.TARGET_EGGS * 0.85);
-        if (this.basketEggs >= hat1At && !this.unlockedHats.includes(1)) {
-            this.unlockedHats.push(1);
-            this.chicken.currentHat = 1;
-            this.message.show('👑 왕관! 알 가치 +1 UP!');
-            Audio.play('fanfare');
-            this._triggerShake(4, 0.3);
-        }
-        if (this.basketEggs >= hat2At && !this.unlockedHats.includes(2)) {
-            this.unlockedHats.push(2);
-            this.chicken.currentHat = 2;
-            // Ribbon: reduce gauge taps
-            this.gauge.max = this._getEffectiveTapsPerEgg();
-            this.message.show('🎀 리본! 게이지 1칸 감소!');
-            Audio.play('fanfare');
-            this._triggerShake(4, 0.3);
-        }
-        if (this.basketEggs >= hat3At && !this.unlockedHats.includes(3)) {
-            this.unlockedHats.push(3);
-            this.chicken.currentHat = 3;
-            this.message.show('🌸 꽃! 병아리 방어력 2배!');
-            Audio.play('fanfare');
-            this._triggerShake(4, 0.3);
+        const HAT_UNLOCKS = [
+            { id: 1, pct: 0.4, msg: '👑 왕관! 알 가치 +1 UP!' },
+            { id: 2, pct: 0.65, msg: '🎀 리본! 게이지 1칸 감소!' },
+            { id: 3, pct: 0.85, msg: '🌸 꽃! 병아리 방어력 2배!' },
+        ];
+        for (const hat of HAT_UNLOCKS) {
+            const threshold = Math.floor(this.TARGET_EGGS * hat.pct);
+            if (this.basketEggs >= threshold && !this.unlockedHats.has(hat.id)) {
+                this.unlockedHats.add(hat.id);
+                this.chicken.currentHat = hat.id;
+                if (hat.id === 2) this.gauge.max = this._getEffectiveTapsPerEgg();
+                this.message.show(hat.msg);
+                Audio.play('fanfare');
+                this._triggerShake(4, 0.3);
+            }
         }
 
         // Auto-save every 10 eggs
@@ -576,7 +574,7 @@ export class GameScene {
      * Crown: all egg values +1
      */
     _getEggValueBonus() {
-        return this.unlockedHats.includes(1) ? 1 : 0;
+        return this.unlockedHats.has(1) ? 1 : 0;
     }
 
     /**
@@ -584,7 +582,7 @@ export class GameScene {
      * Ribbon: gauge needs 1 fewer tap (5 -> 4)
      */
     _getEffectiveTapsPerEgg() {
-        return this.unlockedHats.includes(2) ? Math.max(2, this.TAPS_PER_EGG - 1) : this.TAPS_PER_EGG;
+        return this.unlockedHats.has(2) ? Math.max(2, this.TAPS_PER_EGG - 1) : this.TAPS_PER_EGG;
     }
 
     _triggerShake(amount, duration) {
@@ -735,9 +733,9 @@ export class GameScene {
 
         // Build active abilities list
         const activeAbilities = [];
-        if (this.unlockedHats.includes(1)) activeAbilities.push({ text: '👑 알+1', color: '#FFD700' });
-        if (this.unlockedHats.includes(2)) activeAbilities.push({ text: '🎀 게이지-1', color: '#FF69B4' });
-        if (this.unlockedHats.includes(3)) activeAbilities.push({ text: '🌸 방어×2', color: '#4CAF50' });
+        if (this.unlockedHats.has(1)) activeAbilities.push({ text: '👑 알+1', color: '#FFD700' });
+        if (this.unlockedHats.has(2)) activeAbilities.push({ text: '🎀 게이지-1', color: '#FF69B4' });
+        if (this.unlockedHats.has(3)) activeAbilities.push({ text: '🌸 방어×2', color: '#4CAF50' });
         const chickCount = this.chicks.length;
         if (chickCount >= 1) {
             const defTypes = chickCount >= 5 ? '전체' : chickCount >= 3 ? '여우+족제비' : '여우';
@@ -779,23 +777,19 @@ export class GameScene {
         const startX = w - (btnSize * 3 + gap * 2) - 10;
         const btnY = h - btnSize - 10;
 
-        // Check if a dog of this type is already active
-        const boriActive = this.dogs.some(d => d.type === 0 && d.active);
-        const jopssalActive = this.dogs.some(d => d.type === 1 && d.active);
-
         // Bori button (left)
         const boriX = startX;
-        const boriReady = this.dogChargeBori >= this.dogChargeMaxPer && !boriActive;
+        const boriReady = this.dogChargeBori >= this.dogChargeMaxPer && !this._boriActive;
         const boriRatio = Math.min(1, this.dogChargeBori / this.dogChargeMaxPer);
         this._boriBtnRect = { x: boriX, y: btnY, w: btnSize, h: btnSize };
-        this._drawSingleDogBtn(ctx, boriX, btnY, btnSize, '🐕', '보리', boriReady, boriRatio, boriActive);
+        this._drawSingleDogBtn(ctx, boriX, btnY, btnSize, '🐕', '보리', boriReady, boriRatio, this._boriActive);
 
         // Jopssal button (middle)
         const jopssalX = startX + btnSize + gap;
-        const jopssalReady = this.dogChargeJopssal >= this.dogChargeMaxPer && !jopssalActive;
+        const jopssalReady = this.dogChargeJopssal >= this.dogChargeMaxPer && !this._jopssalActive;
         const jopssalRatio = Math.min(1, this.dogChargeJopssal / this.dogChargeMaxPer);
         this._jopssalBtnRect = { x: jopssalX, y: btnY, w: btnSize, h: btnSize };
-        this._drawSingleDogBtn(ctx, jopssalX, btnY, btnSize, '🐶', '좁쌀이', jopssalReady, jopssalRatio, jopssalActive);
+        this._drawSingleDogBtn(ctx, jopssalX, btnY, btnSize, '🐶', '좁쌀이', jopssalReady, jopssalRatio, this._jopssalActive);
 
         // Heal button (right)
         const healX = startX + (btnSize + gap) * 2;
@@ -1017,13 +1011,10 @@ export class GameScene {
         this.hud.resetIdle();
 
         // Improvement 3: Dog summon buttons
-        const boriActive = this.dogs.some(d => d.type === 0 && d.active);
-        const jopssalActive = this.dogs.some(d => d.type === 1 && d.active);
-
         // Bori button
         const bb = this._boriBtnRect;
         if (bb && x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h
-            && this.dogChargeBori >= this.dogChargeMaxPer && !boriActive) {
+            && this.dogChargeBori >= this.dogChargeMaxPer && !this._boriActive) {
             this._summonDog(0);
             return null;
         }
@@ -1031,7 +1022,7 @@ export class GameScene {
         // Jopssal button
         const jb = this._jopssalBtnRect;
         if (jb && x >= jb.x && x <= jb.x + jb.w && y >= jb.y && y <= jb.y + jb.h
-            && this.dogChargeJopssal >= this.dogChargeMaxPer && !jopssalActive) {
+            && this.dogChargeJopssal >= this.dogChargeMaxPer && !this._jopssalActive) {
             this._summonDog(1);
             return null;
         }

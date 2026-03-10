@@ -2,7 +2,8 @@
  * SpriteCache - Pre-renders all game entities to offscreen canvases at startup.
  * Entities use drawImage() instead of redrawing path commands every frame.
  */
-const CHICK_COLORS = ['#FFE44D','#FFD700','#FFC125','#FFAA00','#FFB347','#FF8C69','#DDA0DD','#98FB98','#87CEEB','#FFB6C1'];
+import { CHICK_COLORS } from './entity/Chick.js';
+
 const PRED = [
   { name:'fox', body:'#FF8C42', belly:'#FFFFFF', tail:'#FF8C42', tip:'#FFFFFF', ear:'#FFB380' },
   { name:'weasel', body:'#8B6914', belly:'#F5DEB3', tail:'#8B6914', tip:'#5C4A0E', ear:'#C4A44A' },

@@ -7,6 +7,9 @@ export class ParticleSystem {
   }
 
   createParticles(x, y, color, count) {
+    const maxParticles = 200;
+    count = Math.min(count, maxParticles - this.particles.length);
+    if (count <= 0) return;
     for (let i = 0; i < count; i++) {
       this.particles.push({
         x,
@@ -40,6 +43,7 @@ export class ParticleSystem {
   }
 
   addFloatingText(x, y, text, color) {
+    if (this.floatingTexts.length >= 30) this.floatingTexts.shift();
     this.floatingTexts.push({
       x,
       y,

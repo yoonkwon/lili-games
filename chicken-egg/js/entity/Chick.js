@@ -3,10 +3,13 @@
  * Uses SpriteCache for pre-rendered color/state variants
  */
 
-const CHICK_COLORS = [
+export const CHICK_COLORS = [
   '#FFE44D', '#FFD700', '#FFC125', '#FFAA00', '#FFB347',
   '#FF8C69', '#DDA0DD', '#98FB98', '#87CEEB', '#FFB6C1'
 ];
+
+const ACC_NAMES = [null, 'chick-acc-bow', 'chick-acc-glasses', 'chick-acc-hat'];
+const ACC_POS = [null, {x: 0, y: -24}, {x: 0, y: -12}, {x: 0, y: -31}];
 
 export class Chick {
   constructor(x, y, color, canvasWidth = 900) {
@@ -209,10 +212,8 @@ export class Chick {
 
     // Accessory overlay
     if (this.accessory > 0) {
-      const accNames = [null, 'chick-acc-bow', 'chick-acc-glasses', 'chick-acc-hat'];
-      const accPos = [null, {x: 0, y: -24}, {x: 0, y: -12}, {x: 0, y: -31}];
-      const pos = accPos[this.accessory];
-      if (pos) sc.draw(ctx, accNames[this.accessory], pos.x, pos.y);
+      const pos = ACC_POS[this.accessory];
+      if (pos) sc.draw(ctx, ACC_NAMES[this.accessory], pos.x, pos.y);
     }
 
     ctx.restore();
