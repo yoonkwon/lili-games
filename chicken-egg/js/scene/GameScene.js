@@ -23,6 +23,15 @@ const STAGES = [
     { name: '무지개 마을', emoji: '🌈', skyTop: '#CE93D8', skyMid: '#F48FB1', skyBot: '#FFCC80', groundTop: '#A5D6A7', groundBot: '#66BB6A' },
 ];
 
+// Stage effect descriptions
+const STAGE_EFFECTS = [
+    null, // Stage 0: no effect
+    '☀️ 여름: 천적이 빨라져!',
+    '🍂 가을: 바람이 알을 날려!',
+    '❄️ 겨울: 추위로 게이지 감소!',
+    '🌈 무지개: 랜덤 보너스!',
+];
+
 export class GameScene {
     constructor(canvasWidth, canvasHeight, safeTop = 0, difficultyKey = 'sister') {
         this.difficultyKey = difficultyKey;
@@ -57,10 +66,14 @@ export class GameScene {
         this.damageFlashTimer = 0; // red flash when taking damage
         this.chicksLost = 0; // stat tracking
 
-        // Dog summon system
-        this.dogCharge = 0;
-        this.dogChargeMax = this.diff.dogChargeEggs || 15;
-        this._dogBtnRect = null;
+        // Dog summon system - Improvement 3: separate charges for each dog
+        const baseChargeMax = this.diff.dogChargeEggs || 15;
+        this.dogChargeMaxPer = Math.ceil(baseChargeMax / 2); // half charge per dog
+        this.dogChargeBori = 0;
+        this.dogChargeJopssal = 0;
+        this._boriBtnRect = null;
+        this._jopssalBtnRect = null;
+        this._healBtnRect = null;
 
         this.predatorTimer = 0;
         this.gameTime = 0; // total elapsed time for grace period
@@ -75,10 +88,19 @@ export class GameScene {
         this.comboTimer = 0;
         this.comboMaxInterval = 0.6; // seconds between taps for combo
 
+        // Improvement 5: Score system
+        this.maxCombo = 0;
+
         // Stage system
         this.currentStage = 0;
         this._lastStage = 0;
         this._stageTransition = 0; // 0 = none, >0 = transitioning
+
+        // Improvement 4: Stage environmental event timers
+        this._windTimer = 0;       // Stage 2 wind timer
+        this._lastEggTime = -999;  // timestamp of last egg laid
+        this._bonusTimer = 0;      // Stage 4 bonus timer
+        this._stageEffectShown = -1; // which stage effect msg was last shown
 
         // Screen shake
         this.shakeAmount = 0;
@@ -123,6 +145,13 @@ export class GameScene {
                 unlockedHats: this.unlockedHats,
             }));
         } catch (e) { /* ignore */ }
+    }
+
+    /**
+     * Improvement 1: Check if any predator is occupying the nest (phase === 1)
+     */
+    _isPredatorAtNest() {
+        return this.predators.some(p => p.phase === 1);
     }
 
     update(dt, canvasWidth, canvasHeight) {
@@ -174,6 +203,8 @@ export class GameScene {
         // Stage calculation
         this.currentStage = Math.min(4, Math.floor(this.basketEggs / this.EGGS_PER_STAGE));
 
+        // Improvement 4: Stage environmental effects
+        this._updateStageEffects(dt);
 
         // Update chicks + auto-defense
         for (const chick of this.chicks) {
@@ -230,6 +261,10 @@ export class GameScene {
                 }
                 const pred = new Predator(type, this.groundY + 25, canvasWidth, this.nest.x);
                 pred.speed *= this.diff.predatorSpeedMult;
+                // Improvement 4: Stage 1 speed bonus
+                if (this.currentStage === 1) {
+                    pred.speed *= 1.2;
+                }
                 pred.setStealAmount(this.basketEggs);
                 pred.stealAmount = Math.ceil(pred.stealAmount * this.diff.predatorStealMult);
                 // Apply difficulty taps multiplier
@@ -253,33 +288,29 @@ export class GameScene {
                 this.message.show(`${pred.info.emoji} ${pred.info.name}다! 터치해서 쫓아내!${tapHint}`);
                 Audio.play('warning');
             } else if (event === 'steal') {
-                // Check if predator captures a chick instead of (or in addition to) stealing eggs
+                // Improvement 2: Separate penalties
+                // Priority: capture chick -> steal eggs (no HP) -> attack mother (HP damage)
                 const capturedChick = this._tryCapturChick(pred);
 
-                const stolen = Math.min(pred.stealAmount, this.basketEggs);
-                if (stolen > 0) {
-                    this.basketEggs -= stolen;
-                    this.message.show(`${pred.info.emoji} ${pred.info.stealMsg} (-${stolen})`);
-                    Audio.play('steal');
-                    this._triggerShake(4, 0.3);
-                    this.particles.createParticles(this.nest.x, this.nest.y, '#FF6B6B', 8);
-                    this.particles.addFloatingText(
-                        this.nest.x, this.nest.y - 40,
-                        `-${stolen}`, '#FF4444'
-                    );
-                    // HP damage: -1 per egg stolen
-                    this._takeDamage(1, this.nest.x + 30, this.nest.y - 60);
-                }
-
-                // Predator attacking the mother hen (reached nest without being scared)
-                if (!capturedChick && stolen === 0) {
-                    // Predator reached nest but nothing to steal - attacks mother
-                    this._takeDamage(2, this.nest.x, this.nest.y - 50);
-                    this.message.show(`${pred.info.emoji} ${pred.info.name}가 공격했어!`);
-                    Audio.play('steal');
-                } else if (!capturedChick) {
-                    // Predator stole eggs but also attacks
-                    this._takeDamage(2, this.nest.x - 30, this.nest.y - 50);
+                if (!capturedChick) {
+                    const stolen = Math.min(pred.stealAmount, this.basketEggs);
+                    if (stolen > 0) {
+                        // Egg theft: ONLY reduces eggs, NO HP damage
+                        this.basketEggs -= stolen;
+                        this.message.show(`${pred.info.emoji} ${pred.info.stealMsg} (-${stolen})`);
+                        Audio.play('steal');
+                        this._triggerShake(4, 0.3);
+                        this.particles.createParticles(this.nest.x, this.nest.y, '#FF6B6B', 8);
+                        this.particles.addFloatingText(
+                            this.nest.x, this.nest.y - 40,
+                            `-${stolen}`, '#FF4444'
+                        );
+                    } else {
+                        // Nothing to steal/capture - predator attacks mother: HP -2
+                        this._takeDamage(2, this.nest.x, this.nest.y - 50);
+                        this.message.show(`${pred.info.emoji} ${pred.info.name}가 공격했어!`);
+                        Audio.play('steal');
+                    }
                 }
             }
 
@@ -412,6 +443,93 @@ export class GameScene {
     }
 
     /**
+     * Improvement 4: Update stage-specific environmental effects
+     */
+    _updateStageEffects(dt) {
+        // Stage 2 (가을 숲): Wind gusts every 15 seconds
+        if (this.currentStage === 2) {
+            this._windTimer += dt;
+            if (this._windTimer >= 15) {
+                this._windTimer = 0;
+                // Check if egg was laid within last 2 seconds
+                const timeSinceEgg = this.gameTime - this._lastEggTime;
+                if (timeSinceEgg <= 2 && this.basketEggs > 0) {
+                    this.basketEggs = Math.max(0, this.basketEggs - 1);
+                    this.message.show('🌪️ 바람! 알이 날아갔어!');
+                    this.particles.addFloatingText(this.nest.x, this.nest.y - 60, '🌪️ -1', '#8B4513');
+                    this._triggerShake(3, 0.3);
+                    Audio.play('warning');
+                } else {
+                    this.message.show('🌪️ 바람이 불었어!');
+                }
+            }
+        }
+
+        // Stage 3 (겨울 눈밭): Gauge slowly decays
+        if (this.currentStage === 3) {
+            if (this.gauge.gauge > 0) {
+                this.gauge.gauge = Math.max(0, this.gauge.gauge - 0.3 * dt);
+            }
+        }
+
+        // Stage 4 (무지개 마을): Random bonus every 20 seconds
+        if (this.currentStage === 4) {
+            this._bonusTimer += dt;
+            if (this._bonusTimer >= 20) {
+                this._bonusTimer = 0;
+                const roll = Math.random();
+                if (roll < 0.33) {
+                    // +2 eggs
+                    this.basketEggs += 2;
+                    this.message.show('🌈 보너스! +2 알!');
+                    this.particles.addFloatingText(this.nest.x, this.nest.y - 60, '+2 🥚', '#FFD700');
+                    Audio.play('cheer');
+                } else if (roll < 0.66) {
+                    // +2 HP heal
+                    const healed = Math.min(2, this.maxHp - this.hp);
+                    this.hp = Math.min(this.maxHp, this.hp + 2);
+                    this.message.show('🌈 보너스! HP +2 회복!');
+                    if (healed > 0) {
+                        this.particles.addFloatingText(this.nest.x, this.nest.y - 60, `+${healed} ❤️`, '#4CAF50');
+                    }
+                    Audio.play('cheer');
+                } else {
+                    // Instant dog charge +5
+                    this.dogChargeBori = Math.min(this.dogChargeMaxPer, this.dogChargeBori + 5);
+                    this.dogChargeJopssal = Math.min(this.dogChargeMaxPer, this.dogChargeJopssal + 5);
+                    this.message.show('🌈 보너스! 강아지 충전!');
+                    this.particles.addFloatingText(this.nest.x, this.nest.y - 60, '+5 🐶', '#FF6B00');
+                    Audio.play('cheer');
+                }
+                this._triggerShake(3, 0.2);
+            }
+        }
+    }
+
+    /**
+     * Improvement 5: Calculate final score
+     */
+    _calculateScore() {
+        return this.basketEggs * 10
+            + this.goldenEggs * 50
+            + this.predatorsScared * 20
+            + this.maxCombo * 5
+            + this.hp * 30
+            - this.chicksLost * 50;
+    }
+
+    /**
+     * Improvement 5: Get star rating based on score thresholds
+     */
+    _getStarRating(score) {
+        const t1 = this.TARGET_EGGS * 15;
+        const t2 = this.TARGET_EGGS * 25;
+        if (score >= t2) return 3;
+        if (score >= t1) return 2;
+        return 1;
+    }
+
+    /**
      * Assign available chicks to defend against approaching predators.
      * Chick defense capability scales with chick count:
      * 1 chick: can auto-defend fox (type 0)
@@ -467,7 +585,7 @@ export class GameScene {
 
     /**
      * Get taps per egg (reduced by ribbon hat).
-     * Ribbon: gauge needs 1 fewer tap (5 → 4)
+     * Ribbon: gauge needs 1 fewer tap (5 -> 4)
      */
     _getEffectiveTapsPerEgg() {
         return this.unlockedHats.includes(2) ? this.TAPS_PER_EGG - 1 : this.TAPS_PER_EGG;
@@ -495,33 +613,60 @@ export class GameScene {
         }
     }
 
-    _summonDogs() {
-        if (this.dogCharge < this.dogChargeMax) return;
-        if (this.dogs.length > 0) return; // already active
-
-        this.dogCharge = 0;
+    /**
+     * Improvement 3: Summon a single dog by type (0 = bori, 1 = jopssal)
+     */
+    _summonDog(type) {
         const duration = this.diff.dogDuration || 10;
         const gY = this.groundY + 15;
 
-        // 보리 enters from left
-        const bori = new Dog(0, -30, gY, this.canvasWidth, duration);
-        bori.patrolCenter = this.nest.x - 60;
-        this.dogs.push(bori);
+        if (type === 0) {
+            // 보리 enters from left
+            const bori = new Dog(0, -30, gY, this.canvasWidth, duration);
+            bori.patrolCenter = this.nest.x - 60;
+            this.dogs.push(bori);
+            this.dogChargeBori = 0;
+            this.dogSummons++;
+            this.message.show('🐕 보리 등장!');
+            Audio.play('fanfare');
+            this._triggerShake(4, 0.3);
+            this.particles.addFloatingText(bori.x, gY - 50, '🐕 보리', '#333');
+        } else {
+            // 좁쌀이 enters from right
+            const jopssal = new Dog(1, this.canvasWidth + 30, gY, this.canvasWidth, duration);
+            jopssal.patrolCenter = this.nest.x + 60;
+            jopssal.patrolDir = -1;
+            this.dogs.push(jopssal);
+            this.dogChargeJopssal = 0;
+            this.dogSummons++;
+            this.message.show('🐶 좁쌀이 등장!');
+            Audio.play('fanfare');
+            this._triggerShake(4, 0.3);
+            this.particles.addFloatingText(jopssal.x, gY - 50, '🐕‍🦺 좁쌀이', '#D4AA4C');
+        }
+    }
 
-        // 좁쌀이 enters from right
-        const jopssal = new Dog(1, this.canvasWidth + 30, gY, this.canvasWidth, duration);
-        jopssal.patrolCenter = this.nest.x + 60;
-        jopssal.patrolDir = -1;
-        this.dogs.push(jopssal);
+    /**
+     * Improvement 3: Heal using dog charge
+     */
+    _healWithCharge() {
+        // Use whichever charge is full (bori first)
+        if (this.dogChargeBori >= this.dogChargeMaxPer) {
+            this.dogChargeBori = 0;
+        } else if (this.dogChargeJopssal >= this.dogChargeMaxPer) {
+            this.dogChargeJopssal = 0;
+        } else {
+            return; // no charge available
+        }
 
-        this.dogSummons++;
-        this.message.show('🐶 보리와 좁쌀이 등장!');
-        Audio.play('fanfare');
-        this._triggerShake(4, 0.3);
-
-        // Show dog names above their positions
-        this.particles.addFloatingText(bori.x, gY - 50, '🐕 보리', '#333');
-        this.particles.addFloatingText(jopssal.x, gY - 50, '🐕‍🦺 좁쌀이', '#D4AA4C');
+        const healAmount = 3;
+        const healed = Math.min(healAmount, this.maxHp - this.hp);
+        this.hp = Math.min(this.maxHp, this.hp + healAmount);
+        this.message.show(`❤️ HP +${healed} 회복!`);
+        Audio.play('cheer');
+        this._triggerShake(2, 0.2);
+        this.particles.addFloatingText(this.nest.x, this.nest.y - 60, `+${healed} ❤️`, '#4CAF50');
+        this.particles.createParticles(this.nest.x, this.nest.y, '#FF69B4', 10);
     }
 
     getStageTheme() {
@@ -620,8 +765,8 @@ export class GameScene {
 
         this.message.draw(ctx, w, h);
 
-        // Dog summon button
-        this._drawDogButton(ctx, w, h);
+        // Dog summon buttons (Improvement 3)
+        this._drawDogButtons(ctx, w, h);
 
         // Achievement notification
         if (this._achNotification) {
@@ -629,27 +774,69 @@ export class GameScene {
         }
     }
 
-    _drawDogButton(ctx, w, h) {
-        const btnSize = 54;
-        const btnX = w - btnSize - 12;
-        const btnY = h - btnSize - 12;
-        const ready = this.dogCharge >= this.dogChargeMax && this.dogs.length === 0;
-        const ratio = Math.min(1, this.dogCharge / this.dogChargeMax);
+    /**
+     * Improvement 3: Draw two dog buttons + heal button
+     */
+    _drawDogButtons(ctx, w, h) {
+        const btnSize = 48;
+        const gap = 6;
+        const startX = w - (btnSize * 3 + gap * 2) - 10;
+        const btnY = h - btnSize - 10;
 
-        this._dogBtnRect = { x: btnX, y: btnY, w: btnSize, h: btnSize };
+        // Check if a dog of this type is already active
+        const boriActive = this.dogs.some(d => d.type === 0 && d.active);
+        const jopssalActive = this.dogs.some(d => d.type === 1 && d.active);
 
+        // Bori button (left)
+        const boriX = startX;
+        const boriReady = this.dogChargeBori >= this.dogChargeMaxPer && !boriActive;
+        const boriRatio = Math.min(1, this.dogChargeBori / this.dogChargeMaxPer);
+        this._boriBtnRect = { x: boriX, y: btnY, w: btnSize, h: btnSize };
+        this._drawSingleDogBtn(ctx, boriX, btnY, btnSize, '🐕', '보리', boriReady, boriRatio, boriActive);
+
+        // Jopssal button (middle)
+        const jopssalX = startX + btnSize + gap;
+        const jopssalReady = this.dogChargeJopssal >= this.dogChargeMaxPer && !jopssalActive;
+        const jopssalRatio = Math.min(1, this.dogChargeJopssal / this.dogChargeMaxPer);
+        this._jopssalBtnRect = { x: jopssalX, y: btnY, w: btnSize, h: btnSize };
+        this._drawSingleDogBtn(ctx, jopssalX, btnY, btnSize, '🐶', '좁쌀이', jopssalReady, jopssalRatio, jopssalActive);
+
+        // Heal button (right)
+        const healX = startX + (btnSize + gap) * 2;
+        const healReady = (this.dogChargeBori >= this.dogChargeMaxPer || this.dogChargeJopssal >= this.dogChargeMaxPer)
+            && this.hp < this.maxHp;
+        this._healBtnRect = { x: healX, y: btnY, w: btnSize, h: btnSize };
+        this._drawHealBtn(ctx, healX, btnY, btnSize, healReady);
+
+        // Active dogs timer display (show on bori/jopssal buttons)
+        for (const dog of this.dogs) {
+            const rect = dog.type === 0 ? this._boriBtnRect : this._jopssalBtnRect;
+            if (rect) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(rect.x + btnSize / 2, rect.y + btnSize / 2, btnSize / 2 - 2,
+                    -Math.PI / 2, -Math.PI / 2 + dog.getRemainingRatio() * Math.PI * 2);
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+    }
+
+    _drawSingleDogBtn(ctx, x, y, size, emoji, name, ready, ratio, active) {
         ctx.save();
 
         // Button background
         ctx.beginPath();
-        ctx.roundRect(btnX, btnY, btnSize, btnSize, 14);
+        ctx.roundRect(x, y, size, size, 12);
         ctx.fillStyle = ready ? 'rgba(255,107,0,0.85)' : 'rgba(0,0,0,0.35)';
         ctx.fill();
 
         // Charge ring
-        if (!ready && this.dogs.length === 0) {
+        if (!ready && !active) {
             ctx.beginPath();
-            ctx.arc(btnX + btnSize / 2, btnY + btnSize / 2, btnSize / 2 - 2,
+            ctx.arc(x + size / 2, y + size / 2, size / 2 - 2,
                 -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
             ctx.strokeStyle = '#FF9800';
             ctx.lineWidth = 3;
@@ -659,9 +846,9 @@ export class GameScene {
         // Active glow
         if (ready) {
             ctx.shadowColor = '#FF6B00';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 8;
             ctx.beginPath();
-            ctx.roundRect(btnX, btnY, btnSize, btnSize, 14);
+            ctx.roundRect(x, y, size, size, 12);
             ctx.strokeStyle = '#FFF';
             ctx.lineWidth = 2;
             ctx.stroke();
@@ -669,28 +856,50 @@ export class GameScene {
         }
 
         // Dog icon
-        ctx.font = '26px sans-serif';
+        ctx.font = '22px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🐶', btnX + btnSize / 2, btnY + btnSize / 2 - 2);
+        ctx.fillText(emoji, x + size / 2, y + size / 2 - 4);
 
-        // "Ready!" label
+        // Name label
+        ctx.fillStyle = ready ? '#FFF' : 'rgba(255,255,255,0.6)';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(name, x + size / 2, y + size - 6);
+
+        ctx.restore();
+    }
+
+    _drawHealBtn(ctx, x, y, size, ready) {
+        ctx.save();
+
+        // Button background
+        ctx.beginPath();
+        ctx.roundRect(x, y, size, size, 12);
+        ctx.fillStyle = ready ? 'rgba(76,175,80,0.85)' : 'rgba(0,0,0,0.35)';
+        ctx.fill();
+
+        // Active glow
         if (ready) {
-            ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 10px sans-serif';
-            ctx.fillText('호출!', btnX + btnSize / 2, btnY + btnSize - 6);
+            ctx.shadowColor = '#4CAF50';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.roundRect(x, y, size, size, 12);
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
 
-        // Active dogs timer display
-        if (this.dogs.length > 0) {
-            const avgRemaining = this.dogs.reduce((s, d) => s + d.getRemainingRatio(), 0) / this.dogs.length;
-            ctx.beginPath();
-            ctx.arc(btnX + btnSize / 2, btnY + btnSize / 2, btnSize / 2 - 2,
-                -Math.PI / 2, -Math.PI / 2 + avgRemaining * Math.PI * 2);
-            ctx.strokeStyle = '#4CAF50';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
+        // Heart icon
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('❤️', x + size / 2, y + size / 2 - 4);
+
+        // Label
+        ctx.fillStyle = ready ? '#FFF' : 'rgba(255,255,255,0.6)';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('회복', x + size / 2, y + size - 6);
 
         ctx.restore();
     }
@@ -811,12 +1020,35 @@ export class GameScene {
         Audio.vibrate();
         this.hud.resetIdle();
 
-        // Dog summon button (only consume tap when ready)
-        const db = this._dogBtnRect;
-        if (db && x >= db.x && x <= db.x + db.w && y >= db.y && y <= db.y + db.h
-            && this.dogCharge >= this.dogChargeMax && this.dogs.length === 0) {
-            this._summonDogs();
+        // Improvement 3: Dog summon buttons
+        const boriActive = this.dogs.some(d => d.type === 0 && d.active);
+        const jopssalActive = this.dogs.some(d => d.type === 1 && d.active);
+
+        // Bori button
+        const bb = this._boriBtnRect;
+        if (bb && x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h
+            && this.dogChargeBori >= this.dogChargeMaxPer && !boriActive) {
+            this._summonDog(0);
             return null;
+        }
+
+        // Jopssal button
+        const jb = this._jopssalBtnRect;
+        if (jb && x >= jb.x && x <= jb.x + jb.w && y >= jb.y && y <= jb.y + jb.h
+            && this.dogChargeJopssal >= this.dogChargeMaxPer && !jopssalActive) {
+            this._summonDog(1);
+            return null;
+        }
+
+        // Heal button
+        const hb = this._healBtnRect;
+        if (hb && x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) {
+            const canHeal = (this.dogChargeBori >= this.dogChargeMaxPer || this.dogChargeJopssal >= this.dogChargeMaxPer)
+                && this.hp < this.maxHp;
+            if (canHeal) {
+                this._healWithCharge();
+                return null;
+            }
         }
 
         // Check predators first (priority tap target)
@@ -844,9 +1076,22 @@ export class GameScene {
             }
         }
 
+        // Improvement 1: Nest occupation - block egg production if predator at nest
+        if (this._isPredatorAtNest()) {
+            this.message.show('🚫 천적을 먼저 쫓아내!');
+            this._triggerShake(2, 0.15);
+            Audio.play('warning');
+            return null;
+        }
+
         // Combo system
         this.comboCount++;
         this.comboTimer = this.comboMaxInterval;
+
+        // Improvement 5: Track max combo
+        if (this.comboCount > this.maxCombo) {
+            this.maxCombo = this.comboCount;
+        }
 
         // Pump gauge
         this.chicken.pump();
@@ -897,7 +1142,12 @@ export class GameScene {
         const prevEggs = this.basketEggs;
         this.basketEggs += value;
         this.totalEggs++;
-        this.dogCharge += value;
+        // Improvement 3: charge both dogs independently
+        this.dogChargeBori += value;
+        this.dogChargeJopssal += value;
+
+        // Improvement 4: track last egg time for wind effect
+        this._lastEggTime = this.gameTime;
 
         const bonusText = bonus > 0 ? ` (+${bonus}👑)` : '';
         this.particles.addFloatingText(
@@ -919,6 +1169,16 @@ export class GameScene {
             for (const chick of this.chicks) {
                 chick.celebrate();
             }
+            // Improvement 4: Show stage effect message
+            if (STAGE_EFFECTS[newStage]) {
+                // Delay the effect message slightly so it doesn't overlap
+                setTimeout(() => {
+                    this.message.show(STAGE_EFFECTS[newStage]);
+                }, 1500);
+            }
+            // Reset stage-specific timers
+            this._windTimer = 0;
+            this._bonusTimer = 0;
         } else if (this.basketEggs % 10 === 0 && this.basketEggs > 0) {
             Audio.play('cheer');
             this.message.show(`🎉 ${this.basketEggs}개 달성!`);

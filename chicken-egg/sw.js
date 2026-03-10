@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chicken-egg-v12';
+const CACHE_NAME = 'chicken-egg-v13';
 
 // Use relative paths for GitHub Pages compatibility
 const PRECACHE_URLS = [

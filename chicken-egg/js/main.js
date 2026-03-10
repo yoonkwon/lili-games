@@ -169,11 +169,15 @@ function gameLoop(timestamp) {
                         audio.stopBgm();
                         // Final achievement check for clear
                     gameScene._checkAchievements();
+                    const score = gameScene._calculateScore();
+                    const stars = gameScene._getStarRating(score);
                     endingScene = new EndingScene(canvas.width, canvas.height, {
                             goldenEggs: gameScene.goldenEggs,
                             totalEggs: gameScene.totalEggs,
                             predatorsScared: gameScene.predatorsScared,
                             difficulty: gameScene.difficultyKey,
+                            score,
+                            stars,
                         });
                         currentScene = 'ending';
                         audio.play('ending');
@@ -181,6 +185,7 @@ function gameLoop(timestamp) {
                 } else if (result === 'gameover' && !transition.active) {
                     startTransition(() => {
                         audio.stopBgm();
+                        const score = gameScene._calculateScore();
                         gameOverScene = new GameOverScene(canvas.width, canvas.height, {
                             basketEggs: gameScene.basketEggs,
                             goldenEggs: gameScene.goldenEggs,
@@ -188,6 +193,7 @@ function gameLoop(timestamp) {
                             predatorsScared: gameScene.predatorsScared,
                             chicksLost: gameScene.chicksLost,
                             difficulty: gameScene.difficultyKey,
+                            score,
                         });
                         currentScene = 'gameover';
                         audio.play('warning');

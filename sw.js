@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v8';
+const CACHE_NAME = 'lili-games-v9';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [

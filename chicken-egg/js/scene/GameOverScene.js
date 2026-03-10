@@ -7,6 +7,9 @@ export class GameOverScene {
         this.stats = stats || {};
         this._restartBtn = null;
         this._shakePhase = 0;
+
+        // Improvement 5: Score data
+        this.score = stats.score || 0;
     }
 
     update(dt) {
@@ -45,7 +48,8 @@ export class GameOverScene {
         ctx.globalAlpha = titleAlpha;
 
         const hasDiff = !!this.stats.difficulty;
-        const boxH = 220 + (hasDiff ? 28 : 0);
+        // Extra height for score display
+        const boxH = 260 + (hasDiff ? 28 : 0);
         const boxY = 40;
 
         ctx.fillStyle = 'rgba(80,0,0,0.6)';
@@ -101,8 +105,15 @@ export class GameOverScene {
             if (d) {
                 ctx.fillStyle = '#FFF';
                 ctx.fillText(`난이도: ${d.emoji} ${d.label}`, w / 2, statY);
+                statY += 28;
             }
         }
+
+        // Improvement 5: Score display (no stars since didn't win)
+        statY += 5;
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillText(`점수: ${this.score}`, w / 2, statY);
 
         ctx.globalAlpha = 1;
         ctx.restore();

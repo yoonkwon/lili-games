@@ -8,6 +8,10 @@ export class EndingScene {
         this._restartBtn = null;
         this.stats = stats || {};
 
+        // Improvement 5: Score data
+        this.score = stats.score || 0;
+        this.stars = stats.stars || 1;
+
         const cx = canvasWidth / 2;
         const cy = canvasHeight * 0.65;
         const colors = [
@@ -67,7 +71,9 @@ export class EndingScene {
         const hasStats = this.stats.goldenEggs !== undefined || this.stats.totalEggs !== undefined;
         const hasPredStats = this.stats.predatorsScared !== undefined && this.stats.predatorsScared > 0;
         const hasDiff = !!this.stats.difficulty;
-        const boxH = hasStats ? (hasPredStats ? 210 : 185) + (hasDiff ? 28 : 0) : 120;
+        // Increase box height for score display
+        let boxH = hasStats ? (hasPredStats ? 210 : 185) + (hasDiff ? 28 : 0) : 120;
+        boxH += 90; // extra space for score + stars
         ctx.beginPath();
         ctx.roundRect(w / 2 - 220, 40, 440, boxH, 25);
         ctx.fill();
@@ -82,25 +88,46 @@ export class EndingScene {
         ctx.fillText('행복하게 살았답니다! 🐔❤️🐣', w / 2, 140);
 
         // Stats display
+        let statY = 175;
         if (this.stats.goldenEggs !== undefined || this.stats.totalEggs !== undefined) {
             ctx.font = 'bold 20px sans-serif';
             if (this.stats.totalEggs !== undefined) {
-                ctx.fillText(`총 알: ${this.stats.totalEggs}개`, w / 2, 175);
+                ctx.fillStyle = '#FFF';
+                ctx.fillText(`총 알: ${this.stats.totalEggs}개`, w / 2, statY);
+                statY += 25;
             }
             if (this.stats.goldenEggs !== undefined) {
-                ctx.fillText(`황금알: ${this.stats.goldenEggs}개 ⭐`, w / 2, 200);
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText(`황금알: ${this.stats.goldenEggs}개 ⭐`, w / 2, statY);
+                statY += 25;
             }
             if (this.stats.predatorsScared !== undefined && this.stats.predatorsScared > 0) {
-                ctx.fillText(`쫓아낸 천적: ${this.stats.predatorsScared}마리 💪`, w / 2, 225);
+                ctx.fillStyle = '#FFF';
+                ctx.fillText(`쫓아낸 천적: ${this.stats.predatorsScared}마리 💪`, w / 2, statY);
+                statY += 25;
             }
             if (this.stats.difficulty) {
                 const d = DIFFICULTIES[this.stats.difficulty];
                 if (d) {
-                    const dy = (this.stats.predatorsScared > 0) ? 250 : 225;
-                    ctx.fillText(`난이도: ${d.emoji} ${d.label}`, w / 2, dy);
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillText(`난이도: ${d.emoji} ${d.label}`, w / 2, statY);
+                    statY += 25;
                 }
             }
         }
+
+        // Improvement 5: Score and star display
+        statY += 5;
+
+        // Score line
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText(`점수: ${this.score}`, w / 2, statY);
+        statY += 35;
+
+        // Star rating with animation
+        this._drawStars(ctx, w / 2, statY, this.stars, this.timer);
+
         ctx.globalAlpha = 1;
 
         // Restart button (after 5 seconds)
@@ -134,6 +161,47 @@ export class EndingScene {
             ctx.fillText('다시 하기! 🔄', w / 2, bY + bH / 2);
 
             this._restartBtn = { x: bX, y: bY, w: bW, h: bH };
+        }
+    }
+
+    /**
+     * Improvement 5: Draw animated stars
+     */
+    _drawStars(ctx, cx, cy, count, timer) {
+        const starSize = 36;
+        const totalW = starSize * 3 + 10 * 2; // 3 stars with 10px gap
+        const startX = cx - totalW / 2 + starSize / 2;
+
+        for (let i = 0; i < 3; i++) {
+            const sx = startX + i * (starSize + 10);
+            const earned = i < count;
+            // Animate: each star appears with a delay
+            const delay = 2 + i * 0.5;
+            const starAlpha = Math.min(1, Math.max(0, (timer - delay) / 0.3));
+
+            if (starAlpha <= 0) continue;
+
+            ctx.save();
+            ctx.globalAlpha = starAlpha * (ctx.globalAlpha || 1);
+            ctx.translate(sx, cy);
+
+            // Pop-in scale effect
+            const scaleProg = Math.min(1, (timer - delay) / 0.4);
+            const scale = scaleProg < 1 ? 0.5 + scaleProg * 0.7 : 1 + Math.sin((timer - delay - 0.4) * 4) * 0.05;
+            ctx.scale(scale, scale);
+
+            ctx.font = `${starSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (earned) {
+                ctx.fillText('⭐', 0, 0);
+            } else {
+                ctx.globalAlpha *= 0.3;
+                ctx.fillText('☆', 0, 0);
+            }
+
+            ctx.restore();
         }
     }
 
