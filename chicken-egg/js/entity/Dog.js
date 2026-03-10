@@ -19,7 +19,7 @@ export const DOG_TYPES = [
     desc: '날렵한 점박이',
     speed: 180,
     patrolRange: 250,
-    scarePower: 1, // needs multiple passes for tough predators
+    scarePower: 2, // needs multiple passes for tough predators
   },
 ];
 

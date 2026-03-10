@@ -112,7 +112,7 @@ export class Predator {
       }
     } else if (this.phase === 1) {
       this._stealTimer += dt;
-      const stealDelay = this._stealDelay || 0.8;
+      const stealDelay = this._stealDelay || 0.5;
       if (this._stealTimer >= stealDelay) {
         this.phase = 2;
         this.facing = this.fromRight ? 1 : -1;

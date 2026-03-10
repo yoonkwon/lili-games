@@ -295,8 +295,9 @@ export class GameScene {
                 if (!capturedChick) {
                     const stolen = Math.min(pred.stealAmount, this.basketEggs);
                     if (stolen > 0) {
-                        // Egg theft: ONLY reduces eggs, NO HP damage
+                        // Egg theft: reduces eggs + small HP penalty
                         this.basketEggs -= stolen;
+                        this._takeDamage(1, this.nest.x, this.nest.y - 50);
                         this.message.show(`${pred.info.emoji} ${pred.info.stealMsg} (-${stolen})`);
                         Audio.play('steal');
                         this._triggerShake(4, 0.3);
@@ -531,10 +532,8 @@ export class GameScene {
 
     /**
      * Assign available chicks to defend against approaching predators.
-     * Chick defense capability scales with chick count:
-     * 1 chick: can auto-defend fox (type 0)
-     * 3 chicks: can also auto-defend weasel (type 1)
-     * 5 chicks: can auto-defend all including raccoon (type 2)
+     * Chicks can only auto-defend foxes (type 0).
+     * Weasels and raccoons must be handled by player taps or dogs.
      */
     _assignChickDefenders() {
         const chickCount = this.chicks.length;
@@ -546,12 +545,9 @@ export class GameScene {
             const distToNest = Math.abs(pred.x - this.nest.x);
             if (distToNest > 400) continue;
 
-            // Check if predator type can be defended by current chick count
-            let canAutoDefend = false;
-            if (pred.type === 0 && chickCount >= 1) canAutoDefend = true; // fox
-            if (pred.type === 1 && chickCount >= 3) canAutoDefend = true; // weasel
-            if (pred.type === 2 && chickCount >= 5) canAutoDefend = true; // raccoon
-            if (!canAutoDefend) continue;
+            // Chicks can only auto-defend foxes (type 0)
+            // Weasels and raccoons must be handled by player taps or dogs
+            if (pred.type !== 0) continue;
 
             // Check if any chick is already defending this predator
             const alreadyAssigned = this.chicks.some(c => c.defendTarget === pred);
@@ -588,7 +584,7 @@ export class GameScene {
      * Ribbon: gauge needs 1 fewer tap (5 -> 4)
      */
     _getEffectiveTapsPerEgg() {
-        return this.unlockedHats.includes(2) ? this.TAPS_PER_EGG - 1 : this.TAPS_PER_EGG;
+        return this.unlockedHats.includes(2) ? Math.max(2, this.TAPS_PER_EGG - 1) : this.TAPS_PER_EGG;
     }
 
     _triggerShake(amount, duration) {
@@ -1108,7 +1104,7 @@ export class GameScene {
     _layEgg() {
         // Combo boosts golden egg chance: base 12% + 2% per combo (max 30%)
         const comboBonus = Math.min(0.18, this.comboCount * this.diff.goldenChanceComboBonus);
-        const goldenChance = this.diff.goldenChanceBase + comboBonus;
+        const goldenChance = Math.min(0.30, this.diff.goldenChanceBase + comboBonus);
         const golden = Math.random() < goldenChance;
         this.chicken.layEgg();
 
