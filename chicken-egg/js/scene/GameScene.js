@@ -303,9 +303,10 @@ export class GameScene {
                 if (!capturedChick) {
                     const stolen = Math.min(pred.stealAmount, this.basketEggs);
                     if (stolen > 0) {
-                        // Egg theft: reduces eggs + small HP penalty
+                        // Egg theft: reduces eggs + HP damage scaled by stolen amount
                         this.basketEggs -= stolen;
-                        this._takeDamage(1, this.nest.x, this.nest.y - 50);
+                        const hpLoss = stolen >= 4 ? 3 : stolen >= 2 ? 2 : 1;
+                        this._takeDamage(hpLoss, this.nest.x, this.nest.y - 50);
                         this.message.show(`${pred.info.emoji} ${pred.info.stealMsg} (-${stolen})`);
                         Audio.play('steal');
                         this._triggerShake(4, 0.3);
@@ -315,8 +316,8 @@ export class GameScene {
                             `-${stolen}`, '#FF4444'
                         );
                     } else {
-                        // Nothing to steal/capture - predator attacks mother: HP -2
-                        this._takeDamage(2, this.nest.x, this.nest.y - 50);
+                        // Nothing to steal/capture - predator attacks mother: HP -3
+                        this._takeDamage(3, this.nest.x, this.nest.y - 50);
                         this.message.show(`${pred.info.emoji} ${pred.info.name}가 공격했어!`);
                         Audio.play('steal');
                     }
@@ -484,10 +485,10 @@ export class GameScene {
                     this.particles.addFloatingText(this.nest.x, this.nest.y - 60, '+2 🥚', '#FFD700');
                     Audio.play('cheer');
                 } else if (roll < 0.66) {
-                    // +2 HP heal
-                    const healed = Math.min(2, this.maxHp - this.hp);
-                    this.hp = Math.min(this.maxHp, this.hp + 2);
-                    this.message.show('🌈 보너스! HP +2 회복!');
+                    // +1 HP heal
+                    const healed = Math.min(1, this.maxHp - this.hp);
+                    this.hp = Math.min(this.maxHp, this.hp + 1);
+                    this.message.show('🌈 보너스! HP +1 회복!');
                     if (healed > 0) {
                         this.particles.addFloatingText(this.nest.x, this.nest.y - 60, `+${healed} ❤️`, '#4CAF50');
                     }
@@ -653,7 +654,7 @@ export class GameScene {
             return; // no charge available
         }
 
-        const healAmount = 3;
+        const healAmount = 2;
         const healed = Math.min(healAmount, this.maxHp - this.hp);
         this.hp = Math.min(this.maxHp, this.hp + healAmount);
         this.message.show(`❤️ HP +${healed} 회복!`);
