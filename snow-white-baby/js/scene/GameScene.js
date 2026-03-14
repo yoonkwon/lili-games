@@ -117,9 +117,10 @@ export class GameScene {
     const targetX = this.w * (0.1 + Math.random() * 0.8);
     const targetY = this.h * (0.68 + Math.random() * 0.18);
 
+    // Crow disguises food as what baby wants (temptation!)
     this.animals.push({
       animalType: { type: 'crow', emoji: POISON.emoji, name: POISON.name, speed: POISON.speed, size: POISON.size },
-      food: { type: 'poison', emoji: POISON.foodEmoji, name: POISON.foodName, color: '#800080' },
+      food: { type: 'poison', emoji: this.wantedFood.emoji, name: POISON.foodName, color: '#800080' },
       x: spawn.x,
       y: spawn.y,
       targetX: targetX,
@@ -147,7 +148,8 @@ export class GameScene {
   }
 
   _pickAnimalFood() {
-    if (Math.random() < GAME.wantedFoodChance) {
+    // 50% chance of carrying wanted food
+    if (Math.random() < 0.5) {
       return this.wantedFood;
     }
     return FOODS[Math.floor(Math.random() * FOODS.length)];
