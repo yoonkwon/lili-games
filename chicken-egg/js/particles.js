@@ -1,4 +1,6 @@
 // particles.js - Particle system for chicken egg game
+// Game-specific physics (gravity=300, life decay=2x, different velocity ranges)
+// See shared/ParticleSystem.js for generic version
 
 export class ParticleSystem {
   constructor() {

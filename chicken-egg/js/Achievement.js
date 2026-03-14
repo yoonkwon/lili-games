@@ -1,6 +1,7 @@
 /**
- * Achievement system - tracks and persists player achievements
+ * Chicken-egg game achievements - uses shared AchievementManager
  */
+import { AchievementManager } from '../../shared/AchievementManager.js';
 
 const ACHIEVEMENTS = [
   // Egg milestones
@@ -40,54 +41,11 @@ const ACHIEVEMENTS = [
   { id: 'clear_mom',       emoji: '👩', name: '엄마 클리어',     desc: '엄마 난이도로 클리어!',    check: s => s.cleared && s.difficulty === 'mom' },
 ];
 
-const STORAGE_KEY = 'liliGames_achievements';
-
-export class AchievementManager {
+export class ChickenAchievementManager extends AchievementManager {
   constructor() {
-    this.unlocked = this._load();
-    this.pending = [];  // newly unlocked, waiting to display
-  }
-
-  _load() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch { return []; }
-  }
-
-  _save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.unlocked));
-    } catch { /* ignore */ }
-  }
-
-  check(stats) {
-    for (const ach of ACHIEVEMENTS) {
-      if (this.unlocked.includes(ach.id)) continue;
-      if (ach.check(stats)) {
-        this.unlocked.push(ach.id);
-        this.pending.push(ach);
-      }
-    }
-    if (this.pending.length > 0) this._save();
-  }
-
-  popPending() {
-    return this.pending.shift() || null;
-  }
-
-  getAll() {
-    return ACHIEVEMENTS.map(a => ({
-      ...a,
-      unlocked: this.unlocked.includes(a.id),
-    }));
-  }
-
-  getUnlockedCount() {
-    return this.unlocked.length;
-  }
-
-  getTotalCount() {
-    return ACHIEVEMENTS.length;
+    super(ACHIEVEMENTS, 'liliGames_achievements');
   }
 }
+
+// Re-export as AchievementManager for backward compatibility
+export { ChickenAchievementManager as AchievementManager };
