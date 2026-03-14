@@ -4,6 +4,7 @@
 import { FOODS, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
+import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
 
 export class GameScene {
   constructor(w, h, safeTop) {
@@ -309,16 +310,14 @@ export class GameScene {
     const momY = h * 0.14;
     const bob = Math.sin(this.momPhase * 1.2) * 3;
 
-    ctx.save();
-    ctx.font = '55px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('👸', momX, momY + bob);
+    drawElsaMom(ctx, momX, momY + bob, 1.0);
 
     // Label
+    ctx.save();
     ctx.font = 'Bold 14px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#B3E5FC';
-    ctx.fillText('엄마 엘사', momX, momY + bob + 40);
+    ctx.fillText('엄마 엘사', momX, momY + bob + 65);
     ctx.restore();
   }
 
@@ -383,90 +382,7 @@ export class GameScene {
     const bob = Math.sin(this.babyPhase * 2) * 4;
     const shakeX = this.babyShake > 0 ? Math.sin(this.babyPhase * 30) * 5 * this.babyShake : 0;
 
-    ctx.save();
-    ctx.translate(cx + shakeX, cy + bob);
-
-    // Baby body
-    ctx.fillStyle = '#FFE0BD';
-    ctx.beginPath();
-    ctx.arc(0, 0, babySize, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cheeks
-    ctx.fillStyle = 'rgba(255, 182, 193, 0.4)';
-    ctx.beginPath();
-    ctx.ellipse(-babySize * 0.4, babySize * 0.15, babySize * 0.18, babySize * 0.12, 0, 0, Math.PI * 2);
-    ctx.ellipse(babySize * 0.4, babySize * 0.15, babySize * 0.18, babySize * 0.12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eyes
-    const eyeY = -babySize * 0.1;
-    const eyeSpread = babySize * 0.25;
-    if (this.babyEmotion === 'happy') {
-      // Happy - closed smile eyes
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(-eyeSpread, eyeY, babySize * 0.1, Math.PI, 0);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(eyeSpread, eyeY, babySize * 0.1, Math.PI, 0);
-      ctx.stroke();
-    } else if (this.babyEmotion === 'angry') {
-      // Angry - ice blue glowing eyes
-      ctx.fillStyle = '#4fc3f7';
-      ctx.shadowColor = '#4fc3f7';
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(-eyeSpread, eyeY, babySize * 0.1, 0, Math.PI * 2);
-      ctx.arc(eyeSpread, eyeY, babySize * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    } else {
-      // Normal / sad eyes
-      ctx.fillStyle = '#333';
-      ctx.beginPath();
-      ctx.arc(-eyeSpread, eyeY, babySize * 0.08, 0, Math.PI * 2);
-      ctx.arc(eyeSpread, eyeY, babySize * 0.08, 0, Math.PI * 2);
-      ctx.fill();
-      // Shine
-      ctx.fillStyle = '#FFF';
-      ctx.beginPath();
-      ctx.arc(-eyeSpread + 1, eyeY - 1, babySize * 0.03, 0, Math.PI * 2);
-      ctx.arc(eyeSpread + 1, eyeY - 1, babySize * 0.03, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Mouth
-    const mouthY = babySize * 0.2;
-    if (this.babyEmotion === 'happy') {
-      ctx.strokeStyle = '#E57373';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(0, mouthY, babySize * 0.12, 0.2, Math.PI - 0.2);
-      ctx.stroke();
-    } else if (this.babyEmotion === 'sad' || this.babyEmotion === 'angry') {
-      ctx.strokeStyle = '#90CAF9';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(0, mouthY + babySize * 0.08, babySize * 0.1, Math.PI + 0.3, -0.3);
-      ctx.stroke();
-    } else {
-      ctx.fillStyle = '#E57373';
-      ctx.beginPath();
-      ctx.arc(0, mouthY, babySize * 0.06, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Elsa hair hint (small blonde tuft on top when bigger)
-    if (growthRatio > 0.3) {
-      ctx.fillStyle = '#E8E8A0';
-      ctx.beginPath();
-      ctx.ellipse(0, -babySize * 0.85, babySize * 0.2, babySize * 0.15, 0, Math.PI, 0);
-      ctx.fill();
-    }
-
-    ctx.restore();
+    drawBabyElsa(ctx, cx + shakeX, cy + bob, babySize, this.babyEmotion, this.babyPhase, growthRatio);
 
     // Stage label
     ctx.save();

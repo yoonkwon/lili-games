@@ -1,6 +1,8 @@
 /**
  * Born scene - baby is born! Happy ending
  */
+import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
+
 export class BornScene {
   constructor(w, h, stats) {
     this.w = w;
@@ -90,18 +92,16 @@ export class BornScene {
       const centerY = h * 0.3;
 
       // Mom Elsa
-      ctx.font = '65px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('👸', w / 2, centerY);
+      drawElsaMom(ctx, w / 2, centerY, 1.2);
 
       // Baby in arms
       const babyBob = Math.sin(this.phase * 1.5) * 3;
-      ctx.font = '40px sans-serif';
-      ctx.fillText('👶', w / 2, centerY + 55 + babyBob);
+      drawBabyElsa(ctx, w / 2, centerY + 75 + babyBob, 22, 'happy', this.phase, 1.0);
 
-      // Holding arms (heart shape)
-      ctx.font = '30px sans-serif';
-      ctx.fillText('🤱', w / 2, centerY + 30);
+      // Heart between them
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💕', w / 2, centerY + 55);
 
       ctx.restore();
     }

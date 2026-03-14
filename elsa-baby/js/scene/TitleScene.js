@@ -1,6 +1,8 @@
 /**
  * Title scene - Elsa baby game
  */
+import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
+
 export class TitleScene {
   constructor() {
     this.phase = 0;
@@ -55,12 +57,10 @@ export class TitleScene {
       ctx.restore();
     }
 
-    // Elsa mom emoji
+    // Elsa mom
     const elsaY = h * 0.2;
     const bounce = Math.sin(this.phase * 1.5) * 5;
-    ctx.font = '70px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('👸', w / 2, elsaY + bounce);
+    drawElsaMom(ctx, w / 2, elsaY + bounce, 1.3);
 
     // Sparkles around
     ctx.font = '20px sans-serif';
@@ -111,10 +111,7 @@ export class TitleScene {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.font = '40px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('👶', 0, 0);
+    drawBabyElsa(ctx, 0, 0, 25, 'neutral', this.phase, 0.3);
     ctx.restore();
 
     // Start button
