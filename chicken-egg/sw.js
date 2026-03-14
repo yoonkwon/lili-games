@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chicken-egg-v16';
+const CACHE_NAME = 'chicken-egg-v17';
 
 // Use relative paths for GitHub Pages compatibility
 const PRECACHE_URLS = [
@@ -57,31 +57,28 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: stale-while-revalidate strategy
+// Fetch: network-first (try network, fallback to cache for offline)
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.match(event.request).then(cachedResponse => {
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          if (networkResponse && networkResponse.ok) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => {
-          if (cachedResponse) return cachedResponse;
-          if (event.request.mode === 'navigate') {
-            return cache.match('./index.html');
-          }
-          return new Response('Offline', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          });
+    fetch(event.request).then(response => {
+      if (response && response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' }
         });
-
-        return cachedResponse || fetchPromise;
-      })
-    )
+      });
+    })
   );
 });

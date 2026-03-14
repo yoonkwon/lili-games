@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v13';
+const CACHE_NAME = 'lili-games-v14';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -51,7 +51,7 @@ const ASSETS = [
   './chicken-egg/js/ui/Message.js',
 ];
 
-// Install: cache all assets
+// Install: cache all assets, activate immediately
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -59,36 +59,33 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean old caches + take control immediately
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: stale-while-revalidate
+// Fetch: network-first (try network, fallback to cache for offline)
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetchPromise = fetch(e.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        if (cached) return cached;
-        return new Response('Offline', {
+    fetch(e.request).then((response) => {
+      if (response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(e.request).then((cached) => {
+        return cached || new Response('Offline', {
           status: 503,
           headers: { 'Content-Type': 'text/plain' }
         });
       });
-      return cached || fetchPromise;
     })
   );
 });
