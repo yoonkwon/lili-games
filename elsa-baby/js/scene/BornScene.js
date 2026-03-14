@@ -1,7 +1,20 @@
 /**
  * Born scene - baby is born! Happy ending
+ * Shows total babies born count (persisted in localStorage)
  */
 import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
+
+const STORAGE_KEY = 'elsa-baby-born-count';
+
+function getBornCount() {
+  try { return parseInt(localStorage.getItem(STORAGE_KEY)) || 0; } catch { return 0; }
+}
+
+function incrementBornCount() {
+  const count = getBornCount() + 1;
+  try { localStorage.setItem(STORAGE_KEY, count); } catch { /* noop */ }
+  return count;
+}
 
 export class BornScene {
   constructor(w, h, stats) {
@@ -9,6 +22,9 @@ export class BornScene {
     this.h = h;
     this.stats = stats;
     this.phase = 0;
+
+    // Increment and store born count
+    this.babyCount = incrementBornCount();
 
     // Celebration particles
     this.hearts = [];
@@ -30,7 +46,7 @@ export class BornScene {
     const btnW = 220;
     const btnH = 55;
     const btnX = (this.w - btnW) / 2;
-    const btnY = this.h * 0.82;
+    const btnY = this.h * 0.85;
     if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
       return 'restart';
     }
@@ -76,7 +92,7 @@ export class BornScene {
     // Phase 1: Light appears
     if (this.phase > 0.5) {
       const lightAlpha = Math.min(0.3, (this.phase - 0.5) * 0.15);
-      const lightGrad = ctx.createRadialGradient(w / 2, h * 0.35, 0, w / 2, h * 0.35, 200);
+      const lightGrad = ctx.createRadialGradient(w / 2, h * 0.3, 0, w / 2, h * 0.3, 200);
       lightGrad.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
       lightGrad.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = lightGrad;
@@ -89,16 +105,13 @@ export class BornScene {
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      const centerY = h * 0.3;
+      const centerY = h * 0.25;
 
-      // Mom Elsa
       drawElsaMom(ctx, w / 2, centerY, 1.2);
 
-      // Baby in arms
       const babyBob = Math.sin(this.phase * 1.5) * 3;
       drawBabyElsa(ctx, w / 2, centerY + 75 + babyBob, 22, 'happy', this.phase, 1.0);
 
-      // Heart between them
       ctx.font = '20px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('💕', w / 2, centerY + 55);
@@ -119,29 +132,45 @@ export class BornScene {
       ctx.shadowColor = '#FF69B4';
       ctx.shadowBlur = 15;
       ctx.fillStyle = '#FFF';
-      ctx.fillText('🎉 아기가 태어났어요! 🎉', w / 2, h * 0.52);
+      ctx.fillText('🎉 아기가 태어났어요! 🎉', w / 2, h * 0.48);
       ctx.shadowBlur = 0;
 
       ctx.font = '20px sans-serif';
       ctx.fillStyle = '#FFB6C1';
-      ctx.fillText('엄마 품에서 행복해하고 있어요 💕', w / 2, h * 0.58);
+      ctx.fillText('엄마 품에서 행복해하고 있어요 💕', w / 2, h * 0.54);
       ctx.restore();
     }
 
-    // Phase 4: Stats
+    // Phase 4: Stats + baby count
     if (this.phase > 3.5) {
       const statsAlpha = Math.min(1, (this.phase - 3.5));
       ctx.save();
       ctx.globalAlpha = statsAlpha;
 
-      ctx.font = '18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      const statsY = h * 0.60;
+
+      // Baby count badge
+      ctx.fillStyle = 'rgba(255,105,180,0.2)';
+      ctx.beginPath();
+      ctx.roundRect(w / 2 - 100, statsY - 24, 200, 40, 20);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,105,180,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText(`👶 ${this.babyCount}번째 아기! 👶`, w / 2, statsY);
+
+      // Stats
+      ctx.font = '16px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.fillStyle = '#E1F5FE';
 
-      const statsY = h * 0.65;
-      ctx.fillText(`🍽️ 총 ${this.stats.totalFed}번 먹었어요`, w / 2, statsY);
-      ctx.fillText(`✅ 정확도: ${this.stats.accuracy}%`, w / 2, statsY + 28);
-      ctx.fillText(`💕 사랑으로 키웠어요!`, w / 2, statsY + 56);
+      const detailY = statsY + 36;
+      ctx.fillText(`🍽️ 총 ${this.stats.totalFed}번 먹었어요`, w / 2, detailY);
+      ctx.fillText(`✅ 정확도: ${this.stats.accuracy}%`, w / 2, detailY + 26);
+      ctx.fillText(`💕 사랑으로 키웠어요!`, w / 2, detailY + 52);
 
       ctx.restore();
     }
@@ -151,7 +180,7 @@ export class BornScene {
       const btnW = 220;
       const btnH = 55;
       const btnX = (w - btnW) / 2;
-      const btnY = h * 0.82;
+      const btnY = h * 0.85;
 
       ctx.save();
       const pulse = 1 + Math.sin(this.phase * 3) * 0.02;

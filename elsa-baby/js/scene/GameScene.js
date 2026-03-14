@@ -1,5 +1,5 @@
 /**
- * Main gameplay - feed the baby!
+ * Main gameplay - feed the baby with conveyor belt food selection!
  */
 import { FOODS, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
@@ -13,17 +13,23 @@ export class GameScene {
     this.safeTop = safeTop;
 
     // Baby state
-    this.growth = 0;          // 0 ~ maxGrowth
-    this.dislike = 0;         // 0 ~ maxDislike
+    this.growth = 0;
+    this.dislike = 0;
     this.combo = 0;
     this.totalFed = 0;
     this.correctFed = 0;
 
     // Current want
     this.wantedFood = null;
-    this.choices = [];
     this.wantTimer = 0;
     this._pickNewWant();
+
+    // === Conveyor belt ===
+    this.conveyorItems = [];
+    this.conveyorSpeed = 60; // px per second
+    this.spawnTimer = 0;
+    this.spawnInterval = 1.2; // seconds between spawns
+    this._fillConveyor(w);
 
     // Ice freeze state
     this.frozen = false;
@@ -33,13 +39,12 @@ export class GameScene {
 
     // Baby animation
     this.babyPhase = 0;
-    this.babyEmotion = 'neutral'; // neutral, happy, sad, angry
+    this.babyEmotion = 'neutral';
     this.emotionTimer = 0;
     this.babyShake = 0;
 
     // Elsa mom
     this.momPhase = 0;
-    this.momHandY = 0;
 
     // Effects
     this.particles = new ParticleSystem();
@@ -57,31 +62,39 @@ export class GameScene {
       });
     }
 
-    // Food buttons layout
-    this.foodBtns = [];
-
-    this.message.show('아기가 원하는 음식을 골라줘요! 💕', 3);
+    this.message.show('컨베이어 위 음식을 터치! 아기가 원하는 걸 골라줘요! 💕', 3);
   }
 
   _pickNewWant() {
-    // Pick a random food the baby wants
     const idx = Math.floor(Math.random() * FOODS.length);
     this.wantedFood = FOODS[idx];
     this.wantTimer = GAME.wantChangeInterval;
+  }
 
-    // Pick choices (including the correct one)
-    const choices = [this.wantedFood];
-    const available = FOODS.filter(f => f.type !== this.wantedFood.type);
-    while (choices.length < GAME.foodChoices && available.length > 0) {
-      const ri = Math.floor(Math.random() * available.length);
-      choices.push(available.splice(ri, 1)[0]);
+  _fillConveyor(w) {
+    // Pre-fill conveyor with foods across the screen
+    const itemSize = 60;
+    const spacing = itemSize + 20;
+    const count = Math.ceil(w / spacing) + 3;
+    for (let i = 0; i < count; i++) {
+      this.conveyorItems.push({
+        food: FOODS[Math.floor(Math.random() * FOODS.length)],
+        x: -spacing + i * spacing,
+        collected: false,
+        collectPhase: 0,
+      });
     }
-    // Shuffle
-    for (let i = choices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [choices[i], choices[j]] = [choices[j], choices[i]];
-    }
-    this.choices = choices;
+  }
+
+  _spawnConveyorItem() {
+    const itemSize = 60;
+    // Spawn from left side
+    this.conveyorItems.push({
+      food: FOODS[Math.floor(Math.random() * FOODS.length)],
+      x: -itemSize,
+      collected: false,
+      collectPhase: 0,
+    });
   }
 
   _generateIceCracks(w, h) {
@@ -105,21 +118,39 @@ export class GameScene {
   handleTap(x, y) {
     if (this.frozen) return;
 
-    // Check food button taps
-    for (const btn of this.foodBtns) {
-      if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
-        this._feedBaby(btn.food);
+    // Check conveyor item taps
+    const beltY = this._getBeltY();
+    const itemSize = this._getItemSize();
+
+    for (const item of this.conveyorItems) {
+      if (item.collected) continue;
+      const ix = item.x;
+      const iy = beltY;
+      if (x >= ix - itemSize / 2 && x <= ix + itemSize / 2 &&
+          y >= iy - itemSize / 2 && y <= iy + itemSize / 2) {
+        this._feedBaby(item);
         return;
       }
     }
   }
 
-  _feedBaby(food) {
+  _getBeltY() {
+    return this.h * 0.85;
+  }
+
+  _getItemSize() {
+    return Math.min(60, this.w * 0.14);
+  }
+
+  _feedBaby(item) {
     this.totalFed++;
-    const correct = food.type === this.wantedFood.type;
+    const correct = item.food.type === this.wantedFood.type;
+
+    // Mark as collected (animate away)
+    item.collected = true;
+    item.collectPhase = 0;
 
     if (correct) {
-      // Correct food!
       this.combo++;
       this.correctFed++;
       const bonus = GAME.growthPerCorrect + this.combo * GAME.comboBonus;
@@ -129,9 +160,9 @@ export class GameScene {
       this.babyEmotion = 'happy';
       this.emotionTimer = 1.5;
 
-      this.particles.createParticles(this.w / 2, this.h * 0.38, '#FFD700', 12);
+      this.particles.createParticles(item.x, this._getBeltY() - 30, '#FFD700', 12);
       this.particles.createStars(this.w / 2, this.h * 0.35, 5);
-      this.particles.addFloatingText(this.w / 2, this.h * 0.32, `+${bonus} 💕`, '#FF69B4', 28);
+      this.particles.addFloatingText(item.x, this._getBeltY() - 50, `+${bonus} 💕`, '#FF69B4', 28);
 
       if (this.combo >= 3) {
         this.message.show(`${this.combo} 콤보! 아기가 아주 좋아해요! ✨`);
@@ -139,12 +170,10 @@ export class GameScene {
 
       this._pickNewWant();
 
-      // Check if fully grown
       if (this.growth >= GAME.maxGrowth) {
-        return; // handled in update
+        return;
       }
     } else {
-      // Wrong food
       this.combo = 0;
       this.growth = Math.max(0, this.growth + GAME.growthPerWrong);
       this.dislike = Math.min(GAME.maxDislike, this.dislike + GAME.dislikePerWrong);
@@ -153,9 +182,8 @@ export class GameScene {
       this.emotionTimer = 1.2;
       this.babyShake = 0.5;
 
-      this.particles.addFloatingText(this.w / 2, this.h * 0.32, '싫어요! 😣', '#88CCFF', 24);
+      this.particles.addFloatingText(item.x, this._getBeltY() - 50, '싫어요! 😣', '#88CCFF', 24);
 
-      // Check if ice magic triggers
       if (this.dislike >= GAME.maxDislike) {
         this._triggerIceMagic();
       }
@@ -196,7 +224,7 @@ export class GameScene {
       }
     }
 
-    // Want timer - baby changes mind
+    // Want timer
     if (!this.frozen) {
       this.wantTimer -= dt;
       if (this.wantTimer <= 0) {
@@ -205,8 +233,6 @@ export class GameScene {
         this.emotionTimer = 0.8;
         this._pickNewWant();
       }
-
-      // Dislike decay
       this.dislike = Math.max(0, this.dislike - GAME.dislikeDecay * dt);
     }
 
@@ -223,6 +249,29 @@ export class GameScene {
       this.babyShake = Math.max(0, this.babyShake - dt * 2);
     }
 
+    // === Conveyor belt update ===
+    if (!this.frozen) {
+      // Move items
+      for (const item of this.conveyorItems) {
+        item.x += this.conveyorSpeed * dt;
+        if (item.collected) {
+          item.collectPhase += dt * 4;
+        }
+      }
+
+      // Remove items that went off-screen or fully collected
+      this.conveyorItems = this.conveyorItems.filter(
+        item => item.x < w + 80 && (!item.collected || item.collectPhase < 1)
+      );
+
+      // Spawn new items
+      this.spawnTimer -= dt;
+      if (this.spawnTimer <= 0) {
+        this._spawnConveyorItem();
+        this.spawnTimer = this.spawnInterval;
+      }
+    }
+
     // Snowflakes
     for (const s of this.snowflakes) {
       s.y += s.speed * dt;
@@ -230,28 +279,10 @@ export class GameScene {
       if (s.y > h + 20) { s.y = -20; s.x = Math.random() * w; }
     }
 
-    // Update food button positions
-    this._layoutFoodBtns(w, h);
-
     this.particles.update(dt);
     this.message.update(dt);
 
     return null;
-  }
-
-  _layoutFoodBtns(w, h) {
-    const btnSize = Math.min(80, (w - 60) / GAME.foodChoices - 10);
-    const totalW = this.choices.length * (btnSize + 10) - 10;
-    const startX = (w - totalW) / 2;
-    const btnY = h * 0.82;
-
-    this.foodBtns = this.choices.map((food, i) => ({
-      food,
-      x: startX + i * (btnSize + 10),
-      y: btnY,
-      w: btnSize,
-      h: btnSize,
-    }));
   }
 
   draw(ctx, w, h) {
@@ -262,9 +293,8 @@ export class GameScene {
     this._drawWantBubble(ctx, w, h);
     this._drawGrowthBar(ctx, w, h);
     this._drawDislikeBar(ctx, w, h);
-    this._drawFoodButtons(ctx, w, h);
+    this._drawConveyorBelt(ctx, w, h);
 
-    // Particles
     this.particles.draw(ctx);
 
     // Combo indicator
@@ -277,7 +307,6 @@ export class GameScene {
       ctx.restore();
     }
 
-    // Message
     this.message.draw(ctx, w, h);
 
     // Ice freeze overlay
@@ -294,7 +323,6 @@ export class GameScene {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Snowflakes
     for (const s of this.snowflakes) {
       ctx.save();
       ctx.globalAlpha = 0.3;
@@ -312,7 +340,6 @@ export class GameScene {
 
     drawElsaMom(ctx, momX, momY + bob, 1.0);
 
-    // Label
     ctx.save();
     ctx.font = 'Bold 14px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
@@ -327,7 +354,6 @@ export class GameScene {
     const growthRatio = this.growth / GAME.maxGrowth;
     const baseRadius = 60 + growthRatio * 40;
 
-    // Outer glow
     ctx.save();
     const glowGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius * 1.3);
     glowGrad.addColorStop(0, 'rgba(79, 195, 247, 0.1)');
@@ -338,7 +364,6 @@ export class GameScene {
     ctx.arc(cx, cy, baseRadius * 1.3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Belly circle
     const bellyGrad = ctx.createRadialGradient(cx, cy - 10, 0, cx, cy, baseRadius);
     bellyGrad.addColorStop(0, 'rgba(129, 212, 250, 0.25)');
     bellyGrad.addColorStop(0.7, 'rgba(79, 195, 247, 0.15)');
@@ -348,12 +373,10 @@ export class GameScene {
     ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Border
     ctx.strokeStyle = 'rgba(79, 195, 247, 0.3)';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Sparkle ring
     const sparkCount = 6;
     for (let i = 0; i < sparkCount; i++) {
       const angle = (i / sparkCount) * Math.PI * 2 + this.babyPhase * 0.5;
@@ -372,7 +395,6 @@ export class GameScene {
     const cy = h * 0.40;
     const growthRatio = this.growth / GAME.maxGrowth;
 
-    // Find current stage
     let stage = GROWTH_STAGES[0];
     for (const s of GROWTH_STAGES) {
       if (growthRatio >= s.threshold) stage = s;
@@ -384,7 +406,6 @@ export class GameScene {
 
     drawBabyElsa(ctx, cx + shakeX, cy + bob, babySize, this.babyEmotion, this.babyPhase, growthRatio);
 
-    // Stage label
     ctx.save();
     ctx.font = '13px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
@@ -399,21 +420,18 @@ export class GameScene {
     const cx = w / 2 + 50;
     const cy = h * 0.28;
 
-    // Speech bubble
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.beginPath();
     ctx.roundRect(cx - 35, cy - 28, 70, 56, 16);
     ctx.fill();
 
-    // Bubble tail
     ctx.beginPath();
     ctx.moveTo(cx - 15, cy + 26);
     ctx.lineTo(cx - 25, cy + 40);
     ctx.lineTo(cx - 5, cy + 28);
     ctx.fill();
 
-    // Wanted food emoji
     const pulse = 1 + Math.sin(this.babyPhase * 4) * 0.08;
     ctx.translate(cx, cy);
     ctx.scale(pulse, pulse);
@@ -423,7 +441,7 @@ export class GameScene {
     ctx.fillText(this.wantedFood.emoji, 0, 0);
     ctx.restore();
 
-    // Timer indicator (urgency dots)
+    // Timer urgency
     const urgency = 1 - (this.wantTimer / GAME.wantChangeInterval);
     ctx.save();
     ctx.font = '10px sans-serif';
@@ -445,20 +463,17 @@ export class GameScene {
     const barH = 22;
     const ratio = this.growth / GAME.maxGrowth;
 
-    // Label
     ctx.save();
     ctx.font = 'Bold 13px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#B3E5FC';
     ctx.fillText(`💕 성장 ${Math.floor(ratio * 100)}%`, barX, barY - 4);
 
-    // Bar bg
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
     ctx.roundRect(barX, barY, barW, barH, 11);
     ctx.fill();
 
-    // Bar fill
     if (ratio > 0) {
       const grad = ctx.createLinearGradient(barX, 0, barX + barW * ratio, 0);
       grad.addColorStop(0, '#FF69B4');
@@ -468,7 +483,6 @@ export class GameScene {
       ctx.roundRect(barX, barY, barW * ratio, barH, 11);
       ctx.fill();
 
-      // Shine
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
       ctx.fillRect(barX + 4, barY + 2, barW * ratio - 8, barH * 0.35);
     }
@@ -504,7 +518,6 @@ export class GameScene {
       ctx.fill();
     }
 
-    // Warning flash when high
     if (ratio > 0.7) {
       const flash = Math.sin(this.babyPhase * 6) * 0.3;
       ctx.fillStyle = `rgba(255,0,0,${0.1 + flash})`;
@@ -516,57 +529,121 @@ export class GameScene {
     ctx.restore();
   }
 
-  _drawFoodButtons(ctx, w, h) {
-    if (this.frozen) return;
+  _drawConveyorBelt(ctx, w, h) {
+    const beltY = this._getBeltY();
+    const beltH = 80;
+    const itemSize = this._getItemSize();
 
-    for (const btn of this.foodBtns) {
-      ctx.save();
-
-      // Button bg
-      const grad = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.h);
-      grad.addColorStop(0, 'rgba(255,255,255,0.2)');
-      grad.addColorStop(1, 'rgba(255,255,255,0.08)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 16);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Food emoji
-      const fontSize = Math.min(36, btn.w * 0.5);
-      ctx.font = `${fontSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(btn.food.emoji, btn.x + btn.w / 2, btn.y + btn.h / 2 - 4);
-
-      // Name
-      ctx.font = `${Math.min(11, btn.w * 0.15)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
-      ctx.fillStyle = '#B3E5FC';
-      ctx.fillText(btn.food.name, btn.x + btn.w / 2, btn.y + btn.h - 10);
-
-      ctx.restore();
-    }
-
-    // Label
+    // Belt label
     ctx.save();
     ctx.font = 'Bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('🍽️ 어떤 음식을 줄까요?', w / 2, h * 0.77);
+    ctx.fillText('🍽️ 아기가 원하는 음식을 터치!', w / 2, beltY - beltH / 2 - 14);
     ctx.restore();
+
+    // Belt background
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.roundRect(0, beltY - beltH / 2, w, beltH, 0);
+    ctx.fill();
+
+    // Belt track lines (moving)
+    const trackOffset = (this.babyPhase * this.conveyorSpeed) % 20;
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    for (let x = -20 + trackOffset; x < w + 20; x += 20) {
+      ctx.beginPath();
+      ctx.moveTo(x, beltY - beltH / 2);
+      ctx.lineTo(x, beltY + beltH / 2);
+      ctx.stroke();
+    }
+
+    // Belt edges
+    ctx.fillStyle = 'rgba(100,100,120,0.6)';
+    ctx.fillRect(0, beltY - beltH / 2, w, 3);
+    ctx.fillRect(0, beltY + beltH / 2 - 3, w, 3);
+
+    // Belt rollers at edges
+    ctx.fillStyle = 'rgba(80,80,100,0.8)';
+    ctx.beginPath();
+    ctx.arc(0, beltY, beltH / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w, beltY, beltH / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(60,60,80,0.8)';
+    ctx.beginPath();
+    ctx.arc(0, beltY, beltH / 2 - 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w, beltY, beltH / 2 - 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    // Draw food items on belt
+    for (const item of this.conveyorItems) {
+      if (item.x < -itemSize || item.x > w + itemSize) continue;
+
+      ctx.save();
+      const ix = item.x;
+      const iy = beltY;
+
+      if (item.collected) {
+        // Fly up and fade out animation
+        const t = item.collectPhase;
+        ctx.globalAlpha = 1 - t;
+        ctx.translate(ix, iy - t * 60);
+        ctx.scale(1 + t * 0.5, 1 + t * 0.5);
+      } else {
+        ctx.translate(ix, iy);
+
+        // Highlight if it matches wanted food
+        if (item.food.type === this.wantedFood.type && !this.frozen) {
+          const glow = 0.3 + Math.sin(this.babyPhase * 5) * 0.15;
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = `rgba(255, 215, 0, ${glow})`;
+          ctx.beginPath();
+          ctx.arc(0, 0, itemSize / 2 + 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
+        // Item plate
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath();
+        ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Food emoji
+      const fontSize = Math.min(32, itemSize * 0.55);
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.food.emoji, 0, -2);
+
+      // Name label
+      ctx.font = `${Math.min(10, itemSize * 0.16)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
+      ctx.fillStyle = '#B3E5FC';
+      ctx.fillText(item.food.name, 0, itemSize / 2 - 8);
+
+      ctx.restore();
+    }
   }
 
   _drawIceOverlay(ctx, w, h) {
     ctx.save();
 
-    // Ice blue overlay
     ctx.fillStyle = `rgba(173, 216, 250, ${this.iceAlpha * 0.6})`;
     ctx.fillRect(0, 0, w, h);
 
-    // Frost edge effect
     const edgeGrad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.7);
     edgeGrad.addColorStop(0, 'rgba(255,255,255,0)');
     edgeGrad.addColorStop(0.6, 'rgba(200,230,255,0)');
@@ -574,7 +651,6 @@ export class GameScene {
     ctx.fillStyle = edgeGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Ice cracks
     if (this.iceAlpha > 0.3) {
       ctx.strokeStyle = `rgba(255,255,255,${(this.iceAlpha - 0.3) * 0.5})`;
       ctx.lineWidth = 1.5;
@@ -588,7 +664,6 @@ export class GameScene {
       }
     }
 
-    // Frozen snowflakes
     ctx.globalAlpha = this.iceAlpha;
     const frozenEmojis = ['❄️', '🧊', '❄️', '💎'];
     for (let i = 0; i < 12; i++) {
@@ -599,7 +674,6 @@ export class GameScene {
       ctx.fillText(frozenEmojis[i % frozenEmojis.length], w / 2 + Math.cos(angle) * r, h / 2 + Math.sin(angle) * r);
     }
 
-    // Timer text
     if (this.frozen) {
       ctx.globalAlpha = 1;
       ctx.font = 'Bold 32px sans-serif';

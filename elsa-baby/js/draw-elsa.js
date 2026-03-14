@@ -1,163 +1,293 @@
 /**
  * Draw Elsa - blonde hair, pale skin, ice blue dress
- * Shared drawing function for all scenes
+ * More Disney-accurate character rendering
  */
 
-// Draw Mom Elsa (upper body)
+// Draw Mom Elsa (upper body) - Disney Frozen style
 export function drawElsaMom(ctx, x, y, scale = 1) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
 
-  // Dress / body - ice blue
+  // === Dress / Body - ice blue with crystalline details ===
   ctx.fillStyle = '#4fc3f7';
   ctx.beginPath();
   ctx.ellipse(0, 28, 22, 30, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Dress shimmer
+
+  // Dress shimmer highlights
   ctx.fillStyle = '#81D4FA';
   ctx.beginPath();
-  ctx.ellipse(-6, 22, 8, 12, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(-6, 20, 8, 14, -0.3, 0, Math.PI * 2);
   ctx.fill();
-  // Cape / shoulders
-  ctx.fillStyle = 'rgba(79, 195, 247, 0.5)';
+  ctx.fillStyle = 'rgba(179,229,252,0.4)';
   ctx.beginPath();
-  ctx.moveTo(-22, 10);
-  ctx.quadraticCurveTo(-30, 40, -18, 55);
+  ctx.ellipse(8, 26, 5, 10, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Snowflake pattern on dress
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.arc(-4, 32, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(6, 40, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cape / transparent sleeves
+  ctx.fillStyle = 'rgba(79, 195, 247, 0.35)';
+  ctx.beginPath();
+  ctx.moveTo(-22, 8);
+  ctx.quadraticCurveTo(-32, 35, -20, 55);
   ctx.lineTo(-16, 12);
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(22, 10);
-  ctx.quadraticCurveTo(30, 40, 18, 55);
+  ctx.moveTo(22, 8);
+  ctx.quadraticCurveTo(32, 35, 20, 55);
   ctx.lineTo(16, 12);
   ctx.fill();
 
-  // Neck
+  // === Neck ===
   ctx.fillStyle = '#FFF0F0';
-  ctx.fillRect(-4, 2, 8, 8);
+  ctx.fillRect(-5, 1, 10, 9);
 
-  // Head - pale/white skin
-  ctx.fillStyle = '#FFF0F0';
+  // Neckline V-shape
+  ctx.fillStyle = '#4fc3f7';
   ctx.beginPath();
-  ctx.arc(0, -10, 18, 0, Math.PI * 2);
+  ctx.moveTo(-8, 8);
+  ctx.lineTo(0, 14);
+  ctx.lineTo(8, 8);
+  ctx.lineTo(10, 10);
+  ctx.lineTo(0, 17);
+  ctx.lineTo(-10, 10);
+  ctx.closePath();
   ctx.fill();
 
-  // Hair - platinum blonde, braided style
+  // === Head - pale porcelain skin ===
+  ctx.fillStyle = '#FFF0F0';
+  ctx.beginPath();
+  ctx.ellipse(0, -12, 17, 19, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Jaw contour (slightly pointed chin like Disney Elsa)
+  ctx.fillStyle = '#FFF0F0';
+  ctx.beginPath();
+  ctx.moveTo(-12, -4);
+  ctx.quadraticCurveTo(-10, 6, 0, 9);
+  ctx.quadraticCurveTo(10, 6, 12, -4);
+  ctx.fill();
+
+  // === Hair - platinum blonde, swept-back with braid ===
+  // Main hair volume (top and back)
   ctx.fillStyle = '#F5E6A0';
-  // Main hair top
   ctx.beginPath();
-  ctx.arc(0, -10, 19, Math.PI * 0.75, Math.PI * 2.25);
+  ctx.ellipse(0, -16, 19, 16, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Bangs
-  ctx.beginPath();
-  ctx.ellipse(-6, -22, 10, 6, -0.2, 0, Math.PI);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(4, -23, 8, 5, 0.2, 0, Math.PI);
-  ctx.fill();
-  // Side hair
+
+  // Hair swept back (Elsa's signature style)
   ctx.fillStyle = '#EDD98A';
   ctx.beginPath();
-  ctx.ellipse(-18, -4, 5, 12, -0.2, 0, Math.PI * 2);
+  ctx.moveTo(-16, -14);
+  ctx.quadraticCurveTo(-18, -28, -4, -30);
+  ctx.quadraticCurveTo(6, -32, 16, -26);
+  ctx.quadraticCurveTo(20, -18, 18, -12);
+  ctx.lineTo(16, -8);
+  ctx.quadraticCurveTo(8, -20, 0, -22);
+  ctx.quadraticCurveTo(-8, -20, -14, -10);
+  ctx.closePath();
   ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(18, -4, 5, 12, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  // Braid (over left shoulder)
+
+  // Bangs - side-swept like Frozen Elsa
   ctx.fillStyle = '#F5E6A0';
   ctx.beginPath();
-  ctx.ellipse(-20, 10, 4, 8, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(-22, 22, 3.5, 7, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(-23, 33, 3, 6, -0.1, 0, Math.PI * 2);
+  ctx.moveTo(-14, -16);
+  ctx.quadraticCurveTo(-8, -22, 2, -24);
+  ctx.quadraticCurveTo(10, -26, 16, -20);
+  ctx.quadraticCurveTo(12, -14, 6, -14);
+  ctx.quadraticCurveTo(0, -16, -4, -12);
+  ctx.quadraticCurveTo(-10, -10, -16, -12);
+  ctx.closePath();
   ctx.fill();
 
-  // Eyes - large, ice blue
+  // Side hair strands
+  ctx.fillStyle = '#EDD98A';
+  ctx.beginPath();
+  ctx.ellipse(-17, -2, 4, 14, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Braid over left shoulder (Elsa signature)
+  ctx.fillStyle = '#F5E6A0';
+  // Braid segments
+  const braidX = -19;
+  for (let i = 0; i < 5; i++) {
+    const by = 6 + i * 9;
+    const bx = braidX - i * 0.5;
+    const r = 4 - i * 0.3;
+    ctx.beginPath();
+    ctx.ellipse(bx, by, r, 5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Braid cross pattern
+    ctx.fillStyle = '#EDD98A';
+    ctx.beginPath();
+    ctx.ellipse(bx + 1.5, by + 2, r * 0.6, 3, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F5E6A0';
+  }
+  // Braid tie
+  ctx.fillStyle = '#B3E5FC';
+  ctx.beginPath();
+  ctx.arc(braidX - 2.5, 50, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // === Eyes - large, Disney-style with detailed iris ===
+  // Eye whites (larger, more almond-shaped)
   ctx.fillStyle = '#FFF';
   ctx.beginPath();
-  ctx.ellipse(-6, -11, 4.5, 5, 0, 0, Math.PI * 2);
-  ctx.ellipse(6, -11, 4.5, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(-6, -12, 5.5, 6, -0.05, 0, Math.PI * 2);
   ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(6, -12, 5.5, 6, 0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Iris - ice blue gradient effect
+  ctx.fillStyle = '#4FC3F7';
+  ctx.beginPath();
+  ctx.arc(-6, -11, 3.8, 0, Math.PI * 2);
+  ctx.arc(6, -11, 3.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Iris inner ring
   ctx.fillStyle = '#29B6F6';
   ctx.beginPath();
-  ctx.arc(-6, -10, 3, 0, Math.PI * 2);
-  ctx.arc(6, -10, 3, 0, Math.PI * 2);
+  ctx.arc(-6, -11, 2.8, 0, Math.PI * 2);
+  ctx.arc(6, -11, 2.8, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#0277BD';
+
+  // Pupil
+  ctx.fillStyle = '#0D47A1';
   ctx.beginPath();
-  ctx.arc(-6, -10, 1.5, 0, Math.PI * 2);
-  ctx.arc(6, -10, 1.5, 0, Math.PI * 2);
+  ctx.arc(-6, -11, 1.8, 0, Math.PI * 2);
+  ctx.arc(6, -11, 1.8, 0, Math.PI * 2);
   ctx.fill();
-  // Eye shine
+
+  // Eye shine (two highlights per eye - Disney style)
   ctx.fillStyle = '#FFF';
   ctx.beginPath();
-  ctx.arc(-5, -12, 1.2, 0, Math.PI * 2);
-  ctx.arc(7, -12, 1.2, 0, Math.PI * 2);
+  ctx.arc(-4.5, -13, 1.5, 0, Math.PI * 2);
+  ctx.arc(7.5, -13, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-7, -9.5, 0.8, 0, Math.PI * 2);
+  ctx.arc(5, -9.5, 0.8, 0, Math.PI * 2);
   ctx.fill();
 
-  // Eyelashes
-  ctx.strokeStyle = '#555';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(-6, -11, 5, Math.PI * 1.15, Math.PI * 1.85);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(6, -11, 5, Math.PI * 1.15, Math.PI * 1.85);
-  ctx.stroke();
-
-  // Eyebrows
-  ctx.strokeStyle = '#C8B060';
+  // Upper eyelid line (thick, defined like Disney)
+  ctx.strokeStyle = '#4A3728';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(-6, -16, 6, Math.PI * 1.2, Math.PI * 1.8);
+  ctx.ellipse(-6, -12, 5.5, 6, -0.05, Math.PI * 1.05, Math.PI * 1.95);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(6, -16, 6, Math.PI * 1.2, Math.PI * 1.8);
+  ctx.ellipse(6, -12, 5.5, 6, 0.05, Math.PI * 1.05, Math.PI * 1.95);
   ctx.stroke();
 
-  // Nose
+  // Eyelashes (longer, more dramatic)
+  ctx.strokeStyle = '#4A3728';
+  ctx.lineWidth = 1.2;
+  // Left eye lashes
+  ctx.beginPath();
+  ctx.moveTo(-11, -14); ctx.lineTo(-12.5, -16);
+  ctx.moveTo(-9, -16); ctx.lineTo(-10, -18.5);
+  ctx.moveTo(-6, -17.5); ctx.lineTo(-6, -19.5);
+  ctx.stroke();
+  // Right eye lashes
+  ctx.beginPath();
+  ctx.moveTo(11, -14); ctx.lineTo(12.5, -16);
+  ctx.moveTo(9, -16); ctx.lineTo(10, -18.5);
+  ctx.moveTo(6, -17.5); ctx.lineTo(6, -19.5);
+  ctx.stroke();
+
+  // Eyebrows - arched, elegant
+  ctx.strokeStyle = '#C8B060';
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-10, -19);
+  ctx.quadraticCurveTo(-6, -22, -2, -19.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(10, -19);
+  ctx.quadraticCurveTo(6, -22, 2, -19.5);
+  ctx.stroke();
+
+  // === Nose - small, delicate Disney nose ===
   ctx.strokeStyle = '#E8C0C0';
   ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.arc(0, -5, 2, 0.3, Math.PI - 0.3);
+  ctx.moveTo(-1, -6);
+  ctx.quadraticCurveTo(0, -3, 1, -4);
   ctx.stroke();
 
-  // Lips - rosy
+  // === Lips - rosy, Disney-style ===
+  // Upper lip
+  ctx.fillStyle = '#E07070';
+  ctx.beginPath();
+  ctx.moveTo(-4, -1);
+  ctx.quadraticCurveTo(-2, -2.5, 0, -1.5);
+  ctx.quadraticCurveTo(2, -2.5, 4, -1);
+  ctx.quadraticCurveTo(2, 0.5, 0, 1);
+  ctx.quadraticCurveTo(-2, 0.5, -4, -1);
+  ctx.closePath();
+  ctx.fill();
+  // Lower lip
   ctx.fillStyle = '#E88B8B';
   ctx.beginPath();
-  ctx.ellipse(0, -1, 4, 2, 0, 0, Math.PI * 2);
+  ctx.moveTo(-3.5, -0.5);
+  ctx.quadraticCurveTo(0, 3, 3.5, -0.5);
+  ctx.quadraticCurveTo(0, 1.5, -3.5, -0.5);
   ctx.fill();
-  ctx.fillStyle = '#F0A0A0';
+  // Lip shine
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.beginPath();
-  ctx.ellipse(0, -1.5, 3.5, 1, 0, 0, Math.PI);
+  ctx.ellipse(0, -1, 1.5, 0.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Blush
+  // === Blush ===
   ctx.fillStyle = 'rgba(255, 150, 180, 0.2)';
   ctx.beginPath();
-  ctx.ellipse(-10, -5, 5, 3, 0, 0, Math.PI * 2);
-  ctx.ellipse(10, -5, 5, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(-10, -6, 5, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(10, -6, 5, 3, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Crown/tiara
+  // === Crown/tiara - ice crystal tiara ===
   ctx.fillStyle = '#B3E5FC';
   ctx.strokeStyle = '#4fc3f7';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(-8, -26);
-  ctx.lineTo(-6, -32);
-  ctx.lineTo(-2, -28);
-  ctx.lineTo(0, -34);
-  ctx.lineTo(2, -28);
-  ctx.lineTo(6, -32);
-  ctx.lineTo(8, -26);
+  ctx.moveTo(-10, -26);
+  ctx.lineTo(-7, -30);
+  ctx.lineTo(-4, -27);
+  ctx.lineTo(-2, -33);
+  ctx.lineTo(0, -36);
+  ctx.lineTo(2, -33);
+  ctx.lineTo(4, -27);
+  ctx.lineTo(7, -30);
+  ctx.lineTo(10, -26);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
+  // Tiara gem
+  ctx.fillStyle = '#E1F5FE';
+  ctx.beginPath();
+  ctx.arc(0, -31, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#4fc3f7';
+  ctx.beginPath();
+  ctx.arc(0, -31, 1.2, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Snowflake on dress
+  // Snowflake detail on dress
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('❄️', 0, 35);
