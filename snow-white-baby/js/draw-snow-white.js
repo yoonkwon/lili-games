@@ -56,7 +56,7 @@ export function drawSnowWhiteMom(ctx, x, y, scale = 1) {
   }
 
   const drawW = 100 * scale;
-  const drawH = 140 * scale;
+  const drawH = 150 * scale;
 
   ctx.save();
   ctx.drawImage(img, x - drawW / 2, y - drawH * 0.35, drawW, drawH);

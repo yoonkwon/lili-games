@@ -1,91 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
-    <radialGradient id="bSkinS" cx="50%" cy="45%" r="50%">
-      <stop offset="0%" stop-color="#FFF0E6"/>
-      <stop offset="100%" stop-color="#FFE4C4"/>
+    <radialGradient id="babySkin" cx="0.5" cy="0.45" r="0.5">
+      <stop offset="0%" stop-color="#FFF8F5"/>
+      <stop offset="100%" stop-color="#FFE8E0"/>
     </radialGradient>
-    <linearGradient id="bHairS" x1="20%" y1="0%" x2="80%" y2="100%">
-      <stop offset="0%" stop-color="#2C2C54"/>
-      <stop offset="100%" stop-color="#1A1A2E"/>
-    </linearGradient>
-    <linearGradient id="bEyeS" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#5A2D0C"/>
-      <stop offset="50%" stop-color="#8B4513"/>
-      <stop offset="100%" stop-color="#A0622A"/>
-    </linearGradient>
-    <radialGradient id="bBlushS" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FF9999" stop-opacity="0.45"/>
-      <stop offset="100%" stop-color="#FF9999" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="tearGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#CCE5FF"/>
-      <stop offset="100%" stop-color="#88CCFF"/>
-    </linearGradient>
   </defs>
-
-  <!-- Body -->
-  <path d="M38 82 Q34 96 30 114 L90 114 Q86 96 82 82 Z" fill="#B8D4F0" stroke="#90B8D8" stroke-width="0.5" stroke-linejoin="round"/>
-  <ellipse cx="60" cy="80" rx="16" ry="6" fill="white" stroke="#E0D8D0" stroke-width="0.4"/>
-  <rect x="55" y="70" width="10" height="12" rx="4" fill="url(#bSkinS)"/>
-
-  <!-- Head -->
-  <circle cx="60" cy="40" r="34" fill="url(#bSkinS)"/>
-
-  <!-- Hair -->
-  <path d="M26 38 Q24 10 38 2 Q50 -4 60 -5 Q70 -4 82 2 Q96 10 94 38 Q96 52 94 64 L91 62 Q92 50 92 40 Q92 16 80 6 Q70 -1 60 -2 Q50 -1 40 6 Q28 16 28 40 Q28 50 29 62 L26 64 Q24 52 26 38 Z" fill="url(#bHairS)"/>
-  <path d="M28 34 Q26 16 38 6 Q46 0 54 -3 L50 6 Q40 14 36 28 Q32 40 32 54 Q30 58 28 56 Q26 46 28 34 Z" fill="url(#bHairS)"/>
-  <path d="M28 54 Q24 60 26 64 Q30 66 33 60 Q34 56 32 54" fill="#1A1A2E"/>
-  <path d="M92 34 Q94 16 82 6 Q74 0 66 -3 L70 6 Q80 14 84 28 Q88 40 88 54 Q90 58 92 56 Q94 46 92 34 Z" fill="url(#bHairS)"/>
-  <path d="M92 54 Q96 60 94 64 Q90 66 87 60 Q86 56 88 54" fill="#1A1A2E"/>
-  <path d="M30 22 Q34 4 48 -2 Q54 -5 60 -6 Q66 -5 72 -2 Q86 4 90 22 Q80 8 60 2 Q40 8 30 22 Z" fill="#2C2C54"/>
-
-  <!-- Headband + bow -->
-  <path d="M28 22 Q34 6 48 -1 Q54 -5 60 -6 Q66 -5 72 -1 Q86 6 92 22" fill="none" stroke="#E63946" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M60 -4 Q52 -12 50 -6 Q48 0 54 4 Q58 0 60 -4 Z" fill="#E63946"/>
-  <path d="M60 -4 Q68 -12 70 -6 Q72 0 66 4 Q62 0 60 -4 Z" fill="#E63946"/>
-  <circle cx="60" cy="-4" r="2.5" fill="#F04858"/>
-
-  <!-- Sad eyebrows (inner ends raised) -->
-  <path d="M40 37 Q45 40 51 38" fill="none" stroke="#4A3728" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
-  <path d="M69 38 Q75 40 80 37" fill="none" stroke="#4A3728" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
-
-  <!-- Left eye (big, watery) -->
-  <ellipse cx="48" cy="46" rx="10" ry="12" fill="#FFF8F0"/>
-  <ellipse cx="49" cy="47" rx="7.5" ry="9" fill="url(#bEyeS)"/>
-  <circle cx="49" cy="48" r="4" fill="#2D1B0E"/>
-  <circle cx="45" cy="42" r="3.5" fill="white" opacity="0.95"/>
-  <circle cx="53" cy="52" r="1.5" fill="white" opacity="0.5"/>
-  <!-- Watery sheen -->
-  <path d="M39 52 Q48 56 57 52" fill="#CCE5FF" opacity="0.2"/>
-  <path d="M38 42 Q44 36 49 35 Q54 36 58 42" stroke="#4A3728" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-  <line x1="39" y1="41" x2="37" y2="38" stroke="#4A3728" stroke-width="1" stroke-linecap="round"/>
-
-  <!-- Right eye -->
-  <ellipse cx="72" cy="46" rx="10" ry="12" fill="#FFF8F0"/>
-  <ellipse cx="71" cy="47" rx="7.5" ry="9" fill="url(#bEyeS)"/>
-  <circle cx="71" cy="48" r="4" fill="#2D1B0E"/>
-  <circle cx="67" cy="42" r="3.5" fill="white" opacity="0.95"/>
-  <circle cx="75" cy="52" r="1.5" fill="white" opacity="0.5"/>
-  <path d="M63 52 Q72 56 81 52" fill="#CCE5FF" opacity="0.2"/>
-  <path d="M62 42 Q67 36 71 35 Q76 36 82 42" stroke="#4A3728" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-  <line x1="81" y1="41" x2="83" y2="38" stroke="#4A3728" stroke-width="1" stroke-linecap="round"/>
-
-  <!-- Tears -->
-  <path d="M43 56 Q42 62 43 68 Q44 70 45 68 Q46 62 45 56 Z" fill="url(#tearGrad)" opacity="0.6"/>
-  <path d="M75 56 Q74 62 75 68 Q76 70 77 68 Q78 62 77 56 Z" fill="url(#tearGrad)" opacity="0.6"/>
-  <ellipse cx="43" cy="72" rx="1.5" ry="2" fill="#88CCFF" opacity="0.35"/>
-
+  <circle cx="60" cy="60" r="45" fill="url(#babySkin)"/>
+  <!-- Hair - black bob tuft -->
+  <path d="M42,22 Q48,8 60,6 Q72,8 78,22 Q72,14 60,12 Q48,14 42,22Z" fill="#1A1A2E"/>
+  <path d="M30,35 Q28,28 35,24 Q32,30 32,36Z" fill="#2C2C54"/>
+  <path d="M90,35 Q92,28 85,24 Q88,30 88,36Z" fill="#2C2C54"/>
+  <!-- Tiny red headband -->
+  <path d="M36,26 Q44,12 60,8 Q76,12 84,26" fill="none" stroke="#CC2233" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M60,10 Q54,4 52,8 Q54,12 58,12Z" fill="#CC2233"/>
+  <path d="M60,10 Q66,4 68,8 Q66,12 62,12Z" fill="#CC2233"/>
+  <circle cx="60" cy="10" r="2" fill="#DD3344"/>
+  <!-- Sad eyes (big, teary) -->
+  <ellipse cx="47" cy="55" rx="9" ry="10" fill="white"/>
+  <ellipse cx="47" cy="56" rx="7" ry="8" fill="#A07850"/>
+  <circle cx="47" cy="57" r="4" fill="#3A2010"/>
+  <circle cx="44" cy="53" r="2.5" fill="white"/>
+  <ellipse cx="73" cy="55" rx="9" ry="10" fill="white"/>
+  <ellipse cx="73" cy="56" rx="7" ry="8" fill="#A07850"/>
+  <circle cx="73" cy="57" r="4" fill="#3A2010"/>
+  <circle cx="70" cy="53" r="2.5" fill="white"/>
+  <!-- Tear drops -->
+  <ellipse cx="40" cy="68" rx="2" ry="3" fill="rgba(120,180,255,0.5)"/>
+  <ellipse cx="80" cy="70" rx="2" ry="3" fill="rgba(120,180,255,0.5)"/>
+  <!-- Cheeks -->
+  <ellipse cx="36" cy="66" rx="8" ry="5" fill="rgba(255,160,170,0.3)"/>
+  <ellipse cx="84" cy="66" rx="8" ry="5" fill="rgba(255,160,170,0.3)"/>
   <!-- Nose -->
-  <circle cx="60" cy="55" r="1.5" fill="#E8B8A0"/>
-
-  <!-- Blush -->
-  <circle cx="36" cy="56" r="8" fill="url(#bBlushS)"/>
-  <circle cx="84" cy="56" r="8" fill="url(#bBlushS)"/>
-
+  <circle cx="60" cy="65" r="2" fill="rgba(230,180,160,0.4)"/>
   <!-- Sad mouth -->
-  <path d="M55 63 Q58 66 60 66.5 Q62 66 65 63" fill="none" stroke="#E07A7A" stroke-width="1" stroke-linecap="round"/>
-
-  <!-- Arms down -->
-  <path d="M36 86 Q30 94 28 104" fill="none" stroke="#FFE4C4" stroke-width="5" stroke-linecap="round"/>
-  <path d="M84 86 Q90 94 92 104" fill="none" stroke="#FFE4C4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M50,80 Q56,74 60,74 Q64,74 70,80" stroke="#C08080" stroke-width="2" fill="none" stroke-linecap="round"/>
 </svg>
