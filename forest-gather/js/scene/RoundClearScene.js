@@ -1,8 +1,6 @@
 /**
  * Round clear celebration scene
  */
-import { COMPANIONS, ROUNDS } from '../config.js';
-
 export class RoundClearScene {
   constructor(w, h, stats, nextRound) {
     this.w = w;
@@ -10,17 +8,6 @@ export class RoundClearScene {
     this.stats = stats;
     this.nextRound = nextRound;
     this.phase = 0;
-    this.showCompanion = false;
-
-    // Check if next round unlocks a companion
-    const nextConfig = ROUNDS[Math.min(nextRound, ROUNDS.length - 1)];
-    if (nextConfig && nextConfig.unlockCompanion) {
-      const comp = COMPANIONS[nextConfig.unlockCompanion];
-      this.newCompanion = comp;
-      this.showCompanion = true;
-    } else {
-      this.newCompanion = null;
-    }
 
     // Stars
     const ratio = stats.totalCollected / stats.target;
@@ -130,28 +117,23 @@ export class RoundClearScene {
       const statsY = h * 0.38;
       ctx.fillText(`🧺 수집: ${this.stats.totalCollected}개`, w / 2, statsY);
       ctx.fillText(`🏆 점수: ${this.stats.score}`, w / 2, statsY + 35);
-      ctx.fillText(`📍 라운드 ${this.stats.round}`, w / 2, statsY + 70);
+      if (this.stats.maxCombo >= 3) {
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(`x${this.stats.maxCombo} 최대 콤보!`, w / 2, statsY + 70);
+        ctx.fillStyle = '#FFF';
+      }
+      ctx.fillText(`📍 라운드 ${this.stats.round}`, w / 2, statsY + 105);
     }
 
-    // New companion unlock
-    if (this.showCompanion && this.newCompanion && this.phase > 1.5) {
+    // Companion info
+    if (this.stats.companions && this.phase > 1.5) {
       const compY = h * 0.6;
-      const compAlpha = Math.min(1, (this.phase - 1.5) * 2);
       ctx.save();
-      ctx.globalAlpha = compAlpha;
-
-      ctx.fillStyle = 'rgba(255,215,0,0.2)';
-      ctx.beginPath();
-      ctx.roundRect(w / 2 - 130, compY - 30, 260, 70, 16);
-      ctx.fill();
-
-      ctx.font = 'Bold 22px sans-serif';
-      ctx.fillStyle = '#FFD700';
+      ctx.globalAlpha = Math.min(1, (this.phase - 1.5) * 2);
+      ctx.font = '18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${this.newCompanion.emoji} ${this.newCompanion.name} 합류!`, w / 2, compY);
-      ctx.font = '16px sans-serif';
       ctx.fillStyle = '#C8E6C9';
-      ctx.fillText(this.newCompanion.desc, w / 2, compY + 28);
+      ctx.fillText(`동료: ${this.stats.companions}`, w / 2, compY);
       ctx.restore();
     }
 

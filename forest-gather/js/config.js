@@ -11,6 +11,7 @@ export const ROUNDS = [
     target: 15,
     bgColor: '#87CEEB',
     groundColor: '#90EE90',
+    modifier: null, // tutorial round
     items: [
       { type: 'flower', emoji: '🌷', name: '튤립', rarity: 'common' },
       { type: 'flower2', emoji: '🌻', name: '해바라기', rarity: 'common' },
@@ -19,7 +20,6 @@ export const ROUNDS = [
       { type: 'clover', emoji: '🍀', name: '네잎클로버', rarity: 'rare' },
       { type: 'fairy_flower', emoji: '💮', name: '요정꽃', rarity: 'legendary' },
     ],
-    unlockCompanion: null,
   },
   {
     id: 2,
@@ -28,6 +28,8 @@ export const ROUNDS = [
     target: 20,
     bgColor: '#4a7c59',
     groundColor: '#3d6b4f',
+    modifier: 'drifting', // items slowly drift around
+    modifierDesc: '아이템이 둥둥 떠다녀요!',
     items: [
       { type: 'mushroom', emoji: '🍄', name: '버섯', rarity: 'common' },
       { type: 'acorn', emoji: '🌰', name: '도토리', rarity: 'common' },
@@ -36,7 +38,6 @@ export const ROUNDS = [
       { type: 'owl_feather', emoji: '🪶', name: '부엉이 깃털', rarity: 'rare' },
       { type: 'forest_gem', emoji: '💎', name: '숲의 보석', rarity: 'legendary' },
     ],
-    unlockCompanion: 'bori',
   },
   {
     id: 3,
@@ -45,6 +46,8 @@ export const ROUNDS = [
     target: 25,
     bgColor: '#87CEEB',
     groundColor: '#f4d793',
+    modifier: 'shy', // some items flee when player approaches
+    modifierDesc: '아이템이 도망가요! 빠르게 잡자!',
     items: [
       { type: 'shell', emoji: '🐚', name: '조개', rarity: 'common' },
       { type: 'starfish', emoji: '⭐', name: '불가사리', rarity: 'shiny' },
@@ -53,7 +56,6 @@ export const ROUNDS = [
       { type: 'pearl', emoji: '🫧', name: '진주', rarity: 'rare' },
       { type: 'mermaid_tear', emoji: '💧', name: '인어의 눈물', rarity: 'legendary' },
     ],
-    unlockCompanion: 'jopssal',
   },
   {
     id: 4,
@@ -62,6 +64,8 @@ export const ROUNDS = [
     target: 30,
     bgColor: '#b3d9ff',
     groundColor: '#a8a8a8',
+    modifier: 'fading', // items fade out over time, collect fast
+    modifierDesc: '아이템이 사라져요! 서둘러!',
     items: [
       { type: 'star_piece', emoji: '⭐', name: '별조각', rarity: 'common' },
       { type: 'rainbow_flower', emoji: '🌈', name: '무지개꽃', rarity: 'shiny' },
@@ -70,7 +74,6 @@ export const ROUNDS = [
       { type: 'thunder_stone', emoji: '⚡', name: '번개돌', rarity: 'rare' },
       { type: 'dragon_scale', emoji: '🐉', name: '용의 비늘', rarity: 'legendary' },
     ],
-    unlockCompanion: 'gosun',
   },
   {
     id: 5,
@@ -79,6 +82,8 @@ export const ROUNDS = [
     target: 35,
     bgColor: '#1a1a3e',
     groundColor: '#2d2d5e',
+    modifier: 'swarm', // items spawn in clusters that move together
+    modifierDesc: '아이템 무리가 몰려와요!',
     items: [
       { type: 'shooting_star', emoji: '🌠', name: '별똥별', rarity: 'common' },
       { type: 'moon_piece', emoji: '🌙', name: '달조각', rarity: 'shiny' },
@@ -87,9 +92,57 @@ export const ROUNDS = [
       { type: 'constellation', emoji: '✨', name: '별자리 조각', rarity: 'rare' },
       { type: 'cosmic_egg', emoji: '🥚', name: '우주알', rarity: 'legendary' },
     ],
-    unlockCompanion: 'ikdol',
   },
 ];
+
+// Magnet pull effect
+export const MAGNET = {
+  pullRadius: 150,     // items within this range get pulled
+  pullSpeed: 200,      // pull speed in px/s
+  feverPullRadius: 250, // expanded during fever
+  feverPullSpeed: 400,
+};
+
+// Magic spells (cast when gauge is full)
+export const SPELLS = {
+  harvest: {
+    name: '대수확',
+    emoji: '🌾',
+    desc: '화면 내 모든 아이템을 끌어모아요!',
+    cost: 20, // items needed to charge
+    color: '#FFD700',
+  },
+  blizzard: {
+    name: '얼음 바람',
+    emoji: '❄️',
+    desc: '도망가는 아이템을 모두 얼려요!',
+    cost: 15,
+    color: '#87CEEB',
+  },
+  timewarp: {
+    name: '시간 마법',
+    emoji: '⏳',
+    desc: '15초 추가! 모든 아이템이 느려져요!',
+    cost: 25,
+    color: '#9B59B6',
+  },
+  starburst: {
+    name: '별똥비',
+    emoji: '🌠',
+    desc: '희귀 아이템이 쏟아져요!',
+    cost: 30,
+    color: '#FF6B6B',
+  },
+};
+
+// Combo system
+export const COMBO = {
+  window: 2.0,     // seconds to keep combo alive between collections
+  feverThreshold: 5, // combo count to trigger fever mode
+  feverDuration: 6,  // seconds of fever mode
+  feverRangeBonus: 30,
+  feverSpawnMult: 2.5,
+};
 
 // Item rarity config
 export const RARITY = {
@@ -97,6 +150,21 @@ export const RARITY = {
   shiny:     { value: 2, chance: 0.25, color: '#FFD700', glow: true },
   rare:      { value: 3, chance: 0.12, color: '#9B59B6', glow: true },
   legendary: { value: 5, chance: 0.03, color: '#FF6B6B', glow: true },
+};
+
+// Item effects on collection (applied to player temporarily)
+export const ITEM_EFFECTS = {
+  butterfly:     { type: 'range',  amount: 15, duration: 8, emoji: '🦋' },
+  firefly:       { type: 'range',  amount: 20, duration: 10, emoji: '✨' },
+  clover:        { type: 'range',  amount: 25, duration: 12, emoji: '🍀' },
+  starfish:      { type: 'speed',  amount: 30, duration: 8, emoji: '⭐' },
+  rainbow_flower:{ type: 'range',  amount: 30, duration: 10, emoji: '🌈' },
+  crystal:       { type: 'speed',  amount: 50, duration: 8, emoji: '🔮' },
+  fairy_flower:  { type: 'both',   amount: 20, duration: 15, emoji: '💮' },
+  forest_gem:    { type: 'both',   amount: 25, duration: 12, emoji: '💎' },
+  mermaid_tear:  { type: 'range',  amount: 40, duration: 15, emoji: '💧' },
+  dragon_scale:  { type: 'speed',  amount: 60, duration: 10, emoji: '🐉' },
+  cosmic_egg:    { type: 'both',   amount: 35, duration: 15, emoji: '🥚' },
 };
 
 // Companion definitions
@@ -191,6 +259,19 @@ export const EVENTS = [
   { type: 'gift',        emoji: '🎁', name: '선물 상자!',  desc: '터치하면 보너스!', chance: 0.05, duration: 0 },
 ];
 
+// Companion discovery order (found during exploration, not per-round)
+export const COMPANION_DISCOVERY_ORDER = ['bori', 'jopssal', 'gosun', 'ikdol'];
+// How often a new companion NPC can appear on the map (seconds since game start)
+export const COMPANION_SPAWN_INTERVAL = 30; // every ~30s a new one may appear
+
 // Round time
-export const ROUND_TIME = 300; // 5 minutes in seconds
-export const ROUND_EXTEND = 300; // extension time
+export const ROUND_TIME = 90; // 90 seconds per round - keeps tension high
+export const ROUND_CLEAR_BONUS = 30; // bonus seconds on round clear
+
+// Time bonus for collecting items (seconds added)
+export const COLLECT_TIME_BONUS = {
+  common:    1,
+  shiny:     2,
+  rare:      4,
+  legendary: 8,
+};

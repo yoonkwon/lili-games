@@ -1,9 +1,10 @@
 /**
- * Main gameplay scene - collection game
+ * Main gameplay scene - collection game with combo & fever system
  */
-import { ROUNDS, RARITY, ROUND_TIME, ROUND_EXTEND, DIFFICULTIES } from '../config.js';
+import { ROUNDS, RARITY, ITEM_EFFECTS, COMBO, MAGNET, SPELLS, ROUND_TIME, ROUND_CLEAR_BONUS, COLLECT_TIME_BONUS, DIFFICULTIES, COMPANIONS, COMPANION_DISCOVERY_ORDER, COMPANION_SPAWN_INTERVAL } from '../config.js';
 import { Character } from '../entity/Character.js';
 import { Companion } from '../entity/Companion.js';
+import { CompanionNPC } from '../entity/CompanionNPC.js';
 import { Item } from '../entity/Item.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
@@ -40,12 +41,17 @@ export class GameScene {
       ? new Character(this.mapWidth / 2 + 40, this.mapHeight / 2, 'lisa', diff)
       : null;
 
-    // Companions
+    // Companions (active party members)
     this.companions = [];
-    this._loadUnlockedCompanions();
+
+    // Companion discovery system
+    this.discoveryQueue = [...COMPANION_DISCOVERY_ORDER];
+    this.companionNPCs = [];
+    this.nextCompanionSpawnTime = 15 + Math.random() * 10;
 
     // Items on map
     this.items = [];
+    this._collectedCount = 0;
     this.spawnTimer = 0;
     this.spawnRate = diff.spawnRate;
     this._spawnInitialItems();
@@ -63,6 +69,27 @@ export class GameScene {
     // Score
     this.score = 0;
 
+    // Combo system
+    this.combo = 0;
+    this.comboTimer = 0; // time since last collection
+    this.maxCombo = 0;
+
+    // Fever mode
+    this.fever = false;
+    this.feverTimer = 0;
+
+    // Active buffs (from item effects)
+    this.buffs = [];
+
+    // Magic system
+    this.magicGauge = 0;
+    this.spellList = Object.keys(SPELLS);
+    this.currentSpellIdx = 0;
+    this.spellCasting = false;
+    this.spellCastTimer = 0;
+    this.slowMotion = false;
+    this.slowTimer = 0;
+
     // Items collected by rarity for stats
     this.rarityCount = { common: 0, shiny: 0, rare: 0, legendary: 0 };
 
@@ -70,41 +97,39 @@ export class GameScene {
     this.bgDecos = this._generateDecos();
 
     // State
-    this.state = 'playing'; // playing, roundClear, timesUp
+    this.state = 'playing';
 
     // Show round intro
-    this.message.show(`${this.roundConfig.emoji} ${this.roundConfig.name} - ${this.target}개 모으자!`, 3);
+    this._showRoundIntro();
+  }
+
+  _showRoundIntro() {
+    let msg = `${this.roundConfig.emoji} ${this.roundConfig.name} - ${this.target}개 모으자!`;
+    if (this.roundConfig.modifierDesc) {
+      msg += `\n${this.roundConfig.modifierDesc}`;
+    }
+    this.message.show(msg, 4);
   }
 
   _getRoundConfig() {
     const idx = Math.min(this.round, ROUNDS.length - 1);
     const config = { ...ROUNDS[idx] };
-    // For rounds beyond defined ones, scale target
     if (this.round >= ROUNDS.length) {
-      config.target = 35 + (this.round - ROUNDS.length + 1) * 5;
-      config.name = '무지개 세계 ' + (this.round - ROUNDS.length + 2);
+      const extra = this.round - ROUNDS.length + 1;
+      config.target = 35 + extra * 5;
+      config.name = '무지개 세계 ' + (extra + 1);
       config.emoji = '🌈';
+      // Cycle through modifiers for endless rounds
+      const mods = ['drifting', 'shy', 'fading', 'swarm'];
+      config.modifier = mods[(extra - 1) % mods.length];
+      config.modifierDesc = {
+        drifting: '아이템이 둥둥 떠다녀요!',
+        shy: '아이템이 도망가요! 빠르게 잡자!',
+        fading: '아이템이 사라져요! 서둘러!',
+        swarm: '아이템 무리가 몰려와요!',
+      }[config.modifier];
     }
     return config;
-  }
-
-  _loadUnlockedCompanions() {
-    try {
-      const data = localStorage.getItem('forestGather_companions');
-      if (data) {
-        const unlocked = JSON.parse(data);
-        for (const type of unlocked) {
-          this.companions.push(new Companion(type, this.player));
-        }
-      }
-    } catch { /* ignore */ }
-  }
-
-  _saveUnlockedCompanions() {
-    try {
-      const types = this.companions.map(c => c.type);
-      localStorage.setItem('forestGather_companions', JSON.stringify(types));
-    } catch { /* ignore */ }
   }
 
   _spawnInitialItems() {
@@ -118,9 +143,7 @@ export class GameScene {
     const x = 40 + Math.random() * (this.mapWidth - 80);
     const y = 100 + Math.random() * (this.mapHeight - 140);
 
-    // Pick random item from round config
     const itemDefs = this.roundConfig.items;
-    // Determine rarity by roll
     const roll = Math.random();
     let rarity;
     if (roll < RARITY.legendary.chance) rarity = 'legendary';
@@ -128,31 +151,52 @@ export class GameScene {
     else if (roll < RARITY.legendary.chance + RARITY.rare.chance + RARITY.shiny.chance) rarity = 'shiny';
     else rarity = 'common';
 
-    // Pick item matching rarity, or any
+    // Fever mode: upgrade rarity
+    if (this.fever) {
+      if (rarity === 'common' && Math.random() < 0.4) rarity = 'shiny';
+      else if (rarity === 'shiny' && Math.random() < 0.3) rarity = 'rare';
+    }
+
     const matching = itemDefs.filter(d => d.rarity === rarity);
     const def = matching.length > 0 ? matching[Math.floor(Math.random() * matching.length)]
       : itemDefs[Math.floor(Math.random() * itemDefs.length)];
 
     const item = new Item(x, y, def, rarity);
 
-    // Some items hidden (10% chance)
+    // Apply round modifier to item
+    if (this.roundConfig.modifier) {
+      item.setModifier(this.roundConfig.modifier);
+    }
+
     if (Math.random() < 0.1) {
       item.hidden = true;
     }
 
-    // Rainbow event: upgrade rarity
     if (this.activeEvent && this.activeEvent.type === 'rainbow') {
       if (rarity === 'common') {
-        item.rarity = 'shiny';
-        item.value = RARITY.shiny.value;
-        item.color = RARITY.shiny.color;
-        item.glow = true;
+        item.upgradeRarity('shiny');
       }
     }
 
-    // Star rain: double spawn (handled by caller)
-
     this.items.push(item);
+  }
+
+  /** Spawn a cluster of items near a point (for swarm modifier) */
+  _spawnSwarmCluster() {
+    const cx = 80 + Math.random() * (this.mapWidth - 160);
+    const cy = 120 + Math.random() * (this.mapHeight - 200);
+    const count = 4 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      const x = cx + (Math.random() - 0.5) * 60;
+      const y = cy + (Math.random() - 0.5) * 60;
+      const itemDefs = this.roundConfig.items;
+      const def = itemDefs[Math.floor(Math.random() * itemDefs.length)];
+      const item = new Item(x, y, def, def.rarity);
+      item.setModifier('swarm');
+      item.swarmCenterX = cx;
+      item.swarmCenterY = cy;
+      this.items.push(item);
+    }
   }
 
   _generateDecos() {
@@ -173,55 +217,197 @@ export class GameScene {
   handleTap(x, y) {
     if (this.state !== 'playing') return;
 
-    // Convert screen coords to map coords
+    // Check if tapping the spell button (bottom right)
+    const spellBtnX = this.screenW - 60;
+    const spellBtnY = this.screenH - 70;
+    const dx = x - spellBtnX;
+    const dy = y - spellBtnY;
+    if (Math.sqrt(dx * dx + dy * dy) < 35) {
+      if (this._isSpellReady()) {
+        this._castSpell();
+      } else {
+        // Cycle to next spell
+        this.currentSpellIdx = (this.currentSpellIdx + 1) % this.spellList.length;
+      }
+      return;
+    }
+
     const mx = x + this.camX;
     const my = y + this.camY;
 
-    // Check if tapped on an item
-    let tapped = false;
-    for (let i = this.items.length - 1; i >= 0; i--) {
-      const item = this.items[i];
-      if (item.collected || item.hidden) continue;
-      const dx = item.x - mx;
-      const dy = item.y - my;
-      if (Math.sqrt(dx * dx + dy * dy) < 35) {
-        this._collectItem(item, i);
-        tapped = true;
-        break;
-      }
+    this.player.moveTo(mx, my);
+    if (this.secondChar) {
+      this.secondChar.moveTo(mx + 30, my + 10);
     }
+  }
 
-    // If not tapping item, move character
-    if (!tapped) {
-      this.player.moveTo(mx, my);
-      if (this.secondChar) {
-        this.secondChar.moveTo(mx + 30, my + 10);
-      }
+  /** Get current collection radius including buff + fever bonuses */
+  getCollectRadius() {
+    let radius = this.difficulty.collectRadius;
+    for (const buff of this.buffs) {
+      if (buff.type === 'range' || buff.type === 'both') radius += buff.amount;
     }
+    if (this.fever) radius += COMBO.feverRangeBonus;
+    return radius;
+  }
+
+  /** Get current move speed bonus from buffs */
+  getSpeedBonus() {
+    let bonus = 0;
+    for (const buff of this.buffs) {
+      if (buff.type === 'speed' || buff.type === 'both') bonus += buff.amount;
+    }
+    if (this.fever) bonus += 40; // fever speed boost
+    return bonus;
   }
 
   _collectItem(item, index) {
     if (item.collected) return;
     item.collected = true;
+    this._collectedCount++;
+
+    // Combo tracking
+    this.combo++;
+    this.comboTimer = 0;
+    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+    // Score with combo multiplier
+    const comboMult = 1 + Math.min(this.combo, 20) * 0.2; // up to x5 at 20-combo
+    const rarityMult = item.rarity === 'legendary' ? 10 : item.rarity === 'rare' ? 5 : item.rarity === 'shiny' ? 2.5 : 1;
+    const itemScore = Math.floor(item.value * 10 * rarityMult * comboMult);
+    this.score += itemScore;
+
     this.collected += item.value;
     this.totalCollected += item.value;
-    this.score += item.value * 10 * (item.rarity === 'legendary' ? 10 : item.rarity === 'rare' ? 5 : item.rarity === 'shiny' ? 2.5 : 1);
     this.rarityCount[item.rarity]++;
 
-    // Particles
     this.particles.createParticles(item.x - this.camX, item.y - this.camY, item.color, 8);
     if (item.rarity !== 'common') {
       this.particles.createStars(item.x - this.camX, item.y - this.camY, 3);
     }
 
-    // Floating text
+    // Floating text with combo info
     const valueText = item.value > 1 ? `+${item.value} ${item.emoji}` : `+1 ${item.emoji}`;
     this.particles.addFloatingText(item.x - this.camX, item.y - this.camY - 20, valueText, item.color);
 
-    // Check round clear
+    if (this.combo >= 3) {
+      const comboColor = this.combo >= COMBO.feverThreshold ? '#FF4444' : '#FFD700';
+      this.particles.addFloatingText(
+        item.x - this.camX, item.y - this.camY - 45,
+        `x${this.combo} COMBO!`, comboColor
+      );
+    }
+
+    // Time bonus on collection (extra time for combos)
+    let timeBonus = COLLECT_TIME_BONUS[item.rarity] || 1;
+    if (this.combo >= 5) timeBonus += 1; // bonus time for sustained combos
+    this.timer += timeBonus;
+    if (timeBonus >= 2) {
+      this.particles.addFloatingText(item.x - this.camX, item.y - this.camY - 40, `+${timeBonus}s`, '#7DF9FF');
+    }
+
+    // Trigger fever mode at threshold
+    if (this.combo === COMBO.feverThreshold && !this.fever) {
+      this.fever = true;
+      this.feverTimer = COMBO.feverDuration;
+      this.message.show('FEVER MODE!', 2);
+      this.particles.createStars(this.player.x - this.camX, this.player.y - this.camY, 12);
+    }
+
+    // Apply item effect (buff)
+    const effect = ITEM_EFFECTS[item.type];
+    if (effect) {
+      this.buffs.push({ type: effect.type, amount: effect.amount, remaining: effect.duration, emoji: effect.emoji });
+      const label = effect.type === 'range' ? '수집 범위 UP!'
+        : effect.type === 'speed' ? '이동 속도 UP!'
+        : '범위+속도 UP!';
+      this.message.show(`${effect.emoji} ${label}`, 2);
+    }
+
+    // Charge magic gauge
+    this.magicGauge += item.value;
+
     if (this.collected >= this.target) {
       this.state = 'roundClear';
     }
+  }
+
+  _getCurrentSpell() {
+    return SPELLS[this.spellList[this.currentSpellIdx]];
+  }
+
+  _isSpellReady() {
+    return this.magicGauge >= this._getCurrentSpell().cost;
+  }
+
+  _castSpell() {
+    const spellKey = this.spellList[this.currentSpellIdx];
+    const spell = SPELLS[spellKey];
+    this.magicGauge -= spell.cost;
+    this.message.show(`${spell.emoji} ${spell.name}! ${spell.desc}`, 3);
+    this.particles.createStars(this.screenW / 2, this.screenH / 2, 15);
+
+    if (spellKey === 'harvest') {
+      // Pull ALL visible items toward player instantly
+      for (const item of this.items) {
+        if (item.collected || item.hidden) continue;
+        item.magnetPull = true;
+        item.magnetStrength = 800;
+      }
+    } else if (spellKey === 'blizzard') {
+      // Freeze all items (stop drifting/fleeing for 8s)
+      for (const item of this.items) {
+        if (item.collected) continue;
+        item.frozen = true;
+        item.frozenTimer = 8;
+      }
+    } else if (spellKey === 'timewarp') {
+      // Add time + slow motion
+      this.timer += 15;
+      this.slowMotion = true;
+      this.slowTimer = 8;
+      this.particles.addFloatingText(this.screenW / 2, this.screenH / 2, '+15s!', '#9B59B6');
+    } else if (spellKey === 'starburst') {
+      // Spawn a burst of rare/shiny items around the player
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 * i) / 12;
+        const dist = 60 + Math.random() * 80;
+        const x = this.player.x + Math.cos(angle) * dist;
+        const y = this.player.y + Math.sin(angle) * dist;
+        const itemDefs = this.roundConfig.items;
+        const rareDefs = itemDefs.filter(d => d.rarity === 'shiny' || d.rarity === 'rare');
+        const def = rareDefs.length > 0
+          ? rareDefs[Math.floor(Math.random() * rareDefs.length)]
+          : itemDefs[Math.floor(Math.random() * itemDefs.length)];
+        const item = new Item(x, y, def, def.rarity);
+        if (this.roundConfig.modifier) item.setModifier(this.roundConfig.modifier);
+        this.items.push(item);
+      }
+    }
+  }
+
+  _spawnCompanionNPC() {
+    if (this.discoveryQueue.length === 0) return;
+    const type = this.discoveryQueue.shift();
+    let x, y, attempts = 0;
+    do {
+      x = 80 + Math.random() * (this.mapWidth - 160);
+      y = 120 + Math.random() * (this.mapHeight - 200);
+      attempts++;
+    } while (Math.sqrt((x - this.player.x) ** 2 + (y - this.player.y) ** 2) < 200 && attempts < 20);
+    this.companionNPCs.push(new CompanionNPC(type, x, y));
+  }
+
+  _addCompanion(type) {
+    const total = this.companions.length + 1;
+    const comp = new Companion(type, this.player, this.companions.length, total);
+    this.companions.push(comp);
+    for (let i = 0; i < this.companions.length; i++) {
+      this.companions[i].assignAngle(i, this.companions.length);
+    }
+    const config = COMPANIONS[type];
+    this.message.show(`${config.name} 합류! - ${config.desc}`, 4);
+    this.particles.createStars(this.player.x - this.camX, this.player.y - this.camY, 8);
   }
 
   update(dt, w, h) {
@@ -240,35 +426,87 @@ export class GameScene {
       return 'gameover';
     }
 
+    // Combo timer - break combo if too long without collection
+    this.comboTimer += dt;
+    if (this.combo > 0 && this.comboTimer > COMBO.window) {
+      this.combo = 0;
+    }
+
+    // Fever mode timer
+    if (this.fever) {
+      this.feverTimer -= dt;
+      if (this.feverTimer <= 0) {
+        this.fever = false;
+        this.feverTimer = 0;
+      }
+    }
+
+    // Update buffs
+    for (let i = this.buffs.length - 1; i >= 0; i--) {
+      this.buffs[i].remaining -= dt;
+      if (this.buffs[i].remaining <= 0) this.buffs.splice(i, 1);
+    }
+
+    // Cache buff values once per frame (avoid repeated iteration)
+    const speedBonus = this.getSpeedBonus();
+    const collectRadius = this.getCollectRadius();
+    const collectRadiusSq = collectRadius * collectRadius;
+    const rangeBonus = collectRadius - this.difficulty.collectRadius;
+
+    // Apply speed bonus to player
+    this.player.speed = this.difficulty.moveSpeed + speedBonus;
+    if (this.secondChar) this.secondChar.speed = this.difficulty.moveSpeed + speedBonus;
+
     // Player
     this.player.update(dt, this.mapWidth, this.mapHeight);
     if (this.secondChar) {
       this.secondChar.update(dt, this.mapWidth, this.mapHeight);
     }
 
-    // Auto-collect items near player
+    // Magnet pull + auto-collect: use squared distance to avoid sqrt
+    const magnetRadius = this.fever ? MAGNET.feverPullRadius : MAGNET.pullRadius;
+    const magnetRadiusSq = magnetRadius * magnetRadius;
+    const magnetSpeed = this.fever ? MAGNET.feverPullSpeed : MAGNET.pullSpeed;
+
     for (let i = this.items.length - 1; i >= 0; i--) {
       const item = this.items[i];
       if (item.collected || item.hidden) continue;
+
       const dx = item.x - this.player.x;
       const dy = item.y - this.player.y;
-      if (Math.sqrt(dx * dx + dy * dy) < this.difficulty.collectRadius) {
+      const distSq = dx * dx + dy * dy;
+
+      // Collect if within collect radius (squared comparison)
+      if (distSq < collectRadiusSq) {
         this._collectItem(item, i);
+        continue;
+      }
+
+      // Magnet pull if within magnet radius (or spell-forced)
+      if (item.magnetPull || distSq < magnetRadiusSq) {
+        const dist = Math.sqrt(distSq); // sqrt only when needed for pull direction
+        const pullStrength = item.magnetPull ? item.magnetStrength : magnetSpeed;
+        if (dist > 1) {
+          const pull = pullStrength * dt;
+          item.x -= (dx / dist) * Math.min(pull, dist - 5);
+          item.y -= (dy / dist) * Math.min(pull, dist - 5);
+        }
       }
     }
 
     // Companions
+    const speedBonusForComp = speedBonus;
     for (const comp of this.companions) {
-      comp.update(dt, this.items, (item, idx) => this._collectItem(item, idx));
+      comp.update(dt, this.items, (item, idx) => this._collectItem(item, idx), rangeBonus, speedBonusForComp, this.companions);
 
-      // Reveal hidden items (보리)
       if (comp.shouldRevealHidden()) {
+        const revealRangeSq = (comp.range * 2) ** 2;
         let revealed = 0;
         for (const item of this.items) {
           if (item.hidden && !item.collected && revealed < 3) {
             const dx = item.x - comp.x;
             const dy = item.y - comp.y;
-            if (Math.sqrt(dx * dx + dy * dy) < comp.range * 2) {
+            if (dx * dx + dy * dy < revealRangeSq) {
               item.hidden = false;
               revealed++;
               this.particles.createStars(item.x - this.camX, item.y - this.camY, 2);
@@ -276,64 +514,99 @@ export class GameScene {
           }
         }
         if (revealed > 0) {
-          this.message.show(`${comp.emoji} ${comp.name}가 숨은 아이템을 찾았어!`);
+          this.message.show(`${comp.name}가 숨은 아이템을 찾았어!`);
         }
       }
 
-      // Lucky boost (고순이) - upgrade nearby common items to shiny
       if (comp.shouldBoostLuck()) {
+        const luckRangeSq = (comp.range * 1.5) ** 2;
         let upgraded = 0;
         for (const item of this.items) {
           if (!item.collected && item.rarity === 'common' && upgraded < 2) {
             const dx = item.x - comp.x;
             const dy = item.y - comp.y;
-            if (Math.sqrt(dx * dx + dy * dy) < comp.range * 1.5) {
-              item.rarity = 'shiny';
-              item.value = RARITY.shiny.value;
-              item.color = RARITY.shiny.color;
-              item.glow = true;
+            if (dx * dx + dy * dy < luckRangeSq) {
+              item.upgradeRarity('shiny');
               upgraded++;
               this.particles.createStars(item.x - this.camX, item.y - this.camY, 3);
             }
           }
         }
         if (upgraded > 0) {
-          this.message.show(`${comp.emoji} ${comp.name}의 행운! 아이템이 반짝여!`);
+          this.message.show(`${comp.name}의 행운! 아이템이 반짝여!`);
         }
       }
     }
 
-    // Item spawning
+    // Companion NPC spawning
+    if (this.discoveryQueue.length > 0 && this.gameTime >= this.nextCompanionSpawnTime) {
+      this._spawnCompanionNPC();
+      this.nextCompanionSpawnTime = this.gameTime + COMPANION_SPAWN_INTERVAL + Math.random() * 20;
+    }
+
+    // Update companion NPCs
+    for (let i = this.companionNPCs.length - 1; i >= 0; i--) {
+      const npc = this.companionNPCs[i];
+      if (npc.update(dt, this.player.x, this.player.y)) {
+        this._addCompanion(npc.type);
+        this.companionNPCs.splice(i, 1);
+      }
+    }
+
+    // Item spawning (faster during fever)
     this.spawnTimer += dt;
-    const spawnInterval = 1 / this.spawnRate;
+    const effectiveSpawnRate = this.fever ? this.spawnRate * COMBO.feverSpawnMult : this.spawnRate;
+    const spawnInterval = 1 / effectiveSpawnRate;
     if (this.spawnTimer >= spawnInterval) {
       this.spawnTimer -= spawnInterval;
-      if (this.items.filter(i => !i.collected).length < 20 + this.round * 5) {
-        this._spawnItem();
+      const activeCount = this.items.length - this._collectedCount;
+      const maxItems = 20 + this.round * 5 + (this.fever ? 10 : 0);
+      if (activeCount < maxItems) {
+        if (this.roundConfig.modifier === 'swarm' && Math.random() < 0.3) {
+          this._spawnSwarmCluster();
+        } else {
+          this._spawnItem();
+        }
         if (this.activeEvent && this.activeEvent.type === 'star_rain') {
-          this._spawnItem(); // double spawn
+          this._spawnItem();
         }
       }
     }
 
-    // Update items
+    // Slow motion timer
+    if (this.slowMotion) {
+      this.slowTimer -= dt;
+      if (this.slowTimer <= 0) this.slowMotion = false;
+    }
+
+    // Update items (pass player position for shy modifier)
+    const itemDt = this.slowMotion ? dt * 0.3 : dt; // slow motion slows items
     for (let i = this.items.length - 1; i >= 0; i--) {
-      this.items[i].update(dt);
-      if (this.items[i].isFinished()) {
+      const item = this.items[i];
+      // Handle frozen state from blizzard
+      if (item.frozen) {
+        item.frozenTimer -= dt;
+        if (item.frozenTimer <= 0) item.frozen = false;
+        // Don't update item movement while frozen, but do update animations
+        item.phase += dt * 3;
+        if (item.spawnAnim < 1) item.spawnAnim = Math.min(1, item.spawnAnim + dt * 4);
+        if (item.collected) item.collectAnim += dt * 5;
+      } else {
+        item.update(itemDt, this.player.x, this.player.y, this.mapWidth, this.mapHeight);
+      }
+      if (item.isFinished()) {
         this.items.splice(i, 1);
+        this._collectedCount--;
       }
     }
 
     // Events
     if (!this.activeEvent && this.gameTime >= this.nextEventTime) {
-      // Skip events for now in MVP
       this.nextEventTime = this.gameTime + 30 + Math.random() * 30;
     }
     if (this.activeEvent) {
       this.eventTimer -= dt;
-      if (this.eventTimer <= 0) {
-        this.activeEvent = null;
-      }
+      if (this.eventTimer <= 0) this.activeEvent = null;
     }
 
     // Camera follow player
@@ -356,6 +629,13 @@ export class GameScene {
     ctx.fillStyle = this.roundConfig.bgColor;
     ctx.fillRect(0, 0, w, h);
 
+    // Fever screen effect
+    if (this.fever) {
+      const pulse = 0.03 + Math.sin(this.gameTime * 6) * 0.02;
+      ctx.fillStyle = `rgba(255, 100, 50, ${pulse})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+
     // Ground
     const groundY = Math.max(0, h * 0.3 - this.camY);
     ctx.fillStyle = this.roundConfig.groundColor;
@@ -374,9 +654,17 @@ export class GameScene {
       ctx.globalAlpha = 1;
     }
 
+    // Collection radius indicators
+    this._drawCollectRadius(ctx);
+
     // Items
     for (const item of this.items) {
       item.draw(ctx);
+    }
+
+    // Companion NPCs
+    for (const npc of this.companionNPCs) {
+      npc.draw(ctx, this.spriteCache);
     }
 
     // Companions
@@ -384,7 +672,7 @@ export class GameScene {
       comp.draw(ctx, this.spriteCache);
     }
 
-    // Second character (if together mode)
+    // Second character
     if (this.secondChar) {
       this.secondChar.draw(ctx, this.spriteCache);
     }
@@ -394,10 +682,13 @@ export class GameScene {
 
     ctx.restore();
 
-    // UI overlay (not affected by camera)
+    // UI overlay
     this._drawHUD(ctx, w, h);
+    this._drawComboIndicator(ctx, w, h);
+    this._drawBuffIndicators(ctx, w, h);
+    this._drawSpellButton(ctx, w, h);
 
-    // Particles (screen space)
+    // Particles
     this.particles.draw(ctx);
 
     // Message
@@ -408,7 +699,7 @@ export class GameScene {
     const safeTop = this.safeTop;
 
     // Top bar background
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillStyle = this.fever ? 'rgba(180,50,20,0.5)' : 'rgba(0,0,0,0.3)';
     ctx.fillRect(0, 0, w, safeTop + 70);
 
     // Timer
@@ -421,8 +712,14 @@ export class GameScene {
     ctx.textBaseline = 'middle';
     const timerY = safeTop + 35;
 
-    // Timer color: red when < 30s
-    ctx.fillStyle = this.timer < 30 ? '#FF4444' : '#FFF';
+    if (this.timer < 15) {
+      const flash = Math.sin(this.gameTime * 8) > 0;
+      ctx.fillStyle = flash ? '#FF4444' : '#FF8888';
+    } else if (this.timer < 30) {
+      ctx.fillStyle = '#FF4444';
+    } else {
+      ctx.fillStyle = '#FFF';
+    }
     ctx.fillText(`⏰ ${timeStr}`, 16, timerY);
 
     // Collection progress
@@ -431,7 +728,7 @@ export class GameScene {
     ctx.fillStyle = this.collected >= this.target ? '#FFD700' : '#FFF';
     ctx.fillText(progText, w / 2, timerY);
 
-    // Round indicator
+    // Round + modifier indicator
     ctx.textAlign = 'right';
     ctx.fillStyle = '#FFF';
     ctx.font = 'Bold 20px sans-serif';
@@ -451,8 +748,13 @@ export class GameScene {
 
     if (progress > 0) {
       const grad = ctx.createLinearGradient(barX, 0, barX + barW * progress, 0);
-      grad.addColorStop(0, '#FFD700');
-      grad.addColorStop(1, '#FF8F00');
+      if (this.fever) {
+        grad.addColorStop(0, '#FF4444');
+        grad.addColorStop(1, '#FF8800');
+      } else {
+        grad.addColorStop(0, '#FFD700');
+        grad.addColorStop(1, '#FF8F00');
+      }
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW * progress, barH, 4);
@@ -461,39 +763,224 @@ export class GameScene {
 
     // Companion indicators (bottom left)
     if (this.companions.length > 0) {
-      ctx.font = '24px sans-serif';
-      ctx.textAlign = 'left';
+      const indicatorY = h - 30;
       for (let i = 0; i < this.companions.length; i++) {
-        ctx.fillText(this.companions[i].emoji, 16 + i * 36, h - 20);
+        const comp = this.companions[i];
+        const ix = 24 + i * 44;
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(ix, indicatorY, 18, 0, Math.PI * 2);
+        ctx.fill();
+        this.spriteCache.draw(ctx, `${comp.type}-idle`, ix, indicatorY, 0.45);
+        ctx.font = '9px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFF';
+        ctx.fillText(comp.name, ix, indicatorY + 26);
       }
     }
   }
 
-  // Called by main when advancing to next round
+  _drawComboIndicator(ctx, w, h) {
+    if (this.combo < 2) return;
+
+    const centerX = w / 2;
+    const y = this.safeTop + 80;
+
+    // Combo background
+    const comboScale = Math.min(1, 0.8 + this.combo * 0.05);
+    const fontSize = Math.floor(22 * comboScale);
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Combo text with pulsing effect
+    const pulse = 1 + Math.sin(this.gameTime * 10) * 0.08;
+    ctx.font = `Bold ${Math.floor(fontSize * pulse)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
+
+    if (this.fever) {
+      ctx.fillStyle = '#FF4444';
+      ctx.fillText(`FEVER x${this.combo}`, centerX, y);
+    } else if (this.combo >= COMBO.feverThreshold - 1) {
+      // Almost fever - exciting color
+      ctx.fillStyle = '#FF8800';
+      ctx.fillText(`x${this.combo} COMBO!`, centerX, y);
+    } else {
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText(`x${this.combo} COMBO`, centerX, y);
+    }
+
+    // Combo timer bar (shows time remaining before combo breaks)
+    const barW = 80;
+    const barH = 3;
+    const barX = centerX - barW / 2;
+    const barY2 = y + fontSize * 0.6;
+    const remaining = Math.max(0, 1 - this.comboTimer / COMBO.window);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(barX, barY2, barW, barH);
+    ctx.fillStyle = remaining > 0.3 ? '#FFD700' : '#FF4444';
+    ctx.fillRect(barX, barY2, barW * remaining, barH);
+
+    ctx.restore();
+  }
+
+  _drawCollectRadius(ctx) {
+    const radius = this.getCollectRadius();
+    const feverGlow = this.fever ? 0.06 : 0;
+
+    // Player radius
+    ctx.save();
+    ctx.globalAlpha = 0.12 + feverGlow;
+    ctx.fillStyle = this.fever ? '#FF6633' : '#FFD700';
+    ctx.beginPath();
+    ctx.arc(this.player.x, this.player.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = this.fever ? '#FF6633' : '#FFD700';
+    ctx.lineWidth = this.fever ? 2.5 : 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Second character
+    if (this.secondChar) {
+      ctx.save();
+      ctx.globalAlpha = 0.10 + feverGlow;
+      ctx.fillStyle = '#FF69B4';
+      ctx.beginPath();
+      ctx.arc(this.secondChar.x, this.secondChar.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.30;
+      ctx.strokeStyle = '#FF69B4';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Companion radii
+    for (const comp of this.companions) {
+      const compRadius = comp.range * 0.5 + (comp.currentRangeBonus || 0);
+      ctx.save();
+      ctx.globalAlpha = 0.08 + feverGlow;
+      ctx.fillStyle = '#90EE90';
+      ctx.beginPath();
+      ctx.arc(comp.x, comp.y, compRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = '#90EE90';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  _drawBuffIndicators(ctx, w, h) {
+    if (this.buffs.length === 0 && !this.fever) return;
+    const startX = w - 16;
+    let y = this.safeTop + 75;
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+
+    // Fever indicator
+    if (this.fever) {
+      const secs = Math.ceil(this.feverTimer);
+      ctx.fillStyle = 'rgba(200,50,20,0.6)';
+      ctx.beginPath();
+      ctx.roundRect(startX - 100, y - 2, 104, 20, 10);
+      ctx.fill();
+      ctx.font = 'Bold 13px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.fillStyle = '#FF4444';
+      ctx.fillText(`FEVER ${secs}s`, startX - 4, y);
+      y += 24;
+    }
+
+    for (const buff of this.buffs) {
+      const secs = Math.ceil(buff.remaining);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.roundRect(startX - 90, y - 2, 94, 20, 10);
+      ctx.fill();
+      ctx.font = 'Bold 13px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.fillStyle = buff.type === 'speed' ? '#7DF9FF' : buff.type === 'range' ? '#FFD700' : '#FF69B4';
+      ctx.fillText(`${buff.emoji} ${secs}s`, startX - 4, y);
+      y += 24;
+    }
+  }
+
+  _drawSpellButton(ctx, w, h) {
+    const spell = this._getCurrentSpell();
+    const ready = this._isSpellReady();
+    const btnX = w - 60;
+    const btnY = h - 70;
+    const radius = 30;
+
+    ctx.save();
+
+    // Gauge fill (arc around the button)
+    const gaugeProgress = Math.min(1, this.magicGauge / spell.cost);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.arc(btnX, btnY, radius + 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (gaugeProgress > 0) {
+      ctx.strokeStyle = ready ? spell.color : 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(btnX, btnY, radius + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * gaugeProgress);
+      ctx.stroke();
+    }
+
+    // Button background
+    ctx.globalAlpha = ready ? 0.9 : 0.5;
+    ctx.fillStyle = ready ? spell.color : 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.arc(btnX, btnY, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pulse when ready
+    if (ready) {
+      const pulse = Math.sin(this.gameTime * 5) * 0.15;
+      ctx.globalAlpha = 0.3 + pulse;
+      ctx.fillStyle = spell.color;
+      ctx.beginPath();
+      ctx.arc(btnX, btnY, radius + 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Spell emoji
+    ctx.globalAlpha = 1;
+    ctx.font = '28px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(spell.emoji, btnX, btnY);
+
+    // Gauge count
+    ctx.font = 'Bold 10px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(`${Math.floor(this.magicGauge)}/${spell.cost}`, btnX, btnY + radius + 12);
+
+    ctx.restore();
+  }
+
   advanceRound() {
     this.round++;
     this.roundConfig = this._getRoundConfig();
-    this.timer += ROUND_EXTEND;
+    this.timer += ROUND_CLEAR_BONUS;
     this.collected = 0;
     this.target = Math.ceil(this.roundConfig.target * this.difficulty.targetMult);
     this.state = 'playing';
+    this.combo = 0;
+    // Keep magic gauge across rounds (reward for surplus collection)
     this.bgDecos = this._generateDecos();
 
-    // Check companion unlock
-    const rc = this.roundConfig;
-    if (rc.unlockCompanion) {
-      const existing = this.companions.find(c => c.type === rc.unlockCompanion);
-      if (!existing) {
-        this.companions.push(new Companion(rc.unlockCompanion, this.player));
-        this._saveUnlockedCompanions();
-      }
-    }
-
-    // Spawn new items
     this.items = this.items.filter(i => !i.collected);
+    this._collectedCount = 0;
     this._spawnInitialItems();
 
-    this.message.show(`${rc.emoji} ${rc.name} - ${this.target}개 모으자!`, 3);
+    this._showRoundIntro();
   }
 
   getStats() {
@@ -501,8 +988,9 @@ export class GameScene {
       round: this.round + 1,
       totalCollected: this.totalCollected,
       score: Math.floor(this.score),
+      maxCombo: this.maxCombo,
       rarityCount: { ...this.rarityCount },
-      companions: this.companions.map(c => c.emoji).join(' '),
+      companions: this.companions.map(c => c.name).join(', '),
       difficulty: this.difficultyKey,
       roundName: this.roundConfig.name,
     };
