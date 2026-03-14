@@ -27,8 +27,8 @@ export class GameScene {
     // === Conveyor belt ===
     this.conveyorItems = [];
     this.conveyorSpeed = 55; // px per second
+    this.itemSpacing = 100; // fixed spacing between items
     this.spawnTimer = 0;
-    this.spawnInterval = 1.6; // seconds between spawns
     this._fillConveyor(w);
 
     // Ice freeze state
@@ -72,21 +72,17 @@ export class GameScene {
   }
 
   _fillConveyor(w) {
-    // Pre-fill conveyor with well-spaced foods
-    const spacing = this._getItemSpacing();
-    const count = Math.ceil(w / spacing) + 2;
+    // Pre-fill conveyor with evenly spaced foods
+    const count = Math.ceil(w / this.itemSpacing) + 2;
     for (let i = 0; i < count; i++) {
       this.conveyorItems.push({
         food: this._pickConveyorFood(),
-        x: i * spacing,
+        x: i * this.itemSpacing,
         collected: false,
         collectPhase: 0,
       });
     }
-  }
-
-  _getItemSpacing() {
-    return Math.max(90, this.conveyorSpeed * this.spawnInterval);
+    this.spawnTimer = this.itemSpacing / this.conveyorSpeed;
   }
 
   _pickConveyorFood() {
@@ -274,11 +270,11 @@ export class GameScene {
         item => item.x < w + 80 && (!item.collected || item.collectPhase < 1)
       );
 
-      // Spawn new items
+      // Spawn new items at fixed spacing intervals
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
         this._spawnConveyorItem();
-        this.spawnTimer = this.spawnInterval;
+        this.spawnTimer = this.itemSpacing / this.conveyorSpeed;
       }
     }
 
