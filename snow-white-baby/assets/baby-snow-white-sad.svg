@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="babySkinS" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#FFF8F2"/>
+      <stop offset="100%" stop-color="#FFE8D6"/>
+    </radialGradient>
+    <radialGradient id="babyHairGradS" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#2C2C2C"/>
+      <stop offset="100%" stop-color="#0D0D1A"/>
+    </radialGradient>
+    <radialGradient id="tearGrad" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#CCE5FF"/>
+      <stop offset="100%" stop-color="#88CCFF"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Body / onesie -->
+  <path d="M38 82 Q35 95 33 110 L87 110 Q85 95 82 82 Z" fill="#B8D4F0" stroke="#9ABDE0" stroke-width="0.5"/>
+  <!-- Onesie collar -->
+  <path d="M44 80 Q50 76 60 75 Q70 76 76 80" fill="white" stroke="#E8E8E8" stroke-width="0.5"/>
+
+  <!-- Neck -->
+  <rect x="55" y="72" width="10" height="10" rx="3" fill="url(#babySkinS)"/>
+
+  <!-- Head -->
+  <circle cx="60" cy="48" r="30" fill="url(#babySkinS)" stroke="#EEDAD0" stroke-width="0.5"/>
+
+  <!-- Hair tuft - slightly droopy when sad -->
+  <path d="M52 22 Q55 14 60 17 Q62 12 65 16 Q68 10 70 20 Q72 22 68 25 Q63 21 60 23 Q57 21 52 22 Z" fill="url(#babyHairGradS)"/>
+  <path d="M35 38 Q32 32 36 28 Q38 30 38 35 Z" fill="url(#babyHairGradS)"/>
+  <path d="M85 38 Q88 32 84 28 Q82 30 82 35 Z" fill="url(#babyHairGradS)"/>
+
+  <!-- Sad eyebrows - angled upward in center -->
+  <path d="M43 37 Q48 40 53 38" fill="none" stroke="#3A3A4E" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M67 38 Q72 40 77 37" fill="none" stroke="#3A3A4E" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Eyes - big watery eyes looking up -->
+  <!-- Left eye -->
+  <ellipse cx="49" cy="46" rx="7" ry="8" fill="white" stroke="#3A3A4E" stroke-width="0.6"/>
+  <circle cx="50" cy="47" r="4.5" fill="#6B4226"/>
+  <circle cx="50" cy="47" r="2.5" fill="#1A1A2E"/>
+  <circle cx="52" cy="44" r="1.8" fill="white" opacity="0.9"/>
+  <circle cx="48" cy="49" r="0.8" fill="white" opacity="0.5"/>
+  <!-- Watery sheen on left eye -->
+  <path d="M42 50 Q49 54 56 50" fill="#CCE5FF" opacity="0.3" stroke="none"/>
+
+  <!-- Right eye -->
+  <ellipse cx="71" cy="46" rx="7" ry="8" fill="white" stroke="#3A3A4E" stroke-width="0.6"/>
+  <circle cx="70" cy="47" r="4.5" fill="#6B4226"/>
+  <circle cx="70" cy="47" r="2.5" fill="#1A1A2E"/>
+  <circle cx="72" cy="44" r="1.8" fill="white" opacity="0.9"/>
+  <circle cx="68" cy="49" r="0.8" fill="white" opacity="0.5"/>
+  <!-- Watery sheen on right eye -->
+  <path d="M64 50 Q71 54 78 50" fill="#CCE5FF" opacity="0.3" stroke="none"/>
+
+  <!-- Tear drops -->
+  <!-- Left tear -->
+  <path d="M44 54 Q43 60 44 66 Q45 68 46 66 Q47 60 46 54 Z" fill="url(#tearGrad)" opacity="0.7"/>
+  <!-- Right tear -->
+  <path d="M74 54 Q73 60 74 66 Q75 68 76 66 Q77 60 76 54 Z" fill="url(#tearGrad)" opacity="0.7"/>
+  <!-- Small tear drops falling -->
+  <ellipse cx="44" cy="70" rx="1.5" ry="2" fill="#88CCFF" opacity="0.5"/>
+  <ellipse cx="75" cy="72" rx="1.2" ry="1.8" fill="#88CCFF" opacity="0.4"/>
+
+  <!-- Nose - slightly red from crying -->
+  <ellipse cx="60" cy="54" rx="2.2" ry="1.8" fill="#FFD0BC" stroke="#EEDAD0" stroke-width="0.3"/>
+
+  <!-- Rosy cheeks -->
+  <ellipse cx="40" cy="57" rx="6" ry="4" fill="#FFB5B5" opacity="0.4"/>
+  <ellipse cx="80" cy="57" rx="6" ry="4" fill="#FFB5B5" opacity="0.4"/>
+
+  <!-- Mouth - frown / quivering lip -->
+  <path d="M52 64 Q56 68 60 69 Q64 68 68 64" fill="none" stroke="#E08888" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Lower lip quiver -->
+  <path d="M54 66 Q57 69 60 69.5 Q63 69 66 66" fill="#F0A0A0" opacity="0.4" stroke="none"/>
+
+  <!-- Arms hanging down sadly -->
+  <path d="M36 88 Q30 96 28 105" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M84 88 Q90 96 92 105" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M36 88 Q30 96 28 105" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M84 88 Q90 96 92 105" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

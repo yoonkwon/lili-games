@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="babySkinA" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#FFF8F2"/>
+      <stop offset="100%" stop-color="#FFE8D6"/>
+    </radialGradient>
+    <radialGradient id="babyHairGradA" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#2C2C2C"/>
+      <stop offset="100%" stop-color="#0D0D1A"/>
+    </radialGradient>
+    <!-- Purple magic glow for eyes -->
+    <radialGradient id="purpleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#CC66FF"/>
+      <stop offset="60%" stop-color="#9933CC"/>
+      <stop offset="100%" stop-color="#6600AA"/>
+    </radialGradient>
+    <radialGradient id="outerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#CC66FF" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#9933CC" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Dark aura -->
+    <radialGradient id="darkAura" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#6600AA" stop-opacity="0.12"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Subtle dark aura around baby -->
+  <circle cx="60" cy="55" r="58" fill="url(#darkAura)"/>
+
+  <!-- Body / onesie -->
+  <path d="M38 82 Q35 95 33 110 L87 110 Q85 95 82 82 Z" fill="#B8D4F0" stroke="#9ABDE0" stroke-width="0.5"/>
+  <!-- Onesie collar -->
+  <path d="M44 80 Q50 76 60 75 Q70 76 76 80" fill="white" stroke="#E8E8E8" stroke-width="0.5"/>
+
+  <!-- Neck -->
+  <rect x="55" y="72" width="10" height="10" rx="3" fill="url(#babySkinA)"/>
+
+  <!-- Head -->
+  <circle cx="60" cy="48" r="30" fill="url(#babySkinA)" stroke="#EEDAD0" stroke-width="0.5"/>
+
+  <!-- Hair tuft - spikier when angry -->
+  <path d="M50 22 Q53 8 58 14 Q60 5 64 12 Q67 4 71 16 Q74 10 73 22 Q68 18 64 20 Q60 17 56 20 Q53 18 50 22 Z" fill="url(#babyHairGradA)"/>
+  <path d="M35 38 Q30 30 35 26 Q37 29 37 35 Z" fill="url(#babyHairGradA)"/>
+  <path d="M85 38 Q90 30 85 26 Q83 29 83 35 Z" fill="url(#babyHairGradA)"/>
+
+  <!-- Angry eyebrows - V shape, furrowed -->
+  <path d="M42 34 Q46 38 54 36" fill="none" stroke="#2A2A3E" stroke-width="2" stroke-linecap="round"/>
+  <path d="M66 36 Q74 38 78 34" fill="none" stroke="#2A2A3E" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Forehead crease -->
+  <path d="M56 32 Q60 34 64 32" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Eyes - purple glowing (magic mirror curse) -->
+  <!-- Eye glow auras -->
+  <ellipse cx="49" cy="46" rx="12" ry="12" fill="url(#outerGlow)"/>
+  <ellipse cx="71" cy="46" rx="12" ry="12" fill="url(#outerGlow)"/>
+
+  <!-- Left eye -->
+  <ellipse cx="49" cy="46" rx="7" ry="7" fill="#1A0A2E" stroke="#9933CC" stroke-width="1"/>
+  <circle cx="49" cy="46" r="4.5" fill="url(#purpleGlow)"/>
+  <circle cx="49" cy="46" r="2" fill="#E0AAFF"/>
+  <!-- Purple gleam -->
+  <circle cx="51" cy="44" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="47" cy="48" r="0.7" fill="#E0AAFF" opacity="0.6"/>
+
+  <!-- Right eye -->
+  <ellipse cx="71" cy="46" rx="7" ry="7" fill="#1A0A2E" stroke="#9933CC" stroke-width="1"/>
+  <circle cx="71" cy="46" r="4.5" fill="url(#purpleGlow)"/>
+  <circle cx="71" cy="46" r="2" fill="#E0AAFF"/>
+  <!-- Purple gleam -->
+  <circle cx="73" cy="44" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="69" cy="48" r="0.7" fill="#E0AAFF" opacity="0.6"/>
+
+  <!-- Small purple energy sparks near eyes -->
+  <line x1="38" y1="42" x2="35" y2="39" stroke="#CC66FF" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+  <line x1="37" y1="46" x2="33" y2="46" stroke="#CC66FF" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <line x1="82" y1="42" x2="85" y2="39" stroke="#CC66FF" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+  <line x1="83" y1="46" x2="87" y2="46" stroke="#CC66FF" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Nose -->
+  <ellipse cx="60" cy="54" rx="2" ry="1.5" fill="#FFDCC8" stroke="#EEDAD0" stroke-width="0.3"/>
+
+  <!-- Slightly flushed cheeks when angry -->
+  <ellipse cx="40" cy="55" rx="6" ry="4" fill="#FF9999" opacity="0.5"/>
+  <ellipse cx="80" cy="55" rx="6" ry="4" fill="#FF9999" opacity="0.5"/>
+
+  <!-- Mouth - angry pout / gritting -->
+  <path d="M52 63 Q56 60 60 60 Q64 60 68 63" fill="none" stroke="#CC5555" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M54 63 Q57 61 60 61 Q63 61 66 63" fill="#E08888" opacity="0.5"/>
+
+  <!-- Fists raised in anger -->
+  <path d="M36 85 Q26 80 22 76" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M84 85 Q94 80 98 76" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M36 85 Q26 80 22 76" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M84 85 Q94 80 98 76" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- Fist circles -->
+  <circle cx="20" cy="74" r="4" fill="#FFE8D6" stroke="#EEDAD0" stroke-width="0.5"/>
+  <circle cx="100" cy="74" r="4" fill="#FFE8D6" stroke="#EEDAD0" stroke-width="0.5"/>
+
+  <!-- Tiny purple magic particles floating -->
+  <circle cx="15" cy="35" r="1.5" fill="#CC66FF" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="105" cy="30" r="1" fill="#9933CC" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="8" cy="55" r="1.2" fill="#CC66FF" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0;0.3" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="112" cy="60" r="0.8" fill="#9933CC" opacity="0.35">
+    <animate attributeName="opacity" values="0.35;0.1;0.35" dur="2.2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

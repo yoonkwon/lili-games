@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v14';
+const CACHE_NAME = 'lili-games-v15';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -27,6 +27,19 @@ const ASSETS = [
   './elsa-baby/assets/baby-elsa-happy.svg',
   './elsa-baby/assets/baby-elsa-sad.svg',
   './elsa-baby/assets/baby-elsa-angry.svg',
+  './snow-white-baby/',
+  './snow-white-baby/index.html',
+  './snow-white-baby/js/main.js',
+  './snow-white-baby/js/config.js',
+  './snow-white-baby/js/draw-snow-white.js',
+  './snow-white-baby/js/scene/TitleScene.js',
+  './snow-white-baby/js/scene/GameScene.js',
+  './snow-white-baby/js/scene/BornScene.js',
+  './snow-white-baby/assets/snow-white-mom.svg',
+  './snow-white-baby/assets/baby-snow-white.svg',
+  './snow-white-baby/assets/baby-snow-white-happy.svg',
+  './snow-white-baby/assets/baby-snow-white-sad.svg',
+  './snow-white-baby/assets/baby-snow-white-angry.svg',
   './chicken-egg/',
   './chicken-egg/index.html',
   './chicken-egg/js/main.js',

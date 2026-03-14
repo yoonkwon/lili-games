@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="babySkin" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#FFF8F2"/>
+      <stop offset="100%" stop-color="#FFE8D6"/>
+    </radialGradient>
+    <radialGradient id="babyHairGrad" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#2C2C2C"/>
+      <stop offset="100%" stop-color="#0D0D1A"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Body / onesie -->
+  <path d="M38 82 Q35 95 33 110 L87 110 Q85 95 82 82 Z" fill="#B8D4F0" stroke="#9ABDE0" stroke-width="0.5"/>
+  <!-- Onesie collar -->
+  <path d="M44 80 Q50 76 60 75 Q70 76 76 80" fill="white" stroke="#E8E8E8" stroke-width="0.5"/>
+
+  <!-- Neck -->
+  <rect x="55" y="72" width="10" height="10" rx="3" fill="url(#babySkin)"/>
+
+  <!-- Head - big round baby head -->
+  <circle cx="60" cy="48" r="30" fill="url(#babySkin)" stroke="#EEDAD0" stroke-width="0.5"/>
+
+  <!-- Hair tuft on top -->
+  <path d="M52 22 Q55 12 60 15 Q62 10 65 14 Q68 8 70 18 Q72 20 68 24 Q63 20 60 22 Q57 20 52 22 Z" fill="url(#babyHairGrad)"/>
+  <!-- Small hair on sides -->
+  <path d="M35 38 Q32 32 36 28 Q38 30 38 35 Z" fill="url(#babyHairGrad)"/>
+  <path d="M85 38 Q88 32 84 28 Q82 30 82 35 Z" fill="url(#babyHairGrad)"/>
+
+  <!-- Eyebrows - tiny, soft -->
+  <path d="M44 38 Q48 36 52 37" fill="none" stroke="#3A3A4E" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M68 37 Q72 36 76 38" fill="none" stroke="#3A3A4E" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Eyes - big round baby eyes, neutral -->
+  <!-- Left eye -->
+  <ellipse cx="49" cy="46" rx="7" ry="7.5" fill="white" stroke="#3A3A4E" stroke-width="0.6"/>
+  <circle cx="50" cy="46" r="4.5" fill="#6B4226"/>
+  <circle cx="50" cy="46" r="2.5" fill="#1A1A2E"/>
+  <circle cx="52" cy="44" r="1.8" fill="white" opacity="0.9"/>
+  <circle cx="48" cy="48" r="0.8" fill="white" opacity="0.5"/>
+
+  <!-- Right eye -->
+  <ellipse cx="71" cy="46" rx="7" ry="7.5" fill="white" stroke="#3A3A4E" stroke-width="0.6"/>
+  <circle cx="70" cy="46" r="4.5" fill="#6B4226"/>
+  <circle cx="70" cy="46" r="2.5" fill="#1A1A2E"/>
+  <circle cx="72" cy="44" r="1.8" fill="white" opacity="0.9"/>
+  <circle cx="68" cy="48" r="0.8" fill="white" opacity="0.5"/>
+
+  <!-- Nose - tiny button -->
+  <ellipse cx="60" cy="54" rx="2" ry="1.5" fill="#FFDCC8" stroke="#EEDAD0" stroke-width="0.3"/>
+
+  <!-- Rosy cheeks -->
+  <ellipse cx="40" cy="55" rx="6" ry="4" fill="#FFB5B5" opacity="0.4"/>
+  <ellipse cx="80" cy="55" rx="6" ry="4" fill="#FFB5B5" opacity="0.4"/>
+
+  <!-- Mouth - small neutral line -->
+  <path d="M55 62 Q60 64 65 62" fill="none" stroke="#E08888" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Small arms -->
+  <path d="M36 88 Q28 92 26 98" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M84 88 Q92 92 94 98" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
+  <!-- Arm outlines -->
+  <path d="M36 88 Q28 92 26 98" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M84 88 Q92 92 94 98" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+</svg>
