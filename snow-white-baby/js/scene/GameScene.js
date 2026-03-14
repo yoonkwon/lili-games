@@ -88,8 +88,9 @@ export class GameScene {
     const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
     const food = this._pickAnimalFood();
     const spawn = this._getSpawnPosition();
-    const targetX = this.w * (0.2 + Math.random() * 0.6);
-    const targetY = this.h * (0.6 + Math.random() * 0.15);
+    // Keep animals in bottom area so they don't cover baby/mom
+    const targetX = this.w * (0.1 + Math.random() * 0.8);
+    const targetY = this.h * (0.68 + Math.random() * 0.18);
 
     this.animals.push({
       animalType: animal,
@@ -113,8 +114,8 @@ export class GameScene {
 
   _spawnCrow() {
     const spawn = this._getSpawnPosition();
-    const targetX = this.w * (0.2 + Math.random() * 0.6);
-    const targetY = this.h * (0.6 + Math.random() * 0.15);
+    const targetX = this.w * (0.1 + Math.random() * 0.8);
+    const targetY = this.h * (0.68 + Math.random() * 0.18);
 
     this.animals.push({
       animalType: { type: 'crow', emoji: POISON.emoji, name: POISON.name, speed: POISON.speed, size: POISON.size },
@@ -680,7 +681,7 @@ export class GameScene {
     ctx.font = 'Bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('🐾 동물을 터치해서 음식을 주세요!', w / 2, h * 0.55);
+    ctx.fillText('🐾 동물을 터치해서 음식을 주세요!', w / 2, h * 0.62);
     ctx.restore();
 
     for (const a of this.animals) {
