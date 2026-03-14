@@ -1,5 +1,6 @@
 /**
  * Elsa Baby game configuration
+ * Snowflake falling mechanic - Frozen theme
  */
 
 // Foods the baby can want
@@ -18,6 +19,16 @@ export const FOODS = [
   { type: 'watermelon', emoji: '🍉', name: '수박', color: '#2E8B57' },
 ];
 
+// Troll villain (disguised as snowflake)
+export const TROLL = {
+  emoji: '⛄',
+  name: '트롤',
+  foodEmoji: '☠️❄️',
+  foodName: '독눈송이',
+  speed: 35,
+  size: 55,
+};
+
 // Baby growth stages
 export const GROWTH_STAGES = [
   { name: '콩알', size: 0.3, threshold: 0, desc: '아주 작은 아기에요' },
@@ -30,14 +41,20 @@ export const GROWTH_STAGES = [
 
 // Game settings
 export const GAME = {
-  maxGrowth: 100,        // growth points to fill
-  growthPerCorrect: 8,   // correct food = +8 growth
-  growthPerWrong: -2,    // wrong food = -2 growth (slight)
-  dislikePerWrong: 20,   // wrong food = +20 dislike
-  dislikeDecay: 3,       // dislike decreases per second when idle
-  maxDislike: 100,       // dislike gauge max
-  freezeDuration: 5,     // ice magic duration in seconds
-  foodChoices: 4,        // number of food choices shown
-  wantChangeInterval: 8, // seconds before baby wants something new
-  comboBonus: 2,         // extra growth per combo level
+  maxGrowth: 100,
+  growthPerCorrect: 8,
+  growthPerWrong: -2,
+  dislikePerWrong: 20,
+  dislikeDecay: 3,
+  maxDislike: 100,
+  freezeDuration: 5,
+  wantChangeInterval: 10,
+  comboBonus: 2,
+  maxSnowflakes: 6,        // max snowflakes on screen
+  minSnowflakes: 3,        // minimum to maintain
+  snowflakeSpawnInterval: 1.5, // seconds between spawns
+  trollInterval: 15,       // seconds between troll appearances
+  poisonPenalty: -15,
+  poisonDislike: 40,
+  wantedFoodChance: 0.5,   // 50% chance snowflake carries wanted food
 };

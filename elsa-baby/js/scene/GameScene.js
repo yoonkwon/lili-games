@@ -1,7 +1,9 @@
 /**
- * Main gameplay - feed the baby with conveyor belt food selection!
+ * Main gameplay - Elsa baby game
+ * "Snowflake Falling" mechanic: snowflakes carry food and fall from the sky
+ * Tap the right snowflake before it reaches the ground!
  */
-import { FOODS, GROWTH_STAGES, GAME } from '../config.js';
+import { FOODS, TROLL, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
 import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
@@ -24,12 +26,10 @@ export class GameScene {
     this.wantTimer = 0;
     this._pickNewWant();
 
-    // === Conveyor belt ===
-    this.conveyorItems = [];
-    this.conveyorSpeed = 55; // px per second
-    this.itemSpacing = 75; // fixed spacing between items
-    this.spawnTimer = 0;
-    this._fillConveyor(w);
+    // === Snowflake falling system ===
+    this.snowflakeItems = [];
+    this.snowflakeSpawnTimer = 0.5;
+    this.trollTimer = GAME.trollInterval;
 
     // Ice freeze state
     this.frozen = false;
@@ -50,19 +50,22 @@ export class GameScene {
     this.particles = new ParticleSystem();
     this.message = new Message();
 
-    // Snowflakes (ambient)
-    this.snowflakes = [];
-    for (let i = 0; i < 15; i++) {
-      this.snowflakes.push({
+    // Ambient snowflakes (decorative, small)
+    this.ambientSnow = [];
+    for (let i = 0; i < 20; i++) {
+      this.ambientSnow.push({
         x: Math.random() * w,
         y: Math.random() * h,
         speed: 15 + Math.random() * 25,
-        size: 8 + Math.random() * 10,
+        size: 6 + Math.random() * 8,
         wobble: Math.random() * Math.PI * 2,
       });
     }
 
-    this.message.show('컨베이어 위 음식을 터치! 아기가 원하는 걸 골라줘요! 💕', 3);
+    // Snow ground
+    this.groundY = h * 0.92;
+
+    this.message.show('떨어지는 눈송이를 터치! 아기가 원하는 음식을 잡아요! ❄️', 3);
   }
 
   _pickNewWant() {
@@ -71,36 +74,59 @@ export class GameScene {
     this.wantTimer = GAME.wantChangeInterval;
   }
 
-  _fillConveyor(w) {
-    // Pre-fill conveyor with evenly spaced foods
-    const count = Math.ceil(w / this.itemSpacing) + 2;
-    for (let i = 0; i < count; i++) {
-      this.conveyorItems.push({
-        food: this._pickConveyorFood(),
-        x: i * this.itemSpacing,
-        collected: false,
-        collectPhase: 0,
-      });
-    }
-    this.spawnTimer = this.itemSpacing / this.conveyorSpeed;
+  _spawnSnowflake() {
+    if (this.snowflakeItems.filter(s => !s.collected).length >= GAME.maxSnowflakes) return;
+
+    const food = this._pickSnowflakeFood();
+    const size = 45 + Math.random() * 15;
+    const x = size + Math.random() * (this.w - size * 2);
+    const fallSpeed = 30 + Math.random() * 25; // pixels per second
+
+    this.snowflakeItems.push({
+      food: food,
+      x: x,
+      y: -size,
+      fallSpeed: fallSpeed,
+      size: size,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleAmp: 15 + Math.random() * 25,
+      wobbleFreq: 1 + Math.random() * 1.5,
+      baseX: x,
+      collected: false,
+      collectPhase: 0,
+      correct: false,
+      isTroll: false,
+      rotation: 0,
+    });
   }
 
-  _pickConveyorFood() {
-    // 40% chance to spawn the wanted food, 60% random other
-    if (Math.random() < 0.4) {
+  _spawnTroll() {
+    const size = TROLL.size;
+    const x = size + Math.random() * (this.w - size * 2);
+
+    this.snowflakeItems.push({
+      food: { type: 'poison', emoji: this.wantedFood.emoji, name: TROLL.foodName, color: '#6A0DAD' },
+      x: x,
+      y: -size,
+      fallSpeed: TROLL.speed,
+      size: size,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleAmp: 10 + Math.random() * 15,
+      wobbleFreq: 0.8 + Math.random(),
+      baseX: x,
+      collected: false,
+      collectPhase: 0,
+      correct: false,
+      isTroll: true,
+      rotation: 0,
+    });
+  }
+
+  _pickSnowflakeFood() {
+    if (Math.random() < GAME.wantedFoodChance) {
       return this.wantedFood;
     }
     return FOODS[Math.floor(Math.random() * FOODS.length)];
-  }
-
-  _spawnConveyorItem() {
-    const itemSize = 60;
-    this.conveyorItems.push({
-      food: this._pickConveyorFood(),
-      x: -itemSize,
-      collected: false,
-      collectPhase: 0,
-    });
   }
 
   _generateIceCracks(w, h) {
@@ -124,37 +150,31 @@ export class GameScene {
   handleTap(x, y) {
     if (this.frozen) return;
 
-    // Check conveyor item taps
-    const beltY = this._getBeltY();
-    const itemSize = this._getItemSize();
+    // Check snowflake taps (reverse order for z-ordering)
+    for (let i = this.snowflakeItems.length - 1; i >= 0; i--) {
+      const s = this.snowflakeItems[i];
+      if (s.collected) continue;
 
-    for (const item of this.conveyorItems) {
-      if (item.collected) continue;
-      const ix = item.x;
-      const iy = beltY;
-      if (x >= ix - itemSize / 2 && x <= ix + itemSize / 2 &&
-          y >= iy - itemSize / 2 && y <= iy + itemSize / 2) {
-        this._feedBaby(item);
+      const hitSize = s.size * 1.2;
+      if (x >= s.x - hitSize && x <= s.x + hitSize &&
+          y >= s.y - hitSize && y <= s.y + hitSize) {
+        if (s.isTroll) {
+          this._tapTroll(s);
+        } else {
+          this._feedBaby(s);
+        }
         return;
       }
     }
   }
 
-  _getBeltY() {
-    return this.h * 0.85;
-  }
-
-  _getItemSize() {
-    return Math.min(60, this.w * 0.14);
-  }
-
-  _feedBaby(item) {
+  _feedBaby(snowflake) {
     this.totalFed++;
-    const correct = item.food.type === this.wantedFood.type;
+    const correct = snowflake.food.type === this.wantedFood.type;
 
-    // Mark as collected (animate away)
-    item.collected = true;
-    item.collectPhase = 0;
+    snowflake.collected = true;
+    snowflake.collectPhase = 0;
+    snowflake.correct = correct;
 
     if (correct) {
       this.combo++;
@@ -166,9 +186,9 @@ export class GameScene {
       this.babyEmotion = 'happy';
       this.emotionTimer = 1.5;
 
-      this.particles.createParticles(item.x, this._getBeltY() - 30, '#FFD700', 12);
+      this.particles.createParticles(snowflake.x, snowflake.y - 20, '#4FC3F7', 12);
       this.particles.createStars(this.w / 2, this.h * 0.35, 5);
-      this.particles.addFloatingText(item.x, this._getBeltY() - 50, `+${bonus} 💕`, '#FF69B4', 28);
+      this.particles.addFloatingText(snowflake.x, snowflake.y - 40, `+${bonus} ❄️`, '#4FC3F7', 28);
 
       if (this.combo >= 3) {
         this.message.show(`${this.combo} 콤보! 아기가 아주 좋아해요! ✨`);
@@ -176,9 +196,7 @@ export class GameScene {
 
       this._pickNewWant();
 
-      if (this.growth >= GAME.maxGrowth) {
-        return;
-      }
+      if (this.growth >= GAME.maxGrowth) return;
     } else {
       this.combo = 0;
       this.growth = Math.max(0, this.growth + GAME.growthPerWrong);
@@ -188,11 +206,33 @@ export class GameScene {
       this.emotionTimer = 1.2;
       this.babyShake = 0.5;
 
-      this.particles.addFloatingText(item.x, this._getBeltY() - 50, '싫어요! 😣', '#88CCFF', 24);
+      this.particles.addFloatingText(snowflake.x, snowflake.y - 40, '싫어요! 😣', '#88CCFF', 24);
 
       if (this.dislike >= GAME.maxDislike) {
         this._triggerIceMagic();
       }
+    }
+  }
+
+  _tapTroll(troll) {
+    troll.collected = true;
+    troll.collectPhase = 0;
+    troll.correct = false;
+
+    this.growth = Math.max(0, this.growth + GAME.poisonPenalty);
+    this.dislike = Math.min(GAME.maxDislike, this.dislike + GAME.poisonDislike);
+    this.combo = 0;
+
+    this.babyEmotion = 'angry';
+    this.emotionTimer = 2.0;
+    this.babyShake = 0.8;
+
+    this.particles.addFloatingText(troll.x, troll.y - 40, '트롤이다! ⛄', '#6A0DAD', 30);
+    this.particles.createParticles(troll.x, troll.y, '#6A0DAD', 15);
+    this.message.show('⛄ 트롤의 장난! 조심하세요! ⛄', 3);
+
+    if (this.dislike >= GAME.maxDislike) {
+      this._triggerIceMagic();
     }
   }
 
@@ -212,6 +252,7 @@ export class GameScene {
     this.h = h;
     this.babyPhase += dt;
     this.momPhase += dt;
+    this.groundY = h * 0.92;
 
     // Check birth
     if (this.growth >= GAME.maxGrowth) {
@@ -255,31 +296,59 @@ export class GameScene {
       this.babyShake = Math.max(0, this.babyShake - dt * 2);
     }
 
-    // === Conveyor belt update ===
+    // === Snowflake system update ===
     if (!this.frozen) {
-      // Move items
-      for (const item of this.conveyorItems) {
-        item.x += this.conveyorSpeed * dt;
-        if (item.collected) {
-          item.collectPhase += dt * 4;
+      // Spawn snowflakes
+      this.snowflakeSpawnTimer -= dt;
+      if (this.snowflakeSpawnTimer <= 0 && this.snowflakeItems.filter(s => !s.collected).length < GAME.maxSnowflakes) {
+        this._spawnSnowflake();
+        this.snowflakeSpawnTimer = GAME.snowflakeSpawnInterval;
+      }
+
+      // Ensure minimum
+      const activeCount = this.snowflakeItems.filter(s => !s.collected && !s.isTroll).length;
+      if (activeCount < GAME.minSnowflakes) {
+        this._spawnSnowflake();
+      }
+
+      // Troll timer
+      this.trollTimer -= dt;
+      if (this.trollTimer <= 0) {
+        this._spawnTroll();
+        this.trollTimer = GAME.trollInterval;
+      }
+
+      // Update snowflakes
+      for (const s of this.snowflakeItems) {
+        s.wobblePhase += dt * s.wobbleFreq * Math.PI * 2;
+        s.rotation += dt * 0.5;
+
+        if (s.collected) {
+          s.collectPhase += dt * 3;
+        } else {
+          // Fall down with wobble
+          s.y += s.fallSpeed * dt;
+          s.x = s.baseX + Math.sin(s.wobblePhase) * s.wobbleAmp;
+
+          // Keep within horizontal bounds
+          if (s.x < s.size) s.x = s.size;
+          if (s.x > w - s.size) s.x = w - s.size;
+
+          // Hit the ground - missed!
+          if (s.y > this.groundY) {
+            s.collected = true;
+            s.collectPhase = 0;
+            s.correct = true; // neutral exit (no shake)
+          }
         }
       }
 
-      // Remove items that went off-screen or fully collected
-      this.conveyorItems = this.conveyorItems.filter(
-        item => item.x < w + 80 && (!item.collected || item.collectPhase < 1)
-      );
-
-      // Spawn new items at fixed spacing intervals
-      this.spawnTimer -= dt;
-      if (this.spawnTimer <= 0) {
-        this._spawnConveyorItem();
-        this.spawnTimer = this.itemSpacing / this.conveyorSpeed;
-      }
+      // Remove fully faded
+      this.snowflakeItems = this.snowflakeItems.filter(s => !s.collected || s.collectPhase < 1.2);
     }
 
-    // Snowflakes
-    for (const s of this.snowflakes) {
+    // Ambient snow
+    for (const s of this.ambientSnow) {
       s.y += s.speed * dt;
       s.x += Math.sin(this.babyPhase + s.wobble) * 10 * dt;
       if (s.y > h + 20) { s.y = -20; s.x = Math.random() * w; }
@@ -299,7 +368,7 @@ export class GameScene {
     this._drawWantBubble(ctx, w, h);
     this._drawGrowthBar(ctx, w, h);
     this._drawDislikeBar(ctx, w, h);
-    this._drawConveyorBelt(ctx, w, h);
+    this._drawSnowflakes(ctx, w, h);
 
     this.particles.draw(ctx);
 
@@ -308,8 +377,8 @@ export class GameScene {
       ctx.save();
       ctx.font = 'Bold 20px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#FFD700';
-      ctx.fillText(`⚡ ${this.combo} 콤보!`, w / 2, h * 0.68);
+      ctx.fillStyle = '#4FC3F7';
+      ctx.fillText(`❄️ ${this.combo} 콤보!`, w / 2, h * 0.52);
       ctx.restore();
     }
 
@@ -322,26 +391,79 @@ export class GameScene {
   }
 
   _drawBackground(ctx, w, h) {
+    // Night sky gradient
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#0d1b3e');
-    grad.addColorStop(0.5, '#1a3a5c');
-    grad.addColorStop(1, '#2a5298');
+    grad.addColorStop(0, '#050520');
+    grad.addColorStop(0.3, '#0d1b3e');
+    grad.addColorStop(0.6, '#1a3a5c');
+    grad.addColorStop(0.85, '#2a5298');
+    grad.addColorStop(1, '#4a6aa8');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    for (const s of this.snowflakes) {
+    // Snow-covered mountains silhouette
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#1a2a4a';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.75);
+    ctx.lineTo(w * 0.15, h * 0.55);
+    ctx.lineTo(w * 0.25, h * 0.65);
+    ctx.lineTo(w * 0.4, h * 0.5);
+    ctx.lineTo(w * 0.55, h * 0.6);
+    ctx.lineTo(w * 0.7, h * 0.45);
+    ctx.lineTo(w * 0.85, h * 0.55);
+    ctx.lineTo(w, h * 0.65);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Snow ground
+    ctx.fillStyle = 'rgba(200, 220, 240, 0.15)';
+    ctx.fillRect(0, this.groundY, w, h - this.groundY);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(0, this.groundY, w, 3);
+
+    // Ambient snowflakes
+    for (const s of this.ambientSnow) {
       ctx.save();
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.25;
       ctx.font = `${s.size}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillText('❄️', s.x, s.y);
       ctx.restore();
     }
+
+    // Pine trees silhouette at bottom
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = '#0a1a3a';
+    this._drawPine(ctx, w * 0.05, this.groundY, 25, 80);
+    this._drawPine(ctx, w * 0.12, this.groundY, 20, 65);
+    this._drawPine(ctx, w * 0.88, this.groundY, 20, 70);
+    this._drawPine(ctx, w * 0.95, this.groundY, 25, 85);
+    ctx.restore();
+  }
+
+  _drawPine(ctx, x, baseY, width, height) {
+    ctx.fillRect(x - 3, baseY - height * 0.2, 6, height * 0.2);
+    for (let i = 0; i < 3; i++) {
+      const layerY = baseY - height * 0.2 - i * height * 0.25;
+      const layerW = width * (1.2 - i * 0.3);
+      ctx.beginPath();
+      ctx.moveTo(x, layerY - height * 0.25);
+      ctx.lineTo(x - layerW, layerY);
+      ctx.lineTo(x + layerW, layerY);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   _drawMomElsa(ctx, w, h) {
     const momX = w / 2;
-    const momY = h * 0.14;
+    const momY = h * 0.12;
     const bob = Math.sin(this.momPhase * 1.2) * 3;
 
     drawElsaMom(ctx, momX, momY + bob, 1.0);
@@ -356,9 +478,9 @@ export class GameScene {
 
   _drawBelly(ctx, w, h) {
     const cx = w / 2;
-    const cy = h * 0.40;
+    const cy = h * 0.35;
     const growthRatio = this.growth / GAME.maxGrowth;
-    const baseRadius = 60 + growthRatio * 40;
+    const baseRadius = 55 + growthRatio * 35;
 
     ctx.save();
     const glowGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius * 1.3);
@@ -398,7 +520,7 @@ export class GameScene {
 
   _drawBaby(ctx, w, h) {
     const cx = w / 2;
-    const cy = h * 0.40;
+    const cy = h * 0.35;
     const growthRatio = this.growth / GAME.maxGrowth;
 
     let stage = GROWTH_STAGES[0];
@@ -424,7 +546,7 @@ export class GameScene {
     if (this.frozen) return;
 
     const cx = w / 2 + 50;
-    const cy = h * 0.28;
+    const cy = h * 0.22;
 
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -447,7 +569,6 @@ export class GameScene {
     ctx.fillText(this.wantedFood.emoji, 0, 0);
     ctx.restore();
 
-    // Timer urgency
     const urgency = 1 - (this.wantTimer / GAME.wantChangeInterval);
     ctx.save();
     ctx.font = '10px sans-serif';
@@ -473,7 +594,7 @@ export class GameScene {
     ctx.font = 'Bold 13px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#B3E5FC';
-    ctx.fillText(`💕 성장 ${Math.floor(ratio * 100)}%`, barX, barY - 4);
+    ctx.fillText(`❄️ 성장 ${Math.floor(ratio * 100)}%`, barX, barY - 4);
 
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
@@ -482,8 +603,8 @@ export class GameScene {
 
     if (ratio > 0) {
       const grad = ctx.createLinearGradient(barX, 0, barX + barW * ratio, 0);
-      grad.addColorStop(0, '#FF69B4');
-      grad.addColorStop(1, '#FF1493');
+      grad.addColorStop(0, '#4FC3F7');
+      grad.addColorStop(1, '#0288D1');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW * ratio, barH, 11);
@@ -535,101 +656,78 @@ export class GameScene {
     ctx.restore();
   }
 
-  _drawConveyorBelt(ctx, w, h) {
-    const beltY = this._getBeltY();
-    const beltH = 80;
-    const itemSize = this._getItemSize();
-
-    // Belt label
+  _drawSnowflakes(ctx, w, h) {
+    // Label
     ctx.save();
     ctx.font = 'Bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('🍽️ 아기가 원하는 음식을 터치!', w / 2, beltY - beltH / 2 - 14);
+    ctx.fillText('❄️ 눈송이를 터치해서 음식을 잡아요!', w / 2, h * 0.55);
     ctx.restore();
 
-    // Belt background (solid, not transparent)
-    ctx.save();
-    ctx.fillStyle = '#1a2a4a';
-    ctx.fillRect(0, beltY - beltH / 2, w, beltH);
-
-    // Belt surface pattern
-    ctx.fillStyle = '#1e3050';
-    ctx.fillRect(0, beltY - beltH / 2 + 3, w, beltH - 6);
-
-    // Belt track lines (moving)
-    const trackOffset = (this.babyPhase * this.conveyorSpeed) % 20;
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let x = -20 + trackOffset; x < w + 20; x += 20) {
-      ctx.beginPath();
-      ctx.moveTo(x, beltY - beltH / 2 + 3);
-      ctx.lineTo(x, beltY + beltH / 2 - 3);
-      ctx.stroke();
-    }
-
-    // Belt edges (metallic rails)
-    const railGrad = ctx.createLinearGradient(0, beltY - beltH / 2, 0, beltY - beltH / 2 + 4);
-    railGrad.addColorStop(0, '#8899aa');
-    railGrad.addColorStop(1, '#556677');
-    ctx.fillStyle = railGrad;
-    ctx.fillRect(0, beltY - beltH / 2, w, 4);
-
-    const railGrad2 = ctx.createLinearGradient(0, beltY + beltH / 2 - 4, 0, beltY + beltH / 2);
-    railGrad2.addColorStop(0, '#556677');
-    railGrad2.addColorStop(1, '#8899aa');
-    ctx.fillStyle = railGrad2;
-    ctx.fillRect(0, beltY + beltH / 2 - 4, w, 4);
-
-    ctx.restore();
-
-    // Draw food items on belt (each in its own save/restore)
-    for (const item of this.conveyorItems) {
-      if (item.x < -itemSize || item.x > w + itemSize) continue;
-
+    for (const s of this.snowflakeItems) {
       ctx.save();
-      const ix = item.x;
-      const iy = beltY;
 
-      if (item.collected) {
-        // Fly up and fade out animation
-        const t = item.collectPhase;
-        ctx.globalAlpha = 1 - t;
-        ctx.translate(ix, iy - t * 60);
-        ctx.scale(1 + t * 0.5, 1 + t * 0.5);
+      if (s.collected) {
+        const t = s.collectPhase;
+        ctx.globalAlpha = Math.max(0, 1 - t);
+
+        if (s.correct) {
+          // Fly up toward baby
+          ctx.translate(s.x, s.y - t * 80);
+          ctx.scale(1 + t * 0.3, 1 + t * 0.3);
+        } else {
+          // Shake and fade
+          const shake = Math.sin(t * 20) * 8 * (1 - t);
+          ctx.translate(s.x + shake, s.y);
+        }
       } else {
-        ctx.translate(ix, iy);
+        ctx.translate(s.x, s.y);
+      }
 
-        // Solid plate background
-        ctx.fillStyle = '#2a3a5e';
-        ctx.beginPath();
-        ctx.arc(0, 0, itemSize / 2 + 2, 0, Math.PI * 2);
-        ctx.fill();
+      // Draw snowflake crystal shape
+      const bgColor = s.isTroll ? '#3D1A5D' : '#1a2a4a';
+      const borderColor = s.isTroll ? '#8B3DAA' : '#4A7AAA';
 
-        ctx.fillStyle = '#354a70';
-        ctx.beginPath();
-        ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
-        ctx.fill();
+      // Snowflake circle background
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.arc(0, 0, s.size * 0.55, 0, Math.PI * 2);
+      ctx.fill();
 
-        // Plate rim
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
-        ctx.stroke();
+      // Crystal border
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Snowflake decoration (rotating ❄️ behind)
+      if (!s.collected) {
+        ctx.save();
+        ctx.globalAlpha = 0.2;
+        ctx.rotate(s.rotation);
+        ctx.font = `${s.size * 0.9}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('❄️', 0, 0);
+        ctx.restore();
       }
 
       // Food emoji
-      const fontSize = Math.min(34, itemSize * 0.6);
-      ctx.font = `${fontSize}px sans-serif`;
+      const foodSize = Math.max(18, s.size * 0.5);
+      ctx.font = `${foodSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(item.food.emoji, 0, -2);
+      ctx.fillText(s.food.emoji, 0, 0);
 
-      // Name label
-      ctx.font = `Bold ${Math.min(11, itemSize * 0.17)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
-      ctx.fillStyle = '#B3E5FC';
-      ctx.fillText(item.food.name, 0, itemSize / 2 - 6);
+      // Troll warning glow
+      if (s.isTroll && !s.collected) {
+        const warnWidth = 1.5 + Math.sin(s.wobblePhase * 2) * 1.5;
+        ctx.strokeStyle = '#AA44DD';
+        ctx.lineWidth = warnWidth;
+        ctx.beginPath();
+        ctx.arc(0, 0, s.size * 0.65, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       ctx.restore();
     }

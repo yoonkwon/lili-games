@@ -91,8 +91,8 @@ export class TitleScene {
     // Subtitle
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#B3E5FC';
-    ctx.fillText('엄마 엘사가 아기에게 음식을 줘요!', w / 2, titleY + 35);
-    ctx.fillText('좋아하는 음식을 맞춰보세요~ 💕', w / 2, titleY + 58);
+    ctx.fillText('하늘에서 눈송이가 내려와요!', w / 2, titleY + 35);
+    ctx.fillText('좋아하는 음식을 잡아보세요~ ❄️', w / 2, titleY + 58);
     ctx.restore();
 
     // Baby preview
@@ -147,6 +147,6 @@ export class TitleScene {
     ctx.font = '13px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.textAlign = 'center';
-    ctx.fillText('아기가 원하는 음식을 골라주세요!', w / 2, h * 0.88);
+    ctx.fillText('떨어지는 눈송이를 터치해서 음식을 잡아요!', w / 2, h * 0.88);
   }
 }
