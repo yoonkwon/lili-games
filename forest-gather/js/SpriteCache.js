@@ -131,6 +131,8 @@ export class SpriteCache {
     this._renderDog('jopssal', '#D4A574', '#8B6F47');
     // Ikdol - orange pteranodon
     this._renderPteranodon('ikdol', '#FF8C00', '#E67300');
+    // Gosun - white cat with black patches
+    this._renderCat('gosun', '#FFFFFF', '#333333');
   }
 
   _renderDog(name, bodyColor, darkColor) {
@@ -260,6 +262,137 @@ export class SpriteCache {
     ctx.fillStyle = '#333';
     ctx.beginPath();
     ctx.arc(cx + 15, cy - 3, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.cache.set(`${name}-idle`, c);
+  }
+
+  _renderCat(name, bodyColor, patchColor) {
+    const [c, ctx] = this._mk(40, 36);
+    const cx = 20, cy = 18;
+
+    // Body
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 4, 12, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black patches on body
+    ctx.fillStyle = patchColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, cy + 2, 5, 4, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, cy + 6, 4, 3, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.arc(cx + 10, cy - 3, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black patch on head (over one eye)
+    ctx.fillStyle = patchColor;
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, cy - 6, 5, 4, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears (triangles)
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, cy - 10);
+    ctx.lineTo(cx + 2, cy - 18);
+    ctx.lineTo(cx + 8, cy - 11);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 14, cy - 10);
+    ctx.lineTo(cx + 18, cy - 18);
+    ctx.lineTo(cx + 16, cy - 9);
+    ctx.fill();
+
+    // Inner ears (pink)
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, cy - 11);
+    ctx.lineTo(cx + 3, cy - 16);
+    ctx.lineTo(cx + 7, cy - 11);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 14, cy - 10);
+    ctx.lineTo(cx + 17, cy - 16);
+    ctx.lineTo(cx + 16, cy - 10);
+    ctx.fill();
+
+    // Left ear black patch
+    ctx.fillStyle = patchColor;
+    ctx.beginPath();
+    ctx.moveTo(cx + 2, cy - 14);
+    ctx.lineTo(cx + 2, cy - 18);
+    ctx.lineTo(cx + 5, cy - 13);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#90EE90'; // green cat eyes
+    ctx.beginPath();
+    ctx.ellipse(cx + 7, cy - 4, 2.5, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 13, cy - 4, 2.5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Pupils (vertical slits)
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.ellipse(cx + 7, cy - 4, 1, 2.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 13, cy - 4, 1, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose (tiny pink triangle)
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.moveTo(cx + 10, cy - 1);
+    ctx.lineTo(cx + 9, cy + 1);
+    ctx.lineTo(cx + 11, cy + 1);
+    ctx.fill();
+
+    // Whiskers
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy - 1); ctx.lineTo(cx - 1, cy - 3);
+    ctx.moveTo(cx + 6, cy); ctx.lineTo(cx - 1, cy + 1);
+    ctx.moveTo(cx + 14, cy - 1); ctx.lineTo(cx + 21, cy - 3);
+    ctx.moveTo(cx + 14, cy); ctx.lineTo(cx + 21, cy + 1);
+    ctx.stroke();
+
+    // Tail (curvy)
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 2);
+    ctx.quadraticCurveTo(cx - 18, cy - 6, cx - 14, cy - 14);
+    ctx.stroke();
+    // Black tip on tail
+    ctx.strokeStyle = patchColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 15, cy - 11);
+    ctx.quadraticCurveTo(cx - 15, cy - 14, cx - 14, cy - 14);
+    ctx.stroke();
+
+    // Legs
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(cx - 6, cy + 10, 4, 5);
+    ctx.fillRect(cx - 1, cy + 10, 4, 5);
+    ctx.fillRect(cx + 5, cy + 10, 4, 5);
+    ctx.fillRect(cx + 10, cy + 10, 4, 5);
+
+    // Paws
+    ctx.fillStyle = '#FFE0E0';
+    ctx.beginPath();
+    ctx.ellipse(cx - 4, cy + 15, 2.5, 1.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 1, cy + 15, 2.5, 1.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 7, cy + 15, 2.5, 1.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 12, cy + 15, 2.5, 1.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
     this.cache.set(`${name}-idle`, c);

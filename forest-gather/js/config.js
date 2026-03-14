@@ -70,7 +70,7 @@ export const ROUNDS = [
       { type: 'thunder_stone', emoji: '⚡', name: '번개돌', rarity: 'rare' },
       { type: 'dragon_scale', emoji: '🐉', name: '용의 비늘', rarity: 'legendary' },
     ],
-    unlockCompanion: null,
+    unlockCompanion: 'gosun',
   },
   {
     id: 5,
@@ -124,13 +124,24 @@ export const COMPANIONS = {
   },
   ikdol: {
     name: '익돌이',
-    emoji: '🦕',
-    desc: '주황색 프테라노돈, 하늘을 날아요!',
+    emoji: '🦖',
+    desc: '주황색 익룡, 하늘을 날아요!',
     color: '#FF8C00',
     range: 200,
     collectSpeed: 4,
     ability: 'fly', // collects sky items
     speed: 140,
+  },
+  gosun: {
+    name: '고순이',
+    emoji: '🐱',
+    desc: '흰색 얼룩 고양이, 희귀 아이템을 잘 찾아요!',
+    color: '#FFFFFF',
+    range: 100,
+    collectSpeed: 2.5,
+    ability: 'lucky', // increases rare item spawn chance nearby
+    abilityInterval: 20,
+    speed: 160,
   },
 };
 

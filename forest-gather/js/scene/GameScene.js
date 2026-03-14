@@ -261,7 +261,7 @@ export class GameScene {
     for (const comp of this.companions) {
       comp.update(dt, this.items, (item, idx) => this._collectItem(item, idx));
 
-      // Reveal hidden items
+      // Reveal hidden items (보리)
       if (comp.shouldRevealHidden()) {
         let revealed = 0;
         for (const item of this.items) {
@@ -277,6 +277,28 @@ export class GameScene {
         }
         if (revealed > 0) {
           this.message.show(`${comp.emoji} ${comp.name}가 숨은 아이템을 찾았어!`);
+        }
+      }
+
+      // Lucky boost (고순이) - upgrade nearby common items to shiny
+      if (comp.shouldBoostLuck()) {
+        let upgraded = 0;
+        for (const item of this.items) {
+          if (!item.collected && item.rarity === 'common' && upgraded < 2) {
+            const dx = item.x - comp.x;
+            const dy = item.y - comp.y;
+            if (Math.sqrt(dx * dx + dy * dy) < comp.range * 1.5) {
+              item.rarity = 'shiny';
+              item.value = RARITY.shiny.value;
+              item.color = RARITY.shiny.color;
+              item.glow = true;
+              upgraded++;
+              this.particles.createStars(item.x - this.camX, item.y - this.camY, 3);
+            }
+          }
+        }
+        if (upgraded > 0) {
+          this.message.show(`${comp.emoji} ${comp.name}의 행운! 아이템이 반짝여!`);
         }
       }
     }

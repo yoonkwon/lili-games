@@ -78,6 +78,15 @@ export class Companion {
     return false;
   }
 
+  shouldBoostLuck() {
+    if (this.ability !== 'lucky') return false;
+    if (this.abilityTimer >= this.abilityInterval) {
+      this.abilityTimer = 0;
+      return true;
+    }
+    return false;
+  }
+
   draw(ctx, spriteCache) {
     const bobY = Math.sin(this.bobPhase) * 2;
     const flyY = this.ability === 'fly' ? -20 + Math.sin(this.bobPhase * 0.7) * 5 : 0;
