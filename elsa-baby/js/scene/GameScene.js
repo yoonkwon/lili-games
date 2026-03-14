@@ -27,7 +27,7 @@ export class GameScene {
     // === Conveyor belt ===
     this.conveyorItems = [];
     this.conveyorSpeed = 55; // px per second
-    this.itemSpacing = 100; // fixed spacing between items
+    this.itemSpacing = 75; // fixed spacing between items
     this.spawnTimer = 0;
     this._fillConveyor(w);
 
