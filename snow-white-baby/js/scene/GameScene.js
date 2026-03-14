@@ -705,15 +705,15 @@ export class GameScene {
         ctx.translate(a.x, a.y + bounce);
       }
 
-      // Draw animal body circle
-      const bgColor = a.isCrow ? 'rgba(80, 0, 80, 0.5)' : 'rgba(60, 100, 60, 0.4)';
-      const borderColor = a.isCrow ? 'rgba(150, 0, 150, 0.6)' : 'rgba(100, 180, 100, 0.5)';
+      // Draw animal body circle (solid background)
+      const bgColor = a.isCrow ? '#3D1A3D' : '#2A4A2A';
+      const borderColor = a.isCrow ? '#6B2D6B' : '#4A8A4A';
       ctx.fillStyle = bgColor;
       ctx.beginPath();
       ctx.arc(0, 0, a.size * 0.7, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = borderColor;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
       // Animal emoji
@@ -728,13 +728,14 @@ export class GameScene {
       ctx.font = `${foodFontSize}px sans-serif`;
       ctx.fillText(a.food.emoji, 0, a.size * 0.3);
 
-      // Crow warning glow
+      // Crow warning pulse (border glow)
       if (a.isCrow && !a.collected) {
-        const warnAlpha = 0.2 + Math.sin(a.bouncePhase * 2) * 0.15;
-        ctx.fillStyle = `rgba(128, 0, 128, ${warnAlpha})`;
+        const warnWidth = 1.5 + Math.sin(a.bouncePhase * 2) * 1.5;
+        ctx.strokeStyle = '#AA44AA';
+        ctx.lineWidth = warnWidth;
         ctx.beginPath();
-        ctx.arc(0, 0, a.size * 0.9, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(0, 0, a.size * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       ctx.restore();
