@@ -15,6 +15,7 @@ export class Item {
     this.value = RARITY[rarity].value;
     this.color = RARITY[rarity].color;
     this.glow = RARITY[rarity].glow;
+    this.stars = this._getStars(rarity);
     this.collected = false;
     this.hidden = false;
     this.sky = false;
@@ -58,11 +59,16 @@ export class Item {
     this.swarmRadius = 20 + Math.random() * 30;
   }
 
+  _getStars(rarity) {
+    return rarity === 'shiny' ? '✦' : rarity === 'rare' ? '✦✦' : rarity === 'legendary' ? '✦✦✦' : '';
+  }
+
   upgradeRarity(newRarity) {
     this.rarity = newRarity;
     this.value = RARITY[newRarity].value;
     this.color = RARITY[newRarity].color;
     this.glow = RARITY[newRarity].glow;
+    this.stars = this._getStars(newRarity);
   }
 
   setModifier(mod) {
@@ -105,12 +111,12 @@ export class Item {
     if (this.modifier === 'shy' && playerX !== undefined) {
       const dx = this.x - playerX;
       const dy = this.y - playerY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const distSq = dx * dx + dy * dy;
       const fleeRange = 100;
 
-      if (dist < fleeRange && dist > 0) {
+      if (distSq < fleeRange * fleeRange && distSq > 0) {
         this.fleeing = true;
-        // Flee away from player
+        const dist = Math.sqrt(distSq);
         const fleeForce = (1 - dist / fleeRange) * 250;
         this.fleeVx = (dx / dist) * fleeForce;
         this.fleeVy = (dy / dist) * fleeForce;
@@ -218,11 +224,10 @@ export class Item {
     ctx.fillText(this.emoji, 0, 0);
 
     // Rarity indicator
-    if (this.rarity !== 'common') {
+    if (this.stars) {
       ctx.font = '10px sans-serif';
-      const stars = this.rarity === 'shiny' ? '✦' : this.rarity === 'rare' ? '✦✦' : '✦✦✦';
       ctx.fillStyle = this.color;
-      ctx.fillText(stars, 0, this.size * 0.6);
+      ctx.fillText(this.stars, 0, this.size * 0.6);
     }
 
     ctx.restore();

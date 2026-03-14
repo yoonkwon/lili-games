@@ -222,7 +222,7 @@ export class GameScene {
     const spellBtnY = this.screenH - 70;
     const dx = x - spellBtnX;
     const dy = y - spellBtnY;
-    if (Math.sqrt(dx * dx + dy * dy) < 35) {
+    if (dx * dx + dy * dy < 1225) { // 35²
       if (this._isSpellReady()) {
         this._castSpell();
       } else {
@@ -340,6 +340,23 @@ export class GameScene {
     return this.magicGauge >= this._getCurrentSpell().cost;
   }
 
+  _applyCompanionAbility(comp, range, maxCount, filterFn, applyFn, starCount) {
+    const rangeSq = range * range;
+    let affected = 0;
+    for (const item of this.items) {
+      if (affected >= maxCount) break;
+      if (!filterFn(item)) continue;
+      const dx = item.x - comp.x;
+      const dy = item.y - comp.y;
+      if (dx * dx + dy * dy < rangeSq) {
+        applyFn(item);
+        affected++;
+        this.particles.createStars(item.x - this.camX, item.y - this.camY, starCount);
+      }
+    }
+    return affected;
+  }
+
   _castSpell() {
     const spellKey = this.spellList[this.currentSpellIdx];
     const spell = SPELLS[spellKey];
@@ -394,7 +411,7 @@ export class GameScene {
       x = 80 + Math.random() * (this.mapWidth - 160);
       y = 120 + Math.random() * (this.mapHeight - 200);
       attempts++;
-    } while (Math.sqrt((x - this.player.x) ** 2 + (y - this.player.y) ** 2) < 200 && attempts < 20);
+    } while ((x - this.player.x) ** 2 + (y - this.player.y) ** 2 < 40000 && attempts < 20); // 200²
     this.companionNPCs.push(new CompanionNPC(type, x, y));
   }
 
@@ -449,7 +466,7 @@ export class GameScene {
 
     // Cache buff values once per frame (avoid repeated iteration)
     const speedBonus = this.getSpeedBonus();
-    const collectRadius = this.getCollectRadius();
+    const collectRadius = this._cachedCollectRadius = this.getCollectRadius();
     const collectRadiusSq = collectRadius * collectRadius;
     const rangeBonus = collectRadius - this.difficulty.collectRadius;
 
@@ -500,41 +517,17 @@ export class GameScene {
       comp.update(dt, this.items, (item, idx) => this._collectItem(item, idx), rangeBonus, speedBonusForComp, this.companions);
 
       if (comp.shouldRevealHidden()) {
-        const revealRangeSq = (comp.range * 2) ** 2;
-        let revealed = 0;
-        for (const item of this.items) {
-          if (item.hidden && !item.collected && revealed < 3) {
-            const dx = item.x - comp.x;
-            const dy = item.y - comp.y;
-            if (dx * dx + dy * dy < revealRangeSq) {
-              item.hidden = false;
-              revealed++;
-              this.particles.createStars(item.x - this.camX, item.y - this.camY, 2);
-            }
-          }
-        }
-        if (revealed > 0) {
-          this.message.show(`${comp.name}가 숨은 아이템을 찾았어!`);
-        }
+        const count = this._applyCompanionAbility(comp, comp.range * 2, 3,
+          item => item.hidden && !item.collected,
+          item => { item.hidden = false; }, 2);
+        if (count > 0) this.message.show(`${comp.name}가 숨은 아이템을 찾았어!`);
       }
 
       if (comp.shouldBoostLuck()) {
-        const luckRangeSq = (comp.range * 1.5) ** 2;
-        let upgraded = 0;
-        for (const item of this.items) {
-          if (!item.collected && item.rarity === 'common' && upgraded < 2) {
-            const dx = item.x - comp.x;
-            const dy = item.y - comp.y;
-            if (dx * dx + dy * dy < luckRangeSq) {
-              item.upgradeRarity('shiny');
-              upgraded++;
-              this.particles.createStars(item.x - this.camX, item.y - this.camY, 3);
-            }
-          }
-        }
-        if (upgraded > 0) {
-          this.message.show(`${comp.name}의 행운! 아이템이 반짝여!`);
-        }
+        const count = this._applyCompanionAbility(comp, comp.range * 1.5, 2,
+          item => !item.collected && item.rarity === 'common',
+          item => { item.upgradeRarity('shiny'); }, 3);
+        if (count > 0) this.message.show(`${comp.name}의 행운! 아이템이 반짝여!`);
       }
     }
 
@@ -826,7 +819,7 @@ export class GameScene {
   }
 
   _drawCollectRadius(ctx) {
-    const radius = this.getCollectRadius();
+    const radius = this._cachedCollectRadius || this.getCollectRadius();
     const feverGlow = this.fever ? 0.06 : 0;
 
     // Player radius

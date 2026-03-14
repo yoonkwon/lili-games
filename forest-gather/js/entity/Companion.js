@@ -7,8 +7,10 @@ import { COMPANIONS } from '../config.js';
 
 // Separation physics constants
 const SEPARATION_RADIUS = 45;  // min distance between companions
+const SEPARATION_RADIUS_SQ = SEPARATION_RADIUS * SEPARATION_RADIUS;
 const SEPARATION_FORCE = 200;  // push strength
 const PLAYER_SEPARATION_RADIUS = 35;
+const PLAYER_SEPARATION_RADIUS_SQ = PLAYER_SEPARATION_RADIUS * PLAYER_SEPARATION_RADIUS;
 const PLAYER_SEPARATION_FORCE = 250;
 
 export class Companion {
@@ -115,10 +117,10 @@ export class Companion {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist > 5) {
-      const leashDist = Math.sqrt(
-        (this.x - this.owner.x) ** 2 + (this.y - this.owner.y) ** 2
-      );
-      const speedMult = leashDist > 250 ? 4 : leashDist > 150 ? 2 : 1;
+      const ldx = this.x - this.owner.x;
+      const ldy = this.y - this.owner.y;
+      const leashDistSq = ldx * ldx + ldy * ldy;
+      const speedMult = leashDistSq > 62500 ? 4 : leashDistSq > 22500 ? 2 : 1; // 250², 150²
       const moveSpeed = Math.min((this.speed + speedBonus) * speedMult, dist * 3);
       this.vx = (dx / dist) * moveSpeed;
       this.vy = (dy / dist) * moveSpeed;
@@ -132,8 +134,9 @@ export class Companion {
       if (other === this) continue;
       const sx = this.x - other.x;
       const sy = this.y - other.y;
-      const sDist = Math.sqrt(sx * sx + sy * sy);
-      if (sDist < SEPARATION_RADIUS && sDist > 0.1) {
+      const sDistSq = sx * sx + sy * sy;
+      if (sDistSq < SEPARATION_RADIUS_SQ && sDistSq > 0.01) {
+        const sDist = Math.sqrt(sDistSq);
         const overlap = (SEPARATION_RADIUS - sDist) / SEPARATION_RADIUS;
         this.vx += (sx / sDist) * SEPARATION_FORCE * overlap;
         this.vy += (sy / sDist) * SEPARATION_FORCE * overlap;
@@ -144,8 +147,9 @@ export class Companion {
     {
       const px = this.x - this.owner.x;
       const py = this.y - this.owner.y;
-      const pDist = Math.sqrt(px * px + py * py);
-      if (pDist < PLAYER_SEPARATION_RADIUS && pDist > 0.1) {
+      const pDistSq = px * px + py * py;
+      if (pDistSq < PLAYER_SEPARATION_RADIUS_SQ && pDistSq > 0.01) {
+        const pDist = Math.sqrt(pDistSq);
         const overlap = (PLAYER_SEPARATION_RADIUS - pDist) / PLAYER_SEPARATION_RADIUS;
         this.vx += (px / pDist) * PLAYER_SEPARATION_FORCE * overlap;
         this.vy += (py / pDist) * PLAYER_SEPARATION_FORCE * overlap;
@@ -200,17 +204,16 @@ export class Companion {
       if (item.collected || item.hidden) continue;
       if (item.sky && this.ability !== 'fly') continue;
 
-      const distFromOwner = Math.sqrt(
-        (item.x - this.owner.x) ** 2 + (item.y - this.owner.y) ** 2
-      );
-      if (distFromOwner > 280) continue;
+      const odx = item.x - this.owner.x;
+      const ody = item.y - this.owner.y;
+      if (odx * odx + ody * ody > 78400) continue; // 280²
 
-      const distFromSelf = Math.sqrt(
-        (item.x - this.x) ** 2 + (item.y - this.y) ** 2
-      );
+      const sdx = item.x - this.x;
+      const sdy = item.y - this.y;
+      const distFromSelfSq = sdx * sdx + sdy * sdy;
 
       // Score: closer is better, in-sector gets a big bonus
-      let score = 300 - distFromSelf;
+      let score = 300 - Math.sqrt(distFromSelfSq);
       if (this._isInSector(item.x, item.y)) score += 200;
 
       // Lucky companions prefer rare items
