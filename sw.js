@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v19';
+const CACHE_NAME = 'lili-games-v21';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -11,9 +11,11 @@ const ASSETS = [
   './shared/AchievementManager.js',
   './shared/Input.js',
   './shared/ParticleSystem.js',
+  './shared/AssetLoader.js',
   './shared/GameEngine.js',
   './shared/ui/Message.js',
   './shared/ui/Gauge.js',
+  './shared/ui/LoadingScreen.js',
   './elsa-baby/',
   './elsa-baby/index.html',
   './elsa-baby/js/main.js',

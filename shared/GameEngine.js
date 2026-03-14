@@ -7,6 +7,8 @@
  *   engine.onTap((x, y, sceneName) => { ... });
  *   engine.start('title');
  */
+import { Input } from './Input.js';
+
 export class GameEngine {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
@@ -20,14 +22,25 @@ export class GameEngine {
 
     // Transition state
     this.transition = { active: false, alpha: 0, phase: 'none', nextAction: null };
-    this.transitionSpeed = 3;
+    this.transitionSpeed = 2.5;
 
     // Callbacks
     this._tapHandler = null;
+    this._onSceneResult = null;
     this._drawOverlay = null;
+
+    // Bind loop once to avoid creating arrow functions every frame
+    this._boundLoop = (ts) => this._loop(ts);
 
     this._resize();
     window.addEventListener('resize', () => this._resize());
+
+    // Input
+    const input = new Input(this.canvas);
+    input.onTap((x, y) => {
+      if (this.transition.active) return;
+      if (this._tapHandler) this._tapHandler(x, y, this.currentSceneName);
+    });
   }
 
   _resize() {
@@ -70,7 +83,7 @@ export class GameEngine {
       this.currentSceneName = sceneName;
       this.currentScene = this.scenes[sceneName];
     }
-    requestAnimationFrame((ts) => this._loop(ts));
+    requestAnimationFrame(this._boundLoop);
   }
 
   _loop(timestamp) {
@@ -98,7 +111,7 @@ export class GameEngine {
       // Update current scene
       if (!this.paused && this.currentScene) {
         const result = this.currentScene.update(dt, this.width, this.height);
-        if (this._onSceneResult && result) {
+        if (this._onSceneResult && result && !this.transition.active) {
           this._onSceneResult(result, this.currentSceneName);
         }
       }
@@ -117,7 +130,7 @@ export class GameEngine {
       // Transition overlay
       if (this.transition.active && this.transition.alpha > 0) {
         this.ctx.save();
-        this.ctx.fillStyle = `rgba(0,0,0,${this.transition.alpha * 0.6})`;
+        this.ctx.fillStyle = `rgba(0,0,0,${this.transition.alpha * 0.7})`;
         this.ctx.fillRect(0, 0, this.width, this.height);
         this.ctx.restore();
       }
@@ -125,7 +138,7 @@ export class GameEngine {
       console.error('[GameEngine Error]', e);
     }
 
-    requestAnimationFrame((ts) => this._loop(ts));
+    requestAnimationFrame(this._boundLoop);
   }
 
   onSceneResult(handler) {
