@@ -26,9 +26,9 @@ export class GameScene {
 
     // === Conveyor belt ===
     this.conveyorItems = [];
-    this.conveyorSpeed = 35; // px per second (slow, easy for kids)
+    this.conveyorSpeed = 55; // px per second
     this.spawnTimer = 0;
-    this.spawnInterval = 2.2; // seconds between spawns (no overlap)
+    this.spawnInterval = 1.6; // seconds between spawns
     this._fillConveyor(w);
 
     // Ice freeze state
@@ -603,18 +603,6 @@ export class GameScene {
         ctx.scale(1 + t * 0.5, 1 + t * 0.5);
       } else {
         ctx.translate(ix, iy);
-
-        // Highlight if it matches wanted food
-        if (item.food.type === this.wantedFood.type && !this.frozen) {
-          const glow = 0.4 + Math.sin(this.babyPhase * 5) * 0.2;
-          ctx.shadowColor = '#FFD700';
-          ctx.shadowBlur = 15;
-          ctx.fillStyle = `rgba(255, 215, 0, ${glow})`;
-          ctx.beginPath();
-          ctx.arc(0, 0, itemSize / 2 + 5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
 
         // Solid plate background
         ctx.fillStyle = '#2a3a5e';
