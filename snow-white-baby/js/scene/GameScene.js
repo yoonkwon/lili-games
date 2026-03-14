@@ -89,14 +89,23 @@ export class GameScene {
     const food = this._pickAnimalFood();
     const spawn = this._getSpawnPosition();
     // Keep animals in bottom area so they don't cover baby/mom
-    const targetX = this.w * (0.1 + Math.random() * 0.8);
-    const targetY = this.h * (0.68 + Math.random() * 0.18);
+    // Try to find a target position not too close to existing animals
+    let targetX, targetY;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      targetX = this.w * (0.1 + Math.random() * 0.8);
+      targetY = this.h * (0.68 + Math.random() * 0.18);
+      const tooClose = this.animals.some(a => !a.collected &&
+        Math.hypot(a.targetX - targetX, a.targetY - targetY) < (a.size + animal.size) * 0.8);
+      if (!tooClose) break;
+    }
 
     this.animals.push({
       animalType: animal,
       food: food,
       x: spawn.x,
       y: spawn.y,
+      vx: 0,
+      vy: 0,
       targetX: targetX,
       targetY: targetY,
       speed: animal.speed,
@@ -114,8 +123,14 @@ export class GameScene {
 
   _spawnCrow() {
     const spawn = this._getSpawnPosition();
-    const targetX = this.w * (0.1 + Math.random() * 0.8);
-    const targetY = this.h * (0.68 + Math.random() * 0.18);
+    let targetX, targetY;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      targetX = this.w * (0.1 + Math.random() * 0.8);
+      targetY = this.h * (0.68 + Math.random() * 0.18);
+      const tooClose = this.animals.some(a => !a.collected &&
+        Math.hypot(a.targetX - targetX, a.targetY - targetY) < (a.size + POISON.size) * 0.8);
+      if (!tooClose) break;
+    }
 
     // Crow disguises food as what baby wants (temptation!)
     this.animals.push({
@@ -123,6 +138,8 @@ export class GameScene {
       food: { type: 'poison', emoji: this.wantedFood.emoji, name: POISON.foodName, color: '#800080' },
       x: spawn.x,
       y: spawn.y,
+      vx: 0,
+      vy: 0,
       targetX: targetX,
       targetY: targetY,
       speed: POISON.speed,
@@ -335,29 +352,97 @@ export class GameScene {
         if (a.collected) {
           a.collectPhase += dt * 3;
         } else {
-          // Move toward target
+          // Move toward target with steering force
           const dx = a.targetX - a.x;
           const dy = a.targetY - a.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist > 5) {
-            const moveSpeed = a.speed * dt;
-            a.x += (dx / dist) * moveSpeed;
-            a.y += (dy / dist) * moveSpeed;
+            // Steering: accelerate toward target
+            const steerForce = a.speed * 2;
+            a.vx += (dx / dist) * steerForce * dt;
+            a.vy += (dy / dist) * steerForce * dt;
+
+            // Clamp velocity to max speed
+            const vel = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+            if (vel > a.speed) {
+              a.vx = (a.vx / vel) * a.speed;
+              a.vy = (a.vy / vel) * a.speed;
+            }
           } else {
             a.arrived = true;
             a.stayTimer -= dt;
 
-            // Gentle hovering when arrived
-            a.x = a.targetX + Math.sin(a.bouncePhase * 0.5) * 5;
-            a.y = a.targetY + Math.sin(a.bouncePhase * 0.7) * 3;
+            // Gentle hovering when arrived (dampen velocity)
+            a.vx *= 0.9;
+            a.vy *= 0.9;
+            // Soft spring back to target
+            a.vx += (a.targetX - a.x) * 2 * dt;
+            a.vy += (a.targetY - a.y) * 2 * dt;
           }
+
+          // Apply velocity
+          a.x += a.vx * dt;
+          a.y += a.vy * dt;
+
+          // Damping (friction)
+          a.vx *= (1 - 1.5 * dt);
+          a.vy *= (1 - 1.5 * dt);
+
+          // Keep within screen bounds
+          const margin = a.size * 0.5;
+          if (a.x < margin) { a.x = margin; a.vx = Math.abs(a.vx) * 0.5; }
+          if (a.x > w - margin) { a.x = w - margin; a.vx = -Math.abs(a.vx) * 0.5; }
+          if (a.y < h * 0.6) { a.y = h * 0.6; a.vy = Math.abs(a.vy) * 0.5; }
+          if (a.y > h - margin) { a.y = h - margin; a.vy = -Math.abs(a.vy) * 0.5; }
 
           // If stayed too long, fly away (especially crow)
           if (a.arrived && a.stayTimer <= 0) {
             a.collected = true; // mark for removal via fade
             a.collectPhase = 0;
             a.correct = true; // neutral exit, no shake
+          }
+        }
+      }
+
+      // Collision detection & response between active animals
+      const active = this.animals.filter(a => !a.collected);
+      for (let i = 0; i < active.length; i++) {
+        for (let j = i + 1; j < active.length; j++) {
+          const a = active[i];
+          const b = active[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = (a.size + b.size) * 0.75; // collision radius
+
+          if (dist < minDist && dist > 0.01) {
+            // Normalize
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            // Push apart (overlap correction)
+            const overlap = minDist - dist;
+            const pushX = nx * overlap * 0.5;
+            const pushY = ny * overlap * 0.5;
+            a.x -= pushX;
+            a.y -= pushY;
+            b.x += pushX;
+            b.y += pushY;
+
+            // Bounce velocity: reflect relative velocity along collision normal
+            const dvx = a.vx - b.vx;
+            const dvy = a.vy - b.vy;
+            const dvDotN = dvx * nx + dvy * ny;
+
+            // Only bounce if approaching each other
+            if (dvDotN > 0) {
+              const bounce = dvDotN * 0.8; // bounciness
+              a.vx -= bounce * nx;
+              a.vy -= bounce * ny;
+              b.vx += bounce * nx;
+              b.vy += bounce * ny;
+            }
           }
         }
       }
