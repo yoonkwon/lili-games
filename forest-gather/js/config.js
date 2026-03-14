@@ -172,44 +172,76 @@ export const COMPANIONS = {
   bori: {
     name: '보리',
     emoji: '🐕',
-    desc: '검은 차우차우, 숨은 아이템을 찾아요!',
+    desc: '킁킁! 숨은 아이템을 냄새로 찾아요!',
     color: '#333333',
-    range: 80,
-    collectSpeed: 3,
-    ability: 'detect', // reveals hidden items every 30s
-    abilityInterval: 30,
-    speed: 100,
+    range: 90,
+    collectSpeed: 2.5,
+    ability: 'detect',
+    abilityInterval: 12, // bark pulse every 12s
+    detectRadius: 60, // auto-reveal hidden items within this range
+    speed: 110,
   },
   jopssal: {
     name: '좁쌀이',
     emoji: '🐶',
-    desc: '점박이 강아지, 넓은 범위를 돌아다녀요!',
+    desc: '멀리 있는 아이템도 돌진해서 물어와요!',
     color: '#D4A574',
-    range: 150,
-    collectSpeed: 2,
-    ability: 'wide', // wider collection range
-    speed: 180,
+    range: 120,
+    collectSpeed: 1.5,
+    ability: 'dash', // sprint to distant items
+    abilityInterval: 8, // dash every 8s
+    dashSpeed: 500, // burst speed during dash
+    dashDuration: 0.8, // how long dash lasts
+    speed: 160,
   },
   ikdol: {
     name: '익돌이',
     emoji: '🦖',
-    desc: '주황색 익룡, 하늘을 날아요!',
+    desc: '하늘에서 급강하! 줄줄이 아이템 싹쓸이!',
     color: '#FF8C00',
-    range: 200,
-    collectSpeed: 4,
-    ability: 'fly', // collects sky items
-    speed: 140,
+    range: 100,
+    collectSpeed: 1,
+    ability: 'swoop',
+    abilityInterval: 10,
+    swoopRange: 250,
+    speed: 130,
+  },
+  azzi_white: {
+    name: '하얀 아찌',
+    emoji: '🐇',
+    desc: '하얀 토끼! 빠른 발로 아이템을 모아와요!',
+    color: '#FFFFFF',
+    range: 110,
+    collectSpeed: 1.5,
+    ability: 'dash',
+    abilityInterval: 8,
+    dashSpeed: 450,
+    dashDuration: 0.7,
+    speed: 170,
+  },
+  azzi_blue: {
+    name: '하늘 아찌',
+    emoji: '🐇',
+    desc: '하늘색 토끼! 주변 아이템 등급을 올려줘요!',
+    color: '#87CEEB',
+    range: 100,
+    collectSpeed: 2,
+    ability: 'lucky',
+    abilityInterval: 10,
+    luckAuraRadius: 90,
+    speed: 150,
   },
   gosun: {
     name: '고순이',
     emoji: '🐱',
-    desc: '흰색 얼룩 고양이, 희귀 아이템을 잘 찾아요!',
+    desc: '주변 아이템이 반짝! 등급이 올라가요!',
     color: '#FFFFFF',
     range: 100,
-    collectSpeed: 2.5,
-    ability: 'lucky', // increases rare item spawn chance nearby
-    abilityInterval: 20,
-    speed: 160,
+    collectSpeed: 2,
+    ability: 'lucky',
+    abilityInterval: 10, // upgrade aura every 10s
+    luckAuraRadius: 100, // sparkle aura range
+    speed: 140,
   },
 };
 
@@ -259,8 +291,12 @@ export const EVENTS = [
   { type: 'gift',        emoji: '🎁', name: '선물 상자!',  desc: '터치하면 보너스!', chance: 0.05, duration: 0 },
 ];
 
-// Companion discovery order (found during exploration, not per-round)
-export const COMPANION_DISCOVERY_ORDER = ['bori', 'jopssal', 'gosun', 'ikdol'];
+// Companion discovery order per difficulty
+export const COMPANION_DISCOVERY = {
+  lisa:     ['bori', 'jopssal', 'azzi_white', 'azzi_blue', 'gosun'],
+  ria:      ['bori', 'jopssal', 'gosun', 'ikdol'],
+  together: ['bori', 'jopssal', 'azzi_white', 'azzi_blue', 'gosun', 'ikdol'],
+};
 // How often a new companion NPC can appear on the map (seconds since game start)
 export const COMPANION_SPAWN_INTERVAL = 30; // every ~30s a new one may appear
 
@@ -270,8 +306,9 @@ export const ROUND_CLEAR_BONUS = 30; // bonus seconds on round clear
 
 // Time bonus for collecting items (seconds added)
 export const COLLECT_TIME_BONUS = {
-  common:    1,
-  shiny:     2,
-  rare:      4,
-  legendary: 8,
+  common:    0.3,
+  shiny:     0.5,
+  rare:      1,
+  legendary: 2,
 };
+export const TIMER_CAP = 90; // timer can never exceed this

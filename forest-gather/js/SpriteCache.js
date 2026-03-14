@@ -248,11 +248,16 @@ export class SpriteCache {
     this._renderPteranodon('ikdol', '#FF8C00', '#E67300');
     // Gosun - white cat with black patches
     this._renderCat('gosun', '#FFFFFF', '#333333');
+    // Azzi twins - white and sky-blue rabbits
+    this._renderRabbit('azzi_white', '#FFFFFF', '#F5F5F5', '#FFB6C1');
+    this._renderRabbit('azzi_blue', '#B0E0FF', '#87CEEB', '#FFB6C1');
     // NPC versions (with "?" bubble)
     this._renderCompanionNPC('bori');
     this._renderCompanionNPC('jopssal');
     this._renderCompanionNPC('ikdol');
     this._renderCompanionNPC('gosun');
+    this._renderCompanionNPC('azzi_white');
+    this._renderCompanionNPC('azzi_blue');
   }
 
   _renderChowChow(name) {
@@ -726,6 +731,128 @@ export class SpriteCache {
     ctx.ellipse(cx, cy + 18, 3, 2, 0, 0, Math.PI * 2);
     ctx.ellipse(cx + 6, cy + 18, 3, 2, 0, 0, Math.PI * 2);
     ctx.ellipse(cx + 12, cy + 18, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.cache.set(`${name}-idle`, c);
+  }
+
+  _renderRabbit(name, bodyColor, shadowColor, innerEarColor) {
+    const [c, ctx] = this._mk(48, 52);
+    const cx = 24, cy = 26;
+
+    // Body (round, plump)
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 4, 12, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Body shadow
+    ctx.fillStyle = shadowColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 8, 10, 5, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Head
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 6, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Long ears (upright, floppy)
+    ctx.fillStyle = bodyColor;
+    // Left ear
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, cy - 24, 4, 12, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    // Right ear (slightly tilted)
+    ctx.beginPath();
+    ctx.ellipse(cx + 5, cy - 23, 4, 11, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner ears
+    ctx.fillStyle = innerEarColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, cy - 23, 2.5, 8, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 5, cy - 22, 2.5, 7, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes (big, round, cute)
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.ellipse(cx - 4, cy - 7, 3.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 4, cy - 7, 3.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Iris
+    ctx.fillStyle = name === 'azzi_white' ? '#8B4513' : '#4169E1';
+    ctx.beginPath();
+    ctx.arc(cx - 3.5, cy - 7, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 4.5, cy - 7, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Pupils
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(cx - 3.5, cy - 7, 1, 0, Math.PI * 2);
+    ctx.arc(cx + 4.5, cy - 7, 1, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye shine
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(cx - 4.5, cy - 8, 0.8, 0, Math.PI * 2);
+    ctx.arc(cx + 3.5, cy - 8, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose (small pink triangle)
+    ctx.fillStyle = '#FF9999';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 3);
+    ctx.lineTo(cx - 1.5, cy - 1.5);
+    ctx.lineTo(cx + 1.5, cy - 1.5);
+    ctx.fill();
+
+    // Mouth (Y shape)
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 1.5);
+    ctx.lineTo(cx, cy);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx - 2, cy + 1.5);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + 2, cy + 1.5);
+    ctx.stroke();
+
+    // Whiskers
+    ctx.strokeStyle = '#DDD';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, cy - 2); ctx.lineTo(cx - 10, cy - 3);
+    ctx.moveTo(cx - 3, cy - 1); ctx.lineTo(cx - 10, cy);
+    ctx.moveTo(cx + 3, cy - 2); ctx.lineTo(cx + 10, cy - 3);
+    ctx.moveTo(cx + 3, cy - 1); ctx.lineTo(cx + 10, cy);
+    ctx.stroke();
+
+    // Front paws
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, cy + 13, 4, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 5, cy + 13, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Paw pads
+    ctx.fillStyle = innerEarColor;
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy + 13, 1.5, 0, Math.PI * 2);
+    ctx.arc(cx + 5, cy + 13, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cotton tail (behind body)
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy + 4, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy + 4, 3, 0, Math.PI * 2);
     ctx.fill();
 
     this.cache.set(`${name}-idle`, c);

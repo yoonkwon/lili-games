@@ -1,7 +1,7 @@
 /**
  * Main gameplay scene - collection game with combo & fever system
  */
-import { ROUNDS, RARITY, ITEM_EFFECTS, COMBO, MAGNET, SPELLS, ROUND_TIME, ROUND_CLEAR_BONUS, COLLECT_TIME_BONUS, DIFFICULTIES, COMPANIONS, COMPANION_DISCOVERY_ORDER, COMPANION_SPAWN_INTERVAL } from '../config.js';
+import { ROUNDS, RARITY, ITEM_EFFECTS, COMBO, MAGNET, SPELLS, ROUND_TIME, ROUND_CLEAR_BONUS, COLLECT_TIME_BONUS, TIMER_CAP, DIFFICULTIES, COMPANIONS, COMPANION_DISCOVERY, COMPANION_SPAWN_INTERVAL } from '../config.js';
 import { Character } from '../entity/Character.js';
 import { Companion } from '../entity/Companion.js';
 import { CompanionNPC } from '../entity/CompanionNPC.js';
@@ -45,7 +45,7 @@ export class GameScene {
     this.companions = [];
 
     // Companion discovery system
-    this.discoveryQueue = [...COMPANION_DISCOVERY_ORDER];
+    this.discoveryQueue = [...(COMPANION_DISCOVERY[difficultyKey] || COMPANION_DISCOVERY.ria)];
     this.companionNPCs = [];
     this.nextCompanionSpawnTime = 15 + Math.random() * 10;
 
@@ -298,11 +298,10 @@ export class GameScene {
       );
     }
 
-    // Time bonus on collection (extra time for combos)
-    let timeBonus = COLLECT_TIME_BONUS[item.rarity] || 1;
-    if (this.combo >= 5) timeBonus += 1; // bonus time for sustained combos
-    this.timer += timeBonus;
-    if (timeBonus >= 2) {
+    // Time bonus on collection (capped to maintain tension)
+    const timeBonus = COLLECT_TIME_BONUS[item.rarity] || 0.3;
+    this.timer = Math.min(this.timer + timeBonus, TIMER_CAP);
+    if (timeBonus >= 1) {
       this.particles.addFloatingText(item.x - this.camX, item.y - this.camY - 40, `+${timeBonus}s`, '#7DF9FF');
     }
 
@@ -380,7 +379,7 @@ export class GameScene {
       }
     } else if (spellKey === 'timewarp') {
       // Add time + slow motion
-      this.timer += 15;
+      this.timer = Math.min(this.timer + 15, TIMER_CAP);
       this.slowMotion = true;
       this.slowTimer = 8;
       this.particles.addFloatingText(this.screenW / 2, this.screenH / 2, '+15s!', '#9B59B6');
@@ -516,18 +515,73 @@ export class GameScene {
     for (const comp of this.companions) {
       comp.update(dt, this.items, (item, idx) => this._collectItem(item, idx), rangeBonus, speedBonusForComp, this.companions);
 
-      if (comp.shouldRevealHidden()) {
-        const count = this._applyCompanionAbility(comp, comp.range * 2, 3,
+      // === Detect (보리): bark pulse reveals hidden items in large area ===
+      if (comp.shouldBarkPulse()) {
+        const count = this._applyCompanionAbility(comp, comp.range * 3, 5,
           item => item.hidden && !item.collected,
-          item => { item.hidden = false; }, 2);
-        if (count > 0) this.message.show(`${comp.name}가 숨은 아이템을 찾았어!`);
+          item => { item.hidden = false; }, 3);
+        if (count > 0) {
+          this.message.show(`${comp.name}: 멍! 숨은 아이템 ${count}개 발견!`);
+        } else {
+          this.message.show(`${comp.name}: 멍멍! (킁킁...)`, 1);
+        }
       }
 
-      if (comp.shouldBoostLuck()) {
-        const count = this._applyCompanionAbility(comp, comp.range * 1.5, 2,
+      // === Dash (좁쌀이): sprint to distant item ===
+      if (comp.shouldDash()) {
+        // Find the farthest uncollected item in sector
+        let bestItem = null;
+        let bestDist = 0;
+        for (const item of this.items) {
+          if (item.collected || item.hidden) continue;
+          const dx = item.x - comp.x;
+          const dy = item.y - comp.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq > bestDist && distSq < 250 * 250) {
+            bestDist = distSq;
+            bestItem = item;
+          }
+        }
+        if (bestItem) {
+          comp.startDash(bestItem);
+          this.message.show(`${comp.name}: 돌진! 🏃💨`, 1);
+        }
+      }
+
+      // === Swoop (익돌이): dive-bomb toward item cluster ===
+      if (comp.shouldSwoop()) {
+        // Find area with most items (dense cluster)
+        let bestX = comp.x + (comp.facingRight ? 150 : -150);
+        let bestY = comp.y;
+        let bestCount = 0;
+        for (const item of this.items) {
+          if (item.collected) continue;
+          let nearby = 0;
+          for (const other of this.items) {
+            if (other.collected || other === item) continue;
+            const dx = other.x - item.x;
+            const dy = other.y - item.y;
+            if (dx * dx + dy * dy < 80 * 80) nearby++;
+          }
+          if (nearby > bestCount) {
+            bestCount = nearby;
+            bestX = item.x;
+            bestY = item.y;
+          }
+        }
+        comp.startSwoop(bestX, bestY);
+        this.message.show(`${comp.name}: 급강하! 🦅`, 1);
+      }
+
+      // === Lucky (고순이): sparkle aura upgrades nearby items ===
+      if (comp.shouldLuckyAura()) {
+        const auraR = comp.config.luckAuraRadius || 100;
+        const count = this._applyCompanionAbility(comp, auraR, 3,
           item => !item.collected && item.rarity === 'common',
-          item => { item.upgradeRarity('shiny'); }, 3);
-        if (count > 0) this.message.show(`${comp.name}의 행운! 아이템이 반짝여!`);
+          item => { item.upgradeRarity('shiny'); }, 4);
+        if (count > 0) {
+          this.message.show(`${comp.name}: 냥~ ✨ 아이템 ${count}개 등급 UP!`);
+        }
       }
     }
 
@@ -961,7 +1015,7 @@ export class GameScene {
   advanceRound() {
     this.round++;
     this.roundConfig = this._getRoundConfig();
-    this.timer += ROUND_CLEAR_BONUS;
+    this.timer = Math.min(this.timer + ROUND_CLEAR_BONUS, TIMER_CAP);
     this.collected = 0;
     this.target = Math.ceil(this.roundConfig.target * this.difficulty.targetMult);
     this.state = 'playing';
