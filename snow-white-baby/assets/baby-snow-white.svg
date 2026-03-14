@@ -47,43 +47,54 @@
   <path d="M60 3 Q68 -4 70 0 Q72 4 66 7 Q62 4 60 3 Z" fill="#DD2244"/>
   <circle cx="60" cy="3" r="2.5" fill="#EE3355"/>
 
-  <!-- === BIG BABY EYES (neutral, curious) === -->
+  <!-- === BIG SPARKLY BABY EYES === -->
   <!-- Left eye -->
-  <ellipse cx="47" cy="43" rx="10" ry="11" fill="white" stroke="#2A2A3E" stroke-width="0.4"/>
-  <ellipse cx="48" cy="44" rx="7" ry="8" fill="url(#bEye)"/>
-  <circle cx="48" cy="45" r="4" fill="#1A1A2E"/>
-  <circle cx="44" cy="40" r="3" fill="white" opacity="0.95"/>
-  <circle cx="51" cy="47" r="1.5" fill="white" opacity="0.5"/>
+  <ellipse cx="47" cy="43" rx="11" ry="12" fill="white" stroke="#2A2A3E" stroke-width="0.4"/>
+  <ellipse cx="48" cy="44" rx="8" ry="9" fill="url(#bEye)"/>
+  <circle cx="48" cy="45" r="4.5" fill="#1A1A2E"/>
+  <circle cx="44" cy="39" r="3.5" fill="white" opacity="0.95"/>
+  <circle cx="52" cy="48" r="1.8" fill="white" opacity="0.6"/>
+  <!-- Star sparkle -->
+  <g transform="translate(46,42)" opacity="0.5">
+    <line x1="0" y1="-1.5" x2="0" y2="1.5" stroke="white" stroke-width="0.7" stroke-linecap="round"/>
+    <line x1="-1.5" y1="0" x2="1.5" y2="0" stroke="white" stroke-width="0.7" stroke-linecap="round"/>
+  </g>
   <!-- Upper lid -->
-  <path d="M37 39 Q42 34 48 33 Q54 34 57 39" stroke="#1A1A2E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <!-- Baby lashes (short, cute) -->
-  <line x1="38" y1="38" x2="36" y2="35" stroke="#1A1A2E" stroke-width="1.2" stroke-linecap="round"/>
-  <line x1="41" y1="36" x2="40" y2="33" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
+  <path d="M36 38 Q42 32 48 31 Q54 32 58 38" stroke="#1A1A2E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Baby lashes -->
+  <line x1="37" y1="37" x2="34" y2="34" stroke="#1A1A2E" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="40" y1="35" x2="39" y2="31" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
 
   <!-- Right eye -->
-  <ellipse cx="73" cy="43" rx="10" ry="11" fill="white" stroke="#2A2A3E" stroke-width="0.4"/>
-  <ellipse cx="72" cy="44" rx="7" ry="8" fill="url(#bEye)"/>
-  <circle cx="72" cy="45" r="4" fill="#1A1A2E"/>
-  <circle cx="68" cy="40" r="3" fill="white" opacity="0.95"/>
-  <circle cx="75" cy="47" r="1.5" fill="white" opacity="0.5"/>
-  <path d="M63 39 Q68 34 72 33 Q78 34 83 39" stroke="#1A1A2E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <line x1="82" y1="38" x2="84" y2="35" stroke="#1A1A2E" stroke-width="1.2" stroke-linecap="round"/>
-  <line x1="79" y1="36" x2="80" y2="33" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
+  <ellipse cx="73" cy="43" rx="11" ry="12" fill="white" stroke="#2A2A3E" stroke-width="0.4"/>
+  <ellipse cx="72" cy="44" rx="8" ry="9" fill="url(#bEye)"/>
+  <circle cx="72" cy="45" r="4.5" fill="#1A1A2E"/>
+  <circle cx="68" cy="39" r="3.5" fill="white" opacity="0.95"/>
+  <circle cx="76" cy="48" r="1.8" fill="white" opacity="0.6"/>
+  <g transform="translate(70,42)" opacity="0.5">
+    <line x1="0" y1="-1.5" x2="0" y2="1.5" stroke="white" stroke-width="0.7" stroke-linecap="round"/>
+    <line x1="-1.5" y1="0" x2="1.5" y2="0" stroke="white" stroke-width="0.7" stroke-linecap="round"/>
+  </g>
+  <path d="M62 38 Q68 32 72 31 Q78 32 84 38" stroke="#1A1A2E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <line x1="83" y1="37" x2="86" y2="34" stroke="#1A1A2E" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="80" y1="35" x2="81" y2="31" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
 
-  <!-- Tiny eyebrows -->
-  <path d="M40 32 Q44 30 50 31" fill="none" stroke="#2A2A3E" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
-  <path d="M70 31 Q76 30 80 32" fill="none" stroke="#2A2A3E" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <!-- Soft eyebrows -->
+  <path d="M39 30 Q44 28 51 29" fill="none" stroke="#2A2A3E" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
+  <path d="M69 29 Q76 28 81 30" fill="none" stroke="#2A2A3E" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
 
-  <!-- Button nose -->
-  <ellipse cx="60" cy="52" rx="2.5" ry="2" fill="#FFD8C8" stroke="#F0C8B8" stroke-width="0.3"/>
+  <!-- Button nose (tiny dot) -->
+  <circle cx="60" cy="52" r="1.8" fill="#FFD0C0"/>
 
-  <!-- Big rosy cheeks -->
-  <ellipse cx="36" cy="53" rx="7" ry="5" fill="#FFB0B0" opacity="0.5"/>
-  <ellipse cx="84" cy="53" rx="7" ry="5" fill="#FFB0B0" opacity="0.5"/>
+  <!-- Big rosy cheeks (extra pink) -->
+  <ellipse cx="34" cy="53" rx="9" ry="6" fill="#FFB0B8" opacity="0.6"/>
+  <ellipse cx="86" cy="53" rx="9" ry="6" fill="#FFB0B8" opacity="0.6"/>
+  <!-- Tiny heart on cheek -->
+  <path d="M32 51 Q32 49.5 33.2 49.5 Q34 49.5 34 51 Q34 49.5 34.8 49.5 Q36 49.5 36 51 Q36 52.5 34 54 Q32 52.5 32 51 Z" fill="#FF8899" opacity="0.35"/>
 
-  <!-- Small cute mouth -->
-  <path d="M54 60 Q57 58 60 59 Q63 58 66 60" fill="none" stroke="#DD4455" stroke-width="0.8" stroke-linecap="round"/>
-  <path d="M56 60 Q58 63 60 63.5 Q62 63 64 60" fill="#EE5566" stroke="#DD4455" stroke-width="0.3"/>
+  <!-- Tiny cat-smile -->
+  <path d="M56 59 Q58 57.5 60 58.5 Q62 57.5 64 59" fill="none" stroke="#DD4466" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M57 59 Q58.5 61.5 60 62 Q61.5 61.5 63 59" fill="#EE5577" stroke="#DD4466" stroke-width="0.2"/>
 
   <!-- Little arms -->
   <path d="M34 86 Q26 90 24 96" fill="none" stroke="#FFE8DD" stroke-width="6" stroke-linecap="round"/>

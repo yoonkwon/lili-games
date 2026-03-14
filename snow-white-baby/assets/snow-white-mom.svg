@@ -100,52 +100,58 @@
   <path d="M72 68 Q80 62 90 65" fill="none" stroke="#1A1A2E" stroke-width="1.6" stroke-linecap="round"/>
   <path d="M110 65 Q120 62 128 68" fill="none" stroke="#1A1A2E" stroke-width="1.6" stroke-linecap="round"/>
 
-  <!-- LEFT EYE - big sparkly Disney doe eye -->
-  <ellipse cx="82" cy="82" rx="14" ry="15" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
-  <!-- Iris -->
-  <ellipse cx="83" cy="83" rx="10" ry="11" fill="url(#eyeGrad)"/>
+  <!-- LEFT EYE - bigger, sparklier -->
+  <ellipse cx="82" cy="82" rx="15" ry="16" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
+  <!-- Iris (larger) -->
+  <ellipse cx="83" cy="83" rx="11" ry="12" fill="url(#eyeGrad)"/>
   <!-- Pupil -->
-  <circle cx="83" cy="84" r="5" fill="#1A1A2E"/>
-  <!-- Main highlight (large) -->
-  <circle cx="78" cy="78" r="4" fill="white" opacity="0.95"/>
+  <circle cx="83" cy="84" r="5.5" fill="#1A1A2E"/>
+  <!-- Main highlight (big sparkle) -->
+  <circle cx="77" cy="77" r="5" fill="white" opacity="0.95"/>
   <!-- Secondary highlight -->
-  <circle cx="87" cy="87" r="2" fill="white" opacity="0.6"/>
-  <!-- Tiny sparkle -->
-  <circle cx="80" cy="84" r="0.8" fill="white" opacity="0.4"/>
-  <!-- Upper lid -->
-  <path d="M68 76 Q75 68 83 67 Q91 68 96 76" stroke="#1A1A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  <!-- Eyelashes -->
-  <line x1="69" y1="75" x2="65" y2="70" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="73" y1="71" x2="70" y2="66" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="77" y1="69" x2="76" y2="64" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
+  <circle cx="88" cy="88" r="2.5" fill="white" opacity="0.7"/>
+  <!-- Star sparkle -->
+  <g transform="translate(79,81)" opacity="0.5">
+    <line x1="0" y1="-2" x2="0" y2="2" stroke="white" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="-2" y1="0" x2="2" y2="0" stroke="white" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+  <!-- Upper lid (curvy, cute) -->
+  <path d="M67 76 Q75 66 83 65 Q91 66 97 76" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Eyelashes (fluttery) -->
+  <line x1="68" y1="75" x2="63" y2="69" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="72" y1="70" x2="69" y2="64" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="76" y1="68" x2="75" y2="62" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
   <!-- Lower lash -->
-  <path d="M72 95 Q82 98 92 95" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
+  <path d="M72 96 Q82 99 92 96" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
 
   <!-- RIGHT EYE -->
-  <ellipse cx="118" cy="82" rx="14" ry="15" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
-  <ellipse cx="117" cy="83" rx="10" ry="11" fill="url(#eyeGrad)"/>
-  <circle cx="117" cy="84" r="5" fill="#1A1A2E"/>
-  <circle cx="113" cy="78" r="4" fill="white" opacity="0.95"/>
-  <circle cx="121" cy="87" r="2" fill="white" opacity="0.6"/>
-  <circle cx="115" cy="84" r="0.8" fill="white" opacity="0.4"/>
-  <path d="M104 76 Q111 68 117 67 Q125 68 132 76" stroke="#1A1A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  <line x1="131" y1="75" x2="135" y2="70" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="127" y1="71" x2="130" y2="66" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="123" y1="69" x2="124" y2="64" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
-  <path d="M108 95 Q118 98 128 95" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
+  <ellipse cx="118" cy="82" rx="15" ry="16" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
+  <ellipse cx="117" cy="83" rx="11" ry="12" fill="url(#eyeGrad)"/>
+  <circle cx="117" cy="84" r="5.5" fill="#1A1A2E"/>
+  <circle cx="112" cy="77" r="5" fill="white" opacity="0.95"/>
+  <circle cx="122" cy="88" r="2.5" fill="white" opacity="0.7"/>
+  <g transform="translate(114,81)" opacity="0.5">
+    <line x1="0" y1="-2" x2="0" y2="2" stroke="white" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="-2" y1="0" x2="2" y2="0" stroke="white" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+  <path d="M103 76 Q111 66 117 65 Q125 66 133 76" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <line x1="132" y1="75" x2="137" y2="69" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="128" y1="70" x2="131" y2="64" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="124" y1="68" x2="125" y2="62" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M108 96 Q118 99 128 96" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
 
-  <!-- Nose -->
-  <path d="M98 98 Q100 102 102 99" stroke="#F0C8B8" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Nose (tiny dot) -->
+  <circle cx="100" cy="99" r="1.5" fill="#F0C8B8"/>
 
-  <!-- Rosy cheeks (big, warm) -->
-  <ellipse cx="66" cy="100" rx="10" ry="7" fill="#FFB0B0" opacity="0.5"/>
-  <ellipse cx="134" cy="100" rx="10" ry="7" fill="#FFB0B0" opacity="0.5"/>
+  <!-- Rosy cheeks (bigger, pinker, with tiny hearts) -->
+  <ellipse cx="64" cy="100" rx="12" ry="8" fill="#FFB0B8" opacity="0.55"/>
+  <ellipse cx="136" cy="100" rx="12" ry="8" fill="#FFB0B8" opacity="0.55"/>
+  <!-- Tiny heart on left cheek -->
+  <path d="M60 97 Q60 95 62 95 Q63 95 63 97 Q63 95 64 95 Q66 95 66 97 Q66 100 63 102 Q60 100 60 97 Z" fill="#FF8899" opacity="0.4"/>
 
-  <!-- Mouth - cute red smile -->
-  <!-- Upper lip cupid's bow -->
-  <path d="M90 114 Q95 111 100 112 Q105 111 110 114" fill="none" stroke="#DD2244" stroke-width="1" stroke-linecap="round"/>
-  <!-- Lower lip (cute small smile) -->
-  <path d="M92 114 Q96 119 100 120 Q104 119 108 114" fill="#DD2244" stroke="#CC1A38" stroke-width="0.4"/>
+  <!-- Mouth - tiny cat-smile (ω) -->
+  <path d="M94 112 Q97 110 100 111 Q103 110 106 112" fill="none" stroke="#DD3355" stroke-width="1" stroke-linecap="round"/>
+  <path d="M95 112 Q97.5 116 100 116.5 Q102.5 116 105 112" fill="#EE4466" stroke="#DD3355" stroke-width="0.3"/>
   <!-- Lip shine -->
-  <ellipse cx="100" cy="116" rx="3" ry="1.2" fill="#FF6677" opacity="0.35"/>
+  <ellipse cx="100" cy="113" rx="2" ry="0.8" fill="#FF8899" opacity="0.4"/>
 </svg>
