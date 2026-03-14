@@ -133,10 +133,10 @@
   <!-- Nose -->
   <path d="M98,86 Q100,90 102,88" stroke="#E0B0A0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
 
-  <!-- Lips - red rosebud (Snow White signature) -->
-  <path d="M93,96 Q96,93 100,94 Q104,93 107,96 Q104,97 100,97.5 Q96,97 93,96Z" fill="#CC2233"/>
-  <path d="M94,97 Q100,102 106,97 Q104,98 100,98.5 Q96,98 94,97Z" fill="#DD3344"/>
-  <ellipse cx="100" cy="95" rx="2.5" ry="0.8" fill="rgba(255,255,255,0.3)"/>
+  <!-- Lips - red rosebud smile (Snow White signature) -->
+  <path d="M91,94 Q96,92 100,93 Q104,92 109,94 Q106,96 100,97 Q94,96 91,94Z" fill="#CC2233"/>
+  <path d="M92,95 Q96,101 100,102 Q104,101 108,95 Q104,97 100,97.5 Q96,97 92,95Z" fill="#DD3344"/>
+  <ellipse cx="100" cy="93.5" rx="2.5" ry="0.8" fill="rgba(255,255,255,0.3)"/>
 
   <!-- Blush (rosy, warmer than Elsa) -->
   <ellipse cx="78" cy="86" rx="8" ry="4" fill="rgba(255,140,160,0.25)"/>
