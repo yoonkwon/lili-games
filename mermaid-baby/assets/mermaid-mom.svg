@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+  <defs>
+    <linearGradient id="tailGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2ECC71"/>
+      <stop offset="40%" stop-color="#27AE60"/>
+      <stop offset="100%" stop-color="#1E8449"/>
+    </linearGradient>
+    <linearGradient id="tailFinGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#58D68D"/>
+      <stop offset="100%" stop-color="#2ECC71"/>
+    </linearGradient>
+    <radialGradient id="skinGrad" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#FFF5F0"/>
+      <stop offset="100%" stop-color="#FFE8E0"/>
+    </radialGradient>
+    <linearGradient id="hairGrad" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#E74C3C"/>
+      <stop offset="30%" stop-color="#C0392B"/>
+      <stop offset="100%" stop-color="#A93226"/>
+    </linearGradient>
+    <linearGradient id="shellTopGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9B59B6"/>
+      <stop offset="100%" stop-color="#7D3C98"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tail fin at bottom -->
+  <path d="M70,270 Q50,285 35,280 Q45,270 55,265 L60,268Z" fill="url(#tailFinGrad)"/>
+  <path d="M130,270 Q150,285 165,280 Q155,270 145,265 L140,268Z" fill="url(#tailFinGrad)"/>
+  <!-- Fin center -->
+  <path d="M60,268 Q80,275 100,278 Q120,275 140,268 Q130,272 100,274 Q70,272 60,268Z" fill="#27AE60"/>
+
+  <!-- Mermaid tail body -->
+  <path d="M65,180 Q60,210 58,240 Q56,260 65,270 L135,270 Q144,260 142,240 Q140,210 135,180Z" fill="url(#tailGrad)"/>
+  <!-- Tail scale pattern -->
+  <path d="M75,195 Q85,200 95,195 Q105,200 115,195 Q125,200 135,195" fill="none" stroke="#1E8449" stroke-width="0.8" opacity="0.3"/>
+  <path d="M70,210 Q80,215 90,210 Q100,215 110,210 Q120,215 130,210" fill="none" stroke="#1E8449" stroke-width="0.8" opacity="0.3"/>
+  <path d="M65,225 Q75,230 85,225 Q95,230 105,225 Q115,230 125,225 Q135,230 140,225" fill="none" stroke="#1E8449" stroke-width="0.8" opacity="0.3"/>
+  <path d="M60,240 Q70,245 80,240 Q90,245 100,240 Q110,245 120,240 Q130,245 140,240" fill="none" stroke="#1E8449" stroke-width="0.8" opacity="0.3"/>
+  <path d="M58,255 Q68,260 78,255 Q88,260 98,255 Q108,260 118,255 Q128,260 138,255" fill="none" stroke="#1E8449" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Waist / hip transition -->
+  <path d="M65,170 Q60,180 65,190 L135,190 Q140,180 135,170Z" fill="url(#tailGrad)" opacity="0.8"/>
+
+  <!-- Purple seashell top -->
+  <path d="M70,130 Q65,150 68,168 Q80,172 100,174 Q120,172 132,168 Q135,150 130,130 Q115,122 100,120 Q85,122 70,130Z" fill="url(#shellTopGrad)"/>
+  <!-- Shell ridges -->
+  <path d="M78,135 Q82,155 85,170" fill="none" stroke="#6C3483" stroke-width="0.8" opacity="0.4"/>
+  <path d="M90,128 Q92,150 95,172" fill="none" stroke="#6C3483" stroke-width="0.8" opacity="0.4"/>
+  <path d="M100,126 Q100,150 100,174" fill="none" stroke="#6C3483" stroke-width="0.8" opacity="0.3"/>
+  <path d="M110,128 Q108,150 105,172" fill="none" stroke="#6C3483" stroke-width="0.8" opacity="0.4"/>
+  <path d="M122,135 Q118,155 115,170" fill="none" stroke="#6C3483" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Shell top edge scallop -->
+  <path d="M70,130 Q75,126 82,128 Q88,124 95,126 Q100,122 105,126 Q112,124 118,128 Q125,126 130,130" fill="none" stroke="#8E44AD" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <rect x="93" y="98" width="14" height="22" rx="4" fill="url(#skinGrad)"/>
+
+  <!-- Arms -->
+  <path d="M68,135 Q50,155 46,178" fill="none" stroke="#FFE8E0" stroke-width="8" stroke-linecap="round"/>
+  <path d="M132,135 Q150,155 154,178" fill="none" stroke="#FFE8E0" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Head -->
+  <ellipse cx="100" cy="72" rx="34" ry="38" fill="url(#skinGrad)"/>
+  <!-- Jaw / chin -->
+  <path d="M72,80 Q78,105 100,112 Q122,105 128,80" fill="url(#skinGrad)"/>
+
+  <!-- === HAIR (red wavy long, Ariel style) === -->
+  <!-- Hair back volume -->
+  <ellipse cx="100" cy="42" rx="40" ry="28" fill="url(#hairGrad)"/>
+
+  <!-- Hair top swept -->
+  <path d="M62,48 Q64,18 88,10 Q108,6 132,16 Q148,26 144,48 L140,42 Q132,22 112,16 Q92,14 76,28 Q66,38 64,48Z" fill="#C0392B"/>
+
+  <!-- Voluminous top -->
+  <path d="M66,48 Q72,26 88,16 Q98,12 100,12 Q102,12 112,16 Q128,26 134,48 Q124,34 112,26 Q102,22 100,22 Q98,22 88,26 Q76,34 66,48Z" fill="#E74C3C"/>
+  <!-- Hair highlight -->
+  <path d="M80,24 Q90,16 100,14 Q110,16 120,24" fill="none" stroke="#F1948A" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+
+  <!-- Left flowing hair (wavy, long) -->
+  <path d="M62,48 Q52,65 48,90 Q44,115 42,140 Q40,165 44,185" fill="none" stroke="url(#hairGrad)" stroke-width="16" stroke-linecap="round"/>
+  <!-- Left wave details -->
+  <path d="M52,80 Q46,95 50,110 Q54,125 48,140 Q42,155 46,175" fill="none" stroke="#A93226" stroke-width="2" opacity="0.3"/>
+
+  <!-- Right flowing hair -->
+  <path d="M138,48 Q148,65 152,90 Q156,115 158,140 Q160,165 156,185" fill="none" stroke="url(#hairGrad)" stroke-width="16" stroke-linecap="round"/>
+  <!-- Right wave details -->
+  <path d="M148,80 Q154,95 150,110 Q146,125 152,140 Q158,155 154,175" fill="none" stroke="#A93226" stroke-width="2" opacity="0.3"/>
+
+  <!-- Extra hair wisps behind shoulders -->
+  <path d="M38,170 Q34,190 38,210 Q42,225 40,240" fill="none" stroke="#C0392B" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M162,170 Q166,190 162,210 Q158,225 160,240" fill="none" stroke="#C0392B" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- === TIARA / CROWN === -->
+  <path d="M72,30 Q76,16 84,12 L86,20Z" fill="#FFD700"/>
+  <path d="M92,26 Q96,8 100,6 Q104,8 108,26Z" fill="#FFD700"/>
+  <path d="M128,30 Q124,16 116,12 L114,20Z" fill="#FFD700"/>
+  <!-- Crown base band -->
+  <path d="M70,32 Q80,26 100,24 Q120,26 130,32" fill="none" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  <!-- Crown jewels -->
+  <circle cx="85" cy="16" r="2.5" fill="#3498DB"/>
+  <circle cx="100" cy="10" r="3" fill="#E74C3C"/>
+  <circle cx="115" cy="16" r="2.5" fill="#3498DB"/>
+
+  <!-- === FACE === -->
+  <!-- Eyes - large, Disney style, blue-green -->
+  <!-- Left eye -->
+  <ellipse cx="86" cy="75" rx="10" ry="11" fill="white"/>
+  <ellipse cx="86" cy="76" rx="8" ry="9" fill="#1ABC9C"/>
+  <ellipse cx="86" cy="76" rx="6" ry="7" fill="#16A085"/>
+  <circle cx="86" cy="77" r="4" fill="#0E6655"/>
+  <circle cx="83" cy="73" r="2.5" fill="white"/>
+  <circle cx="89" cy="79" r="1.2" fill="white"/>
+  <!-- Left upper eyelid -->
+  <path d="M76,71 Q82,65 96,71" stroke="#5D4037" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Left eyelashes -->
+  <line x1="77" y1="71" x2="74" y2="67" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="80" y1="68" x2="78" y2="64" stroke="#5D4037" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="84" y1="66" x2="83" y2="62" stroke="#5D4037" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Left lower lash line -->
+  <path d="M78,83 Q86,86 94,83" stroke="#8D6E63" stroke-width="0.8" fill="none"/>
+
+  <!-- Right eye -->
+  <ellipse cx="114" cy="75" rx="10" ry="11" fill="white"/>
+  <ellipse cx="114" cy="76" rx="8" ry="9" fill="#1ABC9C"/>
+  <ellipse cx="114" cy="76" rx="6" ry="7" fill="#16A085"/>
+  <circle cx="114" cy="77" r="4" fill="#0E6655"/>
+  <circle cx="111" cy="73" r="2.5" fill="white"/>
+  <circle cx="117" cy="79" r="1.2" fill="white"/>
+  <path d="M104,71 Q110,65 124,71" stroke="#5D4037" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <line x1="123" y1="71" x2="126" y2="67" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="120" y1="68" x2="122" y2="64" stroke="#5D4037" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="116" y1="66" x2="117" y2="62" stroke="#5D4037" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M106,83 Q114,86 122,83" stroke="#8D6E63" stroke-width="0.8" fill="none"/>
+
+  <!-- Eyebrows -->
+  <path d="M76,63 Q84,57 94,61" stroke="#922B21" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M106,61 Q116,57 124,63" stroke="#922B21" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Nose -->
+  <path d="M98,86 Q100,90 102,88" stroke="#E0B0A0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+  <!-- Lips - coral pink (mermaid signature) -->
+  <path d="M93,96 Q96,93 100,94 Q104,93 107,96 Q104,97 100,97.5 Q96,97 93,96Z" fill="#E74C3C"/>
+  <path d="M94,97 Q100,102 106,97 Q104,98 100,98.5 Q96,98 94,97Z" fill="#EC7063"/>
+  <ellipse cx="100" cy="95" rx="2.5" ry="0.8" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- Blush -->
+  <ellipse cx="78" cy="86" rx="8" ry="4" fill="rgba(255,140,160,0.25)"/>
+  <ellipse cx="122" cy="86" rx="8" ry="4" fill="rgba(255,140,160,0.25)"/>
+</svg>

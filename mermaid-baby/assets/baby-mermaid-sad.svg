@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="babySkin" cx="0.5" cy="0.45" r="0.5">
+      <stop offset="0%" stop-color="#FFF8F5"/>
+      <stop offset="100%" stop-color="#FFE8E0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Baby head/body (round) -->
+  <circle cx="60" cy="60" r="45" fill="url(#babySkin)"/>
+
+  <!-- Hair - red wavy tuft -->
+  <path d="M42,22 Q48,8 60,6 Q72,8 78,22 Q72,14 60,12 Q48,14 42,22Z" fill="#E74C3C"/>
+  <!-- Side wisps -->
+  <path d="M30,35 Q26,26 33,22 Q30,28 32,36Z" fill="#C0392B"/>
+  <path d="M90,35 Q94,26 87,22 Q90,28 88,36Z" fill="#C0392B"/>
+  <!-- Extra wave -->
+  <path d="M54,10 Q58,4 62,8 Q66,4 70,10" fill="none" stroke="#E74C3C" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Tiny seashell decoration -->
+  <path d="M56,14 Q58,8 60,6 Q62,8 64,14 Q62,12 60,10 Q58,12 56,14Z" fill="#9B59B6"/>
+  <path d="M54,16 Q56,10 60,7 Q64,10 66,16" fill="none" stroke="#8E44AD" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="58" y1="14" x2="59" y2="9" stroke="#7D3C98" stroke-width="0.6" opacity="0.5"/>
+  <line x1="60" y1="15" x2="60" y2="8" stroke="#7D3C98" stroke-width="0.6" opacity="0.5"/>
+  <line x1="62" y1="14" x2="61" y2="9" stroke="#7D3C98" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- Tiny green tail fin -->
+  <path d="M48,98 Q40,108 34,106 Q40,100 44,96Z" fill="#2ECC71"/>
+  <path d="M72,98 Q80,108 86,106 Q80,100 76,96Z" fill="#2ECC71"/>
+  <path d="M48,96 Q54,102 60,103 Q66,102 72,96 Q66,100 60,101 Q54,100 48,96Z" fill="#27AE60"/>
+
+  <!-- Sad eyes (big, teary, blue-green) -->
+  <ellipse cx="47" cy="55" rx="9" ry="10" fill="white"/>
+  <ellipse cx="47" cy="56" rx="7" ry="8" fill="#5DADE2"/>
+  <circle cx="47" cy="57" r="4" fill="#1B6CA8"/>
+  <circle cx="44" cy="53" r="2.5" fill="white"/>
+
+  <ellipse cx="73" cy="55" rx="9" ry="10" fill="white"/>
+  <ellipse cx="73" cy="56" rx="7" ry="8" fill="#5DADE2"/>
+  <circle cx="73" cy="57" r="4" fill="#1B6CA8"/>
+  <circle cx="70" cy="53" r="2.5" fill="white"/>
+
+  <!-- Tear drops (blue, water-themed) -->
+  <ellipse cx="40" cy="68" rx="2" ry="3.5" fill="rgba(100,180,255,0.55)"/>
+  <ellipse cx="80" cy="70" rx="2" ry="3.5" fill="rgba(100,180,255,0.55)"/>
+  <!-- Extra tear trail -->
+  <ellipse cx="38" cy="74" rx="1.5" ry="2" fill="rgba(100,180,255,0.35)"/>
+  <ellipse cx="82" cy="76" rx="1.5" ry="2" fill="rgba(100,180,255,0.35)"/>
+
+  <!-- Cheeks -->
+  <ellipse cx="36" cy="66" rx="8" ry="5" fill="rgba(255,160,170,0.3)"/>
+  <ellipse cx="84" cy="66" rx="8" ry="5" fill="rgba(255,160,170,0.3)"/>
+
+  <!-- Nose -->
+  <circle cx="60" cy="65" r="2" fill="rgba(230,180,160,0.4)"/>
+
+  <!-- Sad mouth (frown) -->
+  <path d="M50,80 Q56,74 60,74 Q64,74 70,80" stroke="#C08080" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
