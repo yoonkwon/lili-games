@@ -138,13 +138,11 @@ export class GameScene {
   }
 
   _getSpawnPosition() {
-    const edge = Math.floor(Math.random() * 3); // 0=top, 1=left, 2=right
-    if (edge === 0) {
-      return { x: Math.random() * this.w, y: -50 };
-    } else if (edge === 1) {
-      return { x: -50, y: this.h * (0.2 + Math.random() * 0.4) };
+    // Only spawn from left/right sides at bottom area (no top spawn)
+    if (Math.random() < 0.5) {
+      return { x: -50, y: this.h * (0.65 + Math.random() * 0.2) };
     } else {
-      return { x: this.w + 50, y: this.h * (0.2 + Math.random() * 0.4) };
+      return { x: this.w + 50, y: this.h * (0.65 + Math.random() * 0.2) };
     }
   }
 
