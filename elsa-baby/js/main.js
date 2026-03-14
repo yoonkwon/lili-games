@@ -5,9 +5,6 @@ import { TitleScene } from './scene/TitleScene.js';
 import { GameScene } from './scene/GameScene.js';
 import { BornScene } from './scene/BornScene.js';
 
-// Preload SVG assets (non-blocking, draws once loaded)
-elsaAssetsReady.catch(() => console.warn('Some Elsa assets failed to load'));
-
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
@@ -20,6 +17,40 @@ function resize() {
 }
 resize();
 window.addEventListener('resize', resize);
+
+// Loading screen while assets load
+function drawLoading(phase) {
+  const w = canvas.width, h = canvas.height;
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#0d1b3e');
+  grad.addColorStop(1, '#4fc3f7');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  ctx.font = '40px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('❄️', w / 2, h / 2 - 30);
+  ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+  ctx.fillStyle = '#FFF';
+  const dots = '.'.repeat(Math.floor(phase % 4));
+  ctx.fillText('로딩중' + dots, w / 2, h / 2 + 20);
+}
+
+let loadingPhase = 0;
+function loadingLoop(timestamp) {
+  loadingPhase += 0.03;
+  drawLoading(loadingPhase);
+  if (!assetsReady) requestAnimationFrame(loadingLoop);
+}
+let assetsReady = false;
+requestAnimationFrame(loadingLoop);
+
+elsaAssetsReady
+  .catch(() => console.warn('Some Elsa assets failed to load'))
+  .finally(() => {
+    assetsReady = true;
+    requestAnimationFrame(gameLoop);
+  });
 
 // Scenes
 let currentScene = 'title';
@@ -130,5 +161,3 @@ function gameLoop(timestamp) {
 
   requestAnimationFrame(gameLoop);
 }
-
-requestAnimationFrame(gameLoop);

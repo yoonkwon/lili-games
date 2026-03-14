@@ -41,19 +41,7 @@ export { _preloadPromise as mermaidAssetsReady };
 // Draw Mom Mermaid using SVG asset
 export function drawMermaidMom(ctx, x, y, scale = 1) {
   const img = assets.mom;
-  if (!img) {
-    // Fallback: emoji-based mom
-    ctx.save();
-    ctx.font = `${60 * scale}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🧜‍♀️', x, y);
-    ctx.font = `${14 * scale}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
-    ctx.fillStyle = '#80DEEA';
-    ctx.fillText('인어공주', x, y + 40 * scale);
-    ctx.restore();
-    return;
-  }
+  if (!img) return;
 
   const drawW = 100 * scale;
   const drawH = 150 * scale;
@@ -72,27 +60,7 @@ export function drawBabyMermaid(ctx, x, y, size, emotion, phase, growthRatio) {
   else if (emotion === 'angry') img = assets.babyAngry;
   else img = assets.baby;
 
-  if (!img) {
-    // Fallback: emoji-based baby
-    ctx.save();
-    const babyEmoji = emotion === 'happy' ? '😊' : emotion === 'sad' ? '😢' : emotion === 'angry' ? '😠' : '👶';
-    ctx.font = `${size * 1.5}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(babyEmoji, x, y);
-
-    // Growth sparkle for later stages
-    if (growthRatio > 0.6) {
-      const sparkAlpha = 0.3 + Math.sin(phase * 3) * 0.2;
-      ctx.globalAlpha = sparkAlpha;
-      ctx.font = `${size * 0.3}px sans-serif`;
-      ctx.fillText('🫧', x + size * 0.7, y - size * 0.5);
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.restore();
-    return;
-  }
+  if (!img) return;
 
   const drawSize = size * 2;
 
