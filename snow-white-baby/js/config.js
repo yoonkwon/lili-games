@@ -29,7 +29,7 @@ export const ANIMALS = [
 // Evil witch (disguised queen)
 export const POISON = {
   emoji: '🧙‍♀️',
-  name: '마녀할멈',
+  name: '마녀',
   foodEmoji: '☠️🍎',
   foodName: '독사과',
   speed: 70,
