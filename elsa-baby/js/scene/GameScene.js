@@ -77,7 +77,7 @@ export class GameScene {
     const count = Math.ceil(w / spacing) + 2;
     for (let i = 0; i < count; i++) {
       this.conveyorItems.push({
-        food: FOODS[Math.floor(Math.random() * FOODS.length)],
+        food: this._pickConveyorFood(),
         x: i * spacing,
         collected: false,
         collectPhase: 0,
@@ -89,11 +89,18 @@ export class GameScene {
     return Math.max(90, this.conveyorSpeed * this.spawnInterval);
   }
 
+  _pickConveyorFood() {
+    // 40% chance to spawn the wanted food, 60% random other
+    if (Math.random() < 0.4) {
+      return this.wantedFood;
+    }
+    return FOODS[Math.floor(Math.random() * FOODS.length)];
+  }
+
   _spawnConveyorItem() {
     const itemSize = 60;
-    // Spawn from left side
     this.conveyorItems.push({
-      food: FOODS[Math.floor(Math.random() * FOODS.length)],
+      food: this._pickConveyorFood(),
       x: -itemSize,
       collected: false,
       collectPhase: 0,
