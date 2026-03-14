@@ -26,15 +26,15 @@ export const ANIMALS = [
   { type: 'squirrel', emoji: '🐿️', name: '다람쥐', speed: 110, size: 42 },
 ];
 
-// Poison crow
+// Evil witch (disguised queen)
 export const POISON = {
-  emoji: '🐦‍⬛',
-  name: '까마귀',
+  emoji: '🧙‍♀️',
+  name: '마녀할멈',
   foodEmoji: '☠️🍎',
   foodName: '독사과',
-  speed: 90,
-  size: 50,
-  stayDuration: 4, // seconds before flying away
+  speed: 70,
+  size: 55,
+  stayDuration: 5, // seconds before disappearing
 };
 
 // Baby growth stages

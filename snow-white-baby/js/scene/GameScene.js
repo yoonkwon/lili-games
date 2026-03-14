@@ -240,7 +240,7 @@ export class GameScene {
 
     this.particles.addFloatingText(crow.x, crow.y - 40, '독사과! ☠️', '#800080', 30);
     this.particles.createParticles(crow.x, crow.y, '#800080', 15);
-    this.message.show('☠️ 독사과예요! 까마귀를 조심하세요! ☠️', 3);
+    this.message.show('☠️ 독사과예요! 마녀할멈을 조심하세요! ☠️', 3);
 
     if (this.dislike >= GAME.maxDislike) {
       this._triggerMirrorCurse();
