@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v12';
+const CACHE_NAME = 'lili-games-v13';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -14,6 +14,19 @@ const ASSETS = [
   './shared/GameEngine.js',
   './shared/ui/Message.js',
   './shared/ui/Gauge.js',
+  './elsa-baby/',
+  './elsa-baby/index.html',
+  './elsa-baby/js/main.js',
+  './elsa-baby/js/config.js',
+  './elsa-baby/js/draw-elsa.js',
+  './elsa-baby/js/scene/TitleScene.js',
+  './elsa-baby/js/scene/GameScene.js',
+  './elsa-baby/js/scene/BornScene.js',
+  './elsa-baby/assets/elsa-mom.svg',
+  './elsa-baby/assets/baby-elsa.svg',
+  './elsa-baby/assets/baby-elsa-happy.svg',
+  './elsa-baby/assets/baby-elsa-sad.svg',
+  './elsa-baby/assets/baby-elsa-angry.svg',
   './chicken-egg/',
   './chicken-egg/index.html',
   './chicken-egg/js/main.js',

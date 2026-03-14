@@ -1,8 +1,12 @@
 // Main entry point - Elsa Baby game
 import { Input } from '../../shared/Input.js';
+import { elsaAssetsReady } from './draw-elsa.js';
 import { TitleScene } from './scene/TitleScene.js';
 import { GameScene } from './scene/GameScene.js';
 import { BornScene } from './scene/BornScene.js';
+
+// Preload SVG assets (non-blocking, draws once loaded)
+elsaAssetsReady.catch(() => console.warn('Some Elsa assets failed to load'));
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');

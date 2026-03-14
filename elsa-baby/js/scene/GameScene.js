@@ -26,9 +26,9 @@ export class GameScene {
 
     // === Conveyor belt ===
     this.conveyorItems = [];
-    this.conveyorSpeed = 60; // px per second
+    this.conveyorSpeed = 35; // px per second (slow, easy for kids)
     this.spawnTimer = 0;
-    this.spawnInterval = 1.2; // seconds between spawns
+    this.spawnInterval = 2.2; // seconds between spawns (no overlap)
     this._fillConveyor(w);
 
     // Ice freeze state
@@ -72,18 +72,21 @@ export class GameScene {
   }
 
   _fillConveyor(w) {
-    // Pre-fill conveyor with foods across the screen
-    const itemSize = 60;
-    const spacing = itemSize + 20;
-    const count = Math.ceil(w / spacing) + 3;
+    // Pre-fill conveyor with well-spaced foods
+    const spacing = this._getItemSpacing();
+    const count = Math.ceil(w / spacing) + 2;
     for (let i = 0; i < count; i++) {
       this.conveyorItems.push({
         food: FOODS[Math.floor(Math.random() * FOODS.length)],
-        x: -spacing + i * spacing,
+        x: i * spacing,
         collected: false,
         collectPhase: 0,
       });
     }
+  }
+
+  _getItemSpacing() {
+    return Math.max(90, this.conveyorSpeed * this.spawnInterval);
   }
 
   _spawnConveyorItem() {
@@ -542,48 +545,42 @@ export class GameScene {
     ctx.fillText('🍽️ 아기가 원하는 음식을 터치!', w / 2, beltY - beltH / 2 - 14);
     ctx.restore();
 
-    // Belt background
+    // Belt background (solid, not transparent)
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath();
-    ctx.roundRect(0, beltY - beltH / 2, w, beltH, 0);
-    ctx.fill();
+    ctx.fillStyle = '#1a2a4a';
+    ctx.fillRect(0, beltY - beltH / 2, w, beltH);
+
+    // Belt surface pattern
+    ctx.fillStyle = '#1e3050';
+    ctx.fillRect(0, beltY - beltH / 2 + 3, w, beltH - 6);
 
     // Belt track lines (moving)
     const trackOffset = (this.babyPhase * this.conveyorSpeed) % 20;
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
     for (let x = -20 + trackOffset; x < w + 20; x += 20) {
       ctx.beginPath();
-      ctx.moveTo(x, beltY - beltH / 2);
-      ctx.lineTo(x, beltY + beltH / 2);
+      ctx.moveTo(x, beltY - beltH / 2 + 3);
+      ctx.lineTo(x, beltY + beltH / 2 - 3);
       ctx.stroke();
     }
 
-    // Belt edges
-    ctx.fillStyle = 'rgba(100,100,120,0.6)';
-    ctx.fillRect(0, beltY - beltH / 2, w, 3);
-    ctx.fillRect(0, beltY + beltH / 2 - 3, w, 3);
+    // Belt edges (metallic rails)
+    const railGrad = ctx.createLinearGradient(0, beltY - beltH / 2, 0, beltY - beltH / 2 + 4);
+    railGrad.addColorStop(0, '#8899aa');
+    railGrad.addColorStop(1, '#556677');
+    ctx.fillStyle = railGrad;
+    ctx.fillRect(0, beltY - beltH / 2, w, 4);
 
-    // Belt rollers at edges
-    ctx.fillStyle = 'rgba(80,80,100,0.8)';
-    ctx.beginPath();
-    ctx.arc(0, beltY, beltH / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(w, beltY, beltH / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(60,60,80,0.8)';
-    ctx.beginPath();
-    ctx.arc(0, beltY, beltH / 2 - 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(w, beltY, beltH / 2 - 6, 0, Math.PI * 2);
-    ctx.fill();
+    const railGrad2 = ctx.createLinearGradient(0, beltY + beltH / 2 - 4, 0, beltY + beltH / 2);
+    railGrad2.addColorStop(0, '#556677');
+    railGrad2.addColorStop(1, '#8899aa');
+    ctx.fillStyle = railGrad2;
+    ctx.fillRect(0, beltY + beltH / 2 - 4, w, 4);
 
     ctx.restore();
 
-    // Draw food items on belt
+    // Draw food items on belt (each in its own save/restore)
     for (const item of this.conveyorItems) {
       if (item.x < -itemSize || item.x > w + itemSize) continue;
 
@@ -602,37 +599,46 @@ export class GameScene {
 
         // Highlight if it matches wanted food
         if (item.food.type === this.wantedFood.type && !this.frozen) {
-          const glow = 0.3 + Math.sin(this.babyPhase * 5) * 0.15;
+          const glow = 0.4 + Math.sin(this.babyPhase * 5) * 0.2;
           ctx.shadowColor = '#FFD700';
-          ctx.shadowBlur = 12;
+          ctx.shadowBlur = 15;
           ctx.fillStyle = `rgba(255, 215, 0, ${glow})`;
           ctx.beginPath();
-          ctx.arc(0, 0, itemSize / 2 + 4, 0, Math.PI * 2);
+          ctx.arc(0, 0, itemSize / 2 + 5, 0, Math.PI * 2);
           ctx.fill();
           ctx.shadowBlur = 0;
         }
 
-        // Item plate
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        // Solid plate background
+        ctx.fillStyle = '#2a3a5e';
+        ctx.beginPath();
+        ctx.arc(0, 0, itemSize / 2 + 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#354a70';
         ctx.beginPath();
         ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 1;
+
+        // Plate rim
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
         ctx.stroke();
       }
 
       // Food emoji
-      const fontSize = Math.min(32, itemSize * 0.55);
+      const fontSize = Math.min(34, itemSize * 0.6);
       ctx.font = `${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(item.food.emoji, 0, -2);
 
       // Name label
-      ctx.font = `${Math.min(10, itemSize * 0.16)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
+      ctx.font = `Bold ${Math.min(11, itemSize * 0.17)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
       ctx.fillStyle = '#B3E5FC';
-      ctx.fillText(item.food.name, 0, itemSize / 2 - 8);
+      ctx.fillText(item.food.name, 0, itemSize / 2 - 6);
 
       ctx.restore();
     }
