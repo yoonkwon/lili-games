@@ -1,143 +1,151 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
   <defs>
-    <!-- Skin gradient for warmth -->
     <radialGradient id="skinGrad" cx="50%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="#FFF5EE"/>
-      <stop offset="100%" stop-color="#FFE8D6"/>
+      <stop offset="0%" stop-color="#FFF8F5"/>
+      <stop offset="100%" stop-color="#FFE8DD"/>
     </radialGradient>
-    <!-- Hair shine -->
-    <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2C2C2C"/>
-      <stop offset="40%" stop-color="#1A1A2E"/>
-      <stop offset="100%" stop-color="#0D0D1A"/>
+    <linearGradient id="hairGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#1C1C30"/>
+      <stop offset="100%" stop-color="#0A0A18"/>
     </linearGradient>
-    <!-- Dress blue gradient -->
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#2E5CB8"/>
-      <stop offset="100%" stop-color="#1A3A7A"/>
-    </linearGradient>
-    <!-- Dress yellow gradient -->
-    <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFD700"/>
-      <stop offset="100%" stop-color="#E6B800"/>
-    </linearGradient>
-    <!-- Sleeve puff gradient -->
-    <radialGradient id="sleeveGrad" cx="50%" cy="30%" r="60%">
-      <stop offset="0%" stop-color="#3B6FD4"/>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A80D4"/>
       <stop offset="100%" stop-color="#2E5CB8"/>
+    </linearGradient>
+    <linearGradient id="yellowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#F0C800"/>
+    </linearGradient>
+    <radialGradient id="sleeveGrad" cx="50%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#5A90E8"/>
+      <stop offset="100%" stop-color="#3A6CC8"/>
+    </radialGradient>
+    <radialGradient id="eyeGrad" cx="45%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#A0724A"/>
+      <stop offset="50%" stop-color="#7B5230"/>
+      <stop offset="100%" stop-color="#5A3A1E"/>
     </radialGradient>
   </defs>
 
-  <!-- === DRESS BODY (Yellow skirt) === -->
-  <path d="M52 230 Q45 260 38 295 L162 295 Q155 260 148 230 Z" fill="url(#yellowGrad)" stroke="#C8A000" stroke-width="0.5"/>
-  <!-- Skirt folds -->
-  <path d="M75 235 Q72 260 68 295" fill="none" stroke="#C8A000" stroke-width="0.8" opacity="0.4"/>
-  <path d="M100 230 Q100 260 100 295" fill="none" stroke="#C8A000" stroke-width="0.8" opacity="0.3"/>
-  <path d="M125 235 Q128 260 132 295" fill="none" stroke="#C8A000" stroke-width="0.8" opacity="0.4"/>
+  <!-- === YELLOW SKIRT === -->
+  <path d="M58 200 Q50 235 42 275 L158 275 Q150 235 142 200 Z" fill="url(#yellowGrad)" stroke="#D4A800" stroke-width="0.5"/>
+  <path d="M80 205 Q77 235 73 275" fill="none" stroke="#D4A800" stroke-width="0.7" opacity="0.3"/>
+  <path d="M100 200 Q100 235 100 275" fill="none" stroke="#D4A800" stroke-width="0.7" opacity="0.2"/>
+  <path d="M120 205 Q123 235 127 275" fill="none" stroke="#D4A800" stroke-width="0.7" opacity="0.3"/>
 
-  <!-- === BODICE (Blue top) === -->
-  <path d="M70 185 L65 230 L135 230 L130 185 Q120 178 100 175 Q80 178 70 185 Z" fill="url(#blueGrad)" stroke="#1A3A7A" stroke-width="0.5"/>
-  <!-- Bodice center line -->
-  <line x1="100" y1="182" x2="100" y2="230" stroke="#1A3A7A" stroke-width="0.8" opacity="0.3"/>
+  <!-- === BLUE BODICE === -->
+  <path d="M72 165 L67 200 L133 200 L128 165 Q118 157 100 154 Q82 157 72 165 Z" fill="url(#blueGrad)" stroke="#1E4A8A" stroke-width="0.5"/>
 
-  <!-- === WHITE COLLAR === -->
-  <path d="M78 178 Q82 172 90 170 Q95 175 100 177 Q105 175 110 170 Q118 172 122 178 Q115 185 100 188 Q85 185 78 178 Z" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="0.5"/>
-  <!-- Collar detail -->
-  <path d="M88 173 Q94 178 100 180 Q106 178 112 173" fill="none" stroke="#E8E8E8" stroke-width="0.5"/>
+  <!-- === WHITE COLLAR (cute rounded) === -->
+  <path d="M76 158 Q82 148 92 146 Q96 152 100 155 Q104 152 108 146 Q118 148 124 158 Q114 166 100 170 Q86 166 76 158 Z" fill="white" stroke="#E8E8E8" stroke-width="0.6"/>
 
   <!-- === PUFFY SLEEVES === -->
-  <!-- Left sleeve -->
-  <ellipse cx="62" cy="195" rx="18" ry="22" fill="url(#sleeveGrad)" stroke="#1A3A7A" stroke-width="0.5"/>
-  <!-- Left sleeve puff lines -->
-  <path d="M50 185 Q55 195 50 205" fill="none" stroke="#2555A8" stroke-width="0.8" opacity="0.4"/>
-  <path d="M56 182 Q60 195 56 208" fill="none" stroke="#2555A8" stroke-width="0.6" opacity="0.3"/>
-  <!-- Left sleeve red band -->
-  <path d="M48 210 Q55 218 62 218 Q69 218 76 210" fill="none" stroke="#CC2233" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="62" cy="178" rx="20" ry="22" fill="url(#sleeveGrad)" stroke="#1E4A8A" stroke-width="0.5"/>
+  <path d="M48 168 Q54 178 48 188" fill="none" stroke="#2858B0" stroke-width="0.6" opacity="0.25"/>
+  <path d="M46 195 Q54 204 62 204 Q70 204 78 195" fill="none" stroke="#CC2244" stroke-width="3.5" stroke-linecap="round"/>
 
-  <!-- Right sleeve -->
-  <ellipse cx="138" cy="195" rx="18" ry="22" fill="url(#sleeveGrad)" stroke="#1A3A7A" stroke-width="0.5"/>
-  <!-- Right sleeve puff lines -->
-  <path d="M150 185 Q145 195 150 205" fill="none" stroke="#2555A8" stroke-width="0.8" opacity="0.4"/>
-  <path d="M144 182 Q140 195 144 208" fill="none" stroke="#2555A8" stroke-width="0.6" opacity="0.3"/>
-  <!-- Right sleeve red band -->
-  <path d="M124 210 Q131 218 138 218 Q145 218 152 210" fill="none" stroke="#CC2233" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="138" cy="178" rx="20" ry="22" fill="url(#sleeveGrad)" stroke="#1E4A8A" stroke-width="0.5"/>
+  <path d="M152 168 Q146 178 152 188" fill="none" stroke="#2858B0" stroke-width="0.6" opacity="0.25"/>
+  <path d="M122 195 Q130 204 138 204 Q146 204 154 195" fill="none" stroke="#CC2244" stroke-width="3.5" stroke-linecap="round"/>
 
-  <!-- === ARMS (pale skin) === -->
-  <!-- Left arm -->
-  <path d="M50 216 Q46 235 48 250 Q49 255 52 258" fill="none" stroke="#FFE8D6" stroke-width="8" stroke-linecap="round"/>
-  <path d="M50 216 Q46 235 48 250 Q49 255 52 258" fill="none" stroke="#EEDAD0" stroke-width="1" stroke-linecap="round"/>
-  <!-- Right arm -->
-  <path d="M150 216 Q154 235 152 250 Q151 255 148 258" fill="none" stroke="#FFE8D6" stroke-width="8" stroke-linecap="round"/>
-  <path d="M150 216 Q154 235 152 250 Q151 255 148 258" fill="none" stroke="#EEDAD0" stroke-width="1" stroke-linecap="round"/>
+  <!-- === ARMS === -->
+  <path d="M48 202 Q44 222 46 238" fill="none" stroke="#FFE8DD" stroke-width="8" stroke-linecap="round"/>
+  <path d="M152 202 Q156 222 154 238" fill="none" stroke="#FFE8DD" stroke-width="8" stroke-linecap="round"/>
 
   <!-- === NECK === -->
-  <rect x="92" y="160" width="16" height="22" rx="4" fill="url(#skinGrad)"/>
+  <rect x="93" y="135" width="14" height="20" rx="5" fill="url(#skinGrad)"/>
 
-  <!-- === HEAD === -->
-  <!-- Face shape -->
-  <ellipse cx="100" cy="120" rx="45" ry="50" fill="url(#skinGrad)" stroke="#EEDAD0" stroke-width="0.5"/>
+  <!-- === HEAD (big, round chibi-style for cuteness) === -->
+  <ellipse cx="100" cy="85" rx="50" ry="52" fill="url(#skinGrad)" stroke="#F0D0C0" stroke-width="0.3"/>
 
-  <!-- === HAIR (black bob-cut) === -->
-  <!-- Back hair volume -->
-  <path d="M52 115 Q48 70 65 55 Q80 42 100 40 Q120 42 135 55 Q152 70 148 115 Q150 135 148 155 L145 150 Q146 130 145 115 Q145 75 130 62 Q118 50 100 48 Q82 50 70 62 Q55 75 55 115 Q54 130 55 150 L52 155 Z" fill="url(#hairGrad)"/>
-  <!-- Hair front - bob cut framing face, NOT covering forehead -->
-  <!-- Left side hair -->
-  <path d="M55 100 Q52 80 62 62 Q72 48 85 45 L80 55 Q66 65 60 85 Q56 100 57 125 Q56 140 55 150 L52 148 Q53 125 55 100 Z" fill="url(#hairGrad)"/>
-  <!-- Right side hair -->
-  <path d="M145 100 Q148 80 138 62 Q128 48 115 45 L120 55 Q134 65 140 85 Q144 100 143 125 Q144 140 145 150 L148 148 Q147 125 145 100 Z" fill="url(#hairGrad)"/>
+  <!-- === HAIR (voluminous black bob) === -->
+  <!-- Back hair -->
+  <path d="M48 80 Q42 30 65 15 Q82 4 100 2 Q118 4 135 15 Q158 30 152 80 Q154 110 152 140 L148 136 Q150 110 148 82 Q148 38 132 22 Q118 10 100 8 Q82 10 68 22 Q52 38 52 82 Q52 110 54 136 L50 140 Q48 110 48 80 Z" fill="url(#hairGrad)"/>
+
+  <!-- Left side bob (curls outward at bottom) -->
+  <path d="M52 75 Q48 50 62 30 Q72 18 86 12 L80 24 Q66 35 60 55 Q55 72 54 100 Q53 120 54 136 Q50 142 48 138 L48 110 Q48 88 52 75 Z" fill="url(#hairGrad)"/>
+  <!-- Left curl -->
+  <path d="M48 135 Q42 144 45 150 Q50 154 55 146 Q56 140 54 136" fill="#0A0A18"/>
+
+  <!-- Right side bob -->
+  <path d="M148 75 Q152 50 138 30 Q128 18 114 12 L120 24 Q134 35 140 55 Q145 72 146 100 Q147 120 146 136 Q150 142 152 138 L152 110 Q152 88 148 75 Z" fill="url(#hairGrad)"/>
+  <!-- Right curl -->
+  <path d="M152 135 Q158 144 155 150 Q150 154 145 146 Q144 140 146 136" fill="#0A0A18"/>
+
   <!-- Hair top dome -->
-  <path d="M60 75 Q62 50 80 42 Q90 37 100 36 Q110 37 120 42 Q138 50 140 75 Q130 55 100 50 Q70 55 60 75 Z" fill="#2C2C2C"/>
-  <!-- Subtle hair shine -->
-  <path d="M80 45 Q90 40 100 39 Q105 40 108 42" fill="none" stroke="#4A4A5A" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+  <path d="M56 48 Q58 18 78 8 Q90 2 100 1 Q110 2 122 8 Q142 18 144 48 Q132 25 100 18 Q68 25 56 48 Z" fill="#1C1C30"/>
 
-  <!-- === RED HEADBAND === -->
-  <path d="M56 78 Q60 62 75 52 Q88 44 100 42 Q112 44 125 52 Q140 62 144 78" fill="none" stroke="#CC2233" stroke-width="5" stroke-linecap="round"/>
-  <!-- Headband bow (small, on top right) -->
-  <path d="M118 50 Q125 42 130 45 Q128 50 125 52" fill="#CC2233"/>
-  <path d="M118 50 Q122 55 128 55 Q125 52 125 52" fill="#AA1A28"/>
+  <!-- Hair shine -->
+  <path d="M76 10 Q88 4 100 3 Q108 4 114 7" fill="none" stroke="#3838558" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
 
-  <!-- === FACE FEATURES === -->
-  <!-- Eyebrows - thin, arched -->
-  <path d="M74 100 Q82 94 90 97" fill="none" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M110 97 Q118 94 126 100" fill="none" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- === RED HEADBAND WITH BIG BOW === -->
+  <path d="M52 52 Q56 30 75 18 Q88 8 100 6 Q112 8 125 18 Q144 30 148 52" fill="none" stroke="#DD2244" stroke-width="6" stroke-linecap="round"/>
 
-  <!-- Eyes - large, Disney style -->
-  <!-- Left eye -->
-  <ellipse cx="83" cy="110" rx="9" ry="10" fill="white" stroke="#1A1A2E" stroke-width="0.8"/>
-  <circle cx="84" cy="110" r="6" fill="#6B4226"/>
-  <circle cx="84" cy="110" r="3.5" fill="#1A1A2E"/>
-  <circle cx="86" cy="107" r="2" fill="white" opacity="0.9"/>
-  <circle cx="82" cy="112" r="1" fill="white" opacity="0.5"/>
-  <!-- Left eyelashes -->
-  <path d="M74 105 Q76 102 78 104" fill="none" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
-  <path d="M75 108 Q73 106 75 104" fill="none" stroke="#1A1A2E" stroke-width="0.8" stroke-linecap="round"/>
-  <!-- Left upper lid line -->
-  <path d="M74 106 Q78 100 83 99 Q88 100 92 106" fill="none" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Bow - big and cute -->
+  <!-- Left loop -->
+  <path d="M100 10 Q78 -8 70 2 Q64 12 76 22 Q88 16 100 10 Z" fill="#DD2244" stroke="#BB1A38" stroke-width="0.6"/>
+  <path d="M82 6 Q86 2 90 6" fill="none" stroke="#FF6677" stroke-width="0.8" opacity="0.4"/>
+  <!-- Right loop -->
+  <path d="M100 10 Q122 -8 130 2 Q136 12 124 22 Q112 16 100 10 Z" fill="#DD2244" stroke="#BB1A38" stroke-width="0.6"/>
+  <path d="M110 6 Q114 2 118 6" fill="none" stroke="#FF6677" stroke-width="0.8" opacity="0.4"/>
+  <!-- Center knot -->
+  <ellipse cx="100" cy="10" rx="5" ry="6" fill="#EE3355" stroke="#BB1A38" stroke-width="0.5"/>
+  <!-- Bow tails -->
+  <path d="M95 14 Q88 26 82 28" fill="none" stroke="#CC2244" stroke-width="2" stroke-linecap="round"/>
+  <path d="M105 14 Q112 26 118 28" fill="none" stroke="#CC2244" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Right eye -->
-  <ellipse cx="117" cy="110" rx="9" ry="10" fill="white" stroke="#1A1A2E" stroke-width="0.8"/>
-  <circle cx="116" cy="110" r="6" fill="#6B4226"/>
-  <circle cx="116" cy="110" r="3.5" fill="#1A1A2E"/>
-  <circle cx="118" cy="107" r="2" fill="white" opacity="0.9"/>
-  <circle cx="114" cy="112" r="1" fill="white" opacity="0.5"/>
-  <!-- Right eyelashes -->
-  <path d="M126 105 Q124 102 122 104" fill="none" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
-  <path d="M125 108 Q127 106 125 104" fill="none" stroke="#1A1A2E" stroke-width="0.8" stroke-linecap="round"/>
-  <!-- Right upper lid line -->
-  <path d="M108 106 Q112 100 117 99 Q122 100 126 106" fill="none" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- === FACE === -->
 
-  <!-- Nose - small, delicate -->
-  <path d="M98 120 Q100 125 102 120" fill="none" stroke="#EEDAD0" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Eyebrows -->
+  <path d="M72 68 Q80 62 90 65" fill="none" stroke="#1A1A2E" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M110 65 Q120 62 128 68" fill="none" stroke="#1A1A2E" stroke-width="1.6" stroke-linecap="round"/>
 
-  <!-- Rosy cheeks -->
-  <ellipse cx="72" cy="125" rx="8" ry="5" fill="#FFB5B5" opacity="0.45"/>
-  <ellipse cx="128" cy="125" rx="8" ry="5" fill="#FFB5B5" opacity="0.45"/>
+  <!-- LEFT EYE - big sparkly Disney doe eye -->
+  <ellipse cx="82" cy="82" rx="14" ry="15" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
+  <!-- Iris -->
+  <ellipse cx="83" cy="83" rx="10" ry="11" fill="url(#eyeGrad)"/>
+  <!-- Pupil -->
+  <circle cx="83" cy="84" r="5" fill="#1A1A2E"/>
+  <!-- Main highlight (large) -->
+  <circle cx="78" cy="78" r="4" fill="white" opacity="0.95"/>
+  <!-- Secondary highlight -->
+  <circle cx="87" cy="87" r="2" fill="white" opacity="0.6"/>
+  <!-- Tiny sparkle -->
+  <circle cx="80" cy="84" r="0.8" fill="white" opacity="0.4"/>
+  <!-- Upper lid -->
+  <path d="M68 76 Q75 68 83 67 Q91 68 96 76" stroke="#1A1A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Eyelashes -->
+  <line x1="69" y1="75" x2="65" y2="70" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="73" y1="71" x2="70" y2="66" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="77" y1="69" x2="76" y2="64" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- Lower lash -->
+  <path d="M72 95 Q82 98 92 95" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth - red lips, gentle smile -->
-  <path d="M90 138 Q95 136 100 137 Q105 136 110 138" fill="none" stroke="#CC2233" stroke-width="1.2" stroke-linecap="round"/>
-  <path d="M92 138 Q96 142 100 143 Q104 142 108 138" fill="#CC2233" stroke="#AA1A28" stroke-width="0.5"/>
-  <!-- Upper lip detail -->
-  <path d="M93 138 Q96 136 100 137 Q104 136 107 138" fill="#DD3344" stroke="none"/>
+  <!-- RIGHT EYE -->
+  <ellipse cx="118" cy="82" rx="14" ry="15" fill="white" stroke="#1A1A2E" stroke-width="0.5"/>
+  <ellipse cx="117" cy="83" rx="10" ry="11" fill="url(#eyeGrad)"/>
+  <circle cx="117" cy="84" r="5" fill="#1A1A2E"/>
+  <circle cx="113" cy="78" r="4" fill="white" opacity="0.95"/>
+  <circle cx="121" cy="87" r="2" fill="white" opacity="0.6"/>
+  <circle cx="115" cy="84" r="0.8" fill="white" opacity="0.4"/>
+  <path d="M104 76 Q111 68 117 67 Q125 68 132 76" stroke="#1A1A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <line x1="131" y1="75" x2="135" y2="70" stroke="#1A1A2E" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="127" y1="71" x2="130" y2="66" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="123" y1="69" x2="124" y2="64" stroke="#1A1A2E" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M108 95 Q118 98 128 95" stroke="#8D6E63" stroke-width="0.5" fill="none"/>
+
+  <!-- Nose -->
+  <path d="M98 98 Q100 102 102 99" stroke="#F0C8B8" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+  <!-- Rosy cheeks (big, warm) -->
+  <ellipse cx="66" cy="100" rx="10" ry="7" fill="#FFB0B0" opacity="0.5"/>
+  <ellipse cx="134" cy="100" rx="10" ry="7" fill="#FFB0B0" opacity="0.5"/>
+
+  <!-- Mouth - cute red smile -->
+  <!-- Upper lip cupid's bow -->
+  <path d="M90 114 Q95 111 100 112 Q105 111 110 114" fill="none" stroke="#DD2244" stroke-width="1" stroke-linecap="round"/>
+  <!-- Lower lip (cute small smile) -->
+  <path d="M92 114 Q96 119 100 120 Q104 119 108 114" fill="#DD2244" stroke="#CC1A38" stroke-width="0.4"/>
   <!-- Lip shine -->
-  <ellipse cx="100" cy="140" rx="3" ry="1" fill="#FF5566" opacity="0.3"/>
+  <ellipse cx="100" cy="116" rx="3" ry="1.2" fill="#FF6677" opacity="0.35"/>
 </svg>

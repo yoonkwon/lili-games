@@ -1,88 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
-    <radialGradient id="babySkinH" cx="50%" cy="45%" r="50%">
-      <stop offset="0%" stop-color="#FFF8F2"/>
-      <stop offset="100%" stop-color="#FFE8D6"/>
+    <radialGradient id="bSkinH" cx="50%" cy="42%" r="50%">
+      <stop offset="0%" stop-color="#FFF8F5"/>
+      <stop offset="100%" stop-color="#FFE8DD"/>
     </radialGradient>
-    <radialGradient id="babyHairGradH" cx="40%" cy="30%" r="60%">
-      <stop offset="0%" stop-color="#2C2C2C"/>
-      <stop offset="100%" stop-color="#0D0D1A"/>
-    </radialGradient>
-    <radialGradient id="sparkleGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFFACD"/>
-      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="bHairH" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#1C1C30"/>
+      <stop offset="100%" stop-color="#0A0A18"/>
+    </linearGradient>
   </defs>
 
-  <!-- Body / onesie -->
-  <path d="M38 82 Q35 95 33 110 L87 110 Q85 95 82 82 Z" fill="#B8D4F0" stroke="#9ABDE0" stroke-width="0.5"/>
-  <!-- Onesie collar -->
-  <path d="M44 80 Q50 76 60 75 Q70 76 76 80" fill="white" stroke="#E8E8E8" stroke-width="0.5"/>
+  <!-- Onesie body -->
+  <path d="M36 80 Q33 95 30 115 L90 115 Q87 95 84 80 Z" fill="#6CA8E8" stroke="#5090D0" stroke-width="0.5"/>
+  <path d="M42 78 Q48 73 60 72 Q72 73 78 78 Q72 82 60 84 Q48 82 42 78 Z" fill="white" stroke="#E8E8E8" stroke-width="0.4"/>
 
-  <!-- Neck -->
-  <rect x="55" y="72" width="10" height="10" rx="3" fill="url(#babySkinH)"/>
+  <rect x="55" y="68" width="10" height="10" rx="3" fill="url(#bSkinH)"/>
 
   <!-- Head -->
-  <circle cx="60" cy="48" r="30" fill="url(#babySkinH)" stroke="#EEDAD0" stroke-width="0.5"/>
+  <circle cx="60" cy="42" r="32" fill="url(#bSkinH)" stroke="#F0D0C0" stroke-width="0.3"/>
 
-  <!-- Hair tuft -->
-  <path d="M52 22 Q55 12 60 15 Q62 10 65 14 Q68 8 70 18 Q72 20 68 24 Q63 20 60 22 Q57 20 52 22 Z" fill="url(#babyHairGradH)"/>
-  <path d="M35 38 Q32 32 36 28 Q38 30 38 35 Z" fill="url(#babyHairGradH)"/>
-  <path d="M85 38 Q88 32 84 28 Q82 30 82 35 Z" fill="url(#babyHairGradH)"/>
+  <!-- Hair -->
+  <path d="M30 38 Q28 15 42 8 Q52 2 60 1 Q68 2 78 8 Q92 15 90 38 Q92 50 90 60 L87 58 Q88 48 88 40 Q88 20 76 12 Q66 5 60 4 Q54 5 44 12 Q32 20 32 40 Q32 48 33 58 L30 60 Q28 50 30 38 Z" fill="url(#bHairH)"/>
+  <path d="M32 36 Q30 22 40 12 Q48 6 56 4 L52 12 Q42 18 38 30 Q34 40 34 52 Q32 56 30 54 Q30 44 32 36 Z" fill="url(#bHairH)"/>
+  <path d="M88 36 Q90 22 80 12 Q72 6 64 4 L68 12 Q78 18 82 30 Q86 40 86 52 Q88 56 90 54 Q90 44 88 36 Z" fill="url(#bHairH)"/>
+  <path d="M34 28 Q36 10 50 4 Q56 1 60 0 Q64 1 70 4 Q84 10 86 28 Q76 14 60 10 Q44 14 34 28 Z" fill="#1C1C30"/>
+  <!-- Curls -->
+  <path d="M30 53 Q26 58 28 62 Q32 64 35 58 Q36 54 34 52" fill="#0A0A18"/>
+  <path d="M90 53 Q94 58 92 62 Q88 64 85 58 Q84 54 86 52" fill="#0A0A18"/>
 
-  <!-- Happy eyebrows - raised -->
-  <path d="M43 35 Q48 32 53 34" fill="none" stroke="#3A3A4E" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
-  <path d="M67 34 Q72 32 77 35" fill="none" stroke="#3A3A4E" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <!-- Headband -->
+  <path d="M32 25 Q36 12 48 6 Q54 2 60 1 Q66 2 72 6 Q84 12 88 25" fill="none" stroke="#DD2244" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M60 3 Q52 -4 50 0 Q48 4 54 7 Q58 4 60 3 Z" fill="#DD2244"/>
+  <path d="M60 3 Q68 -4 70 0 Q72 4 66 7 Q62 4 60 3 Z" fill="#DD2244"/>
+  <circle cx="60" cy="3" r="2.5" fill="#EE3355"/>
 
-  <!-- Eyes - closed happy arcs (^_^) -->
-  <path d="M42 46 Q49 39 56 46" fill="none" stroke="#3A3A4E" stroke-width="2" stroke-linecap="round"/>
-  <path d="M64 46 Q71 39 78 46" fill="none" stroke="#3A3A4E" stroke-width="2" stroke-linecap="round"/>
+  <!-- Eyebrows raised -->
+  <path d="M39 29 Q44 27 51 28" fill="none" stroke="#2A2A3E" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <path d="M69 28 Q76 27 81 29" fill="none" stroke="#2A2A3E" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Happy eyes (^_^) closed arcs -->
+  <path d="M38 43 Q48 34 58 43" fill="none" stroke="#2A2A3E" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M62 43 Q72 34 82 43" fill="none" stroke="#2A2A3E" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Tiny lashes on closed eyes -->
+  <line x1="38" y1="42" x2="36" y2="39" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
+  <line x1="82" y1="42" x2="84" y2="39" stroke="#1A1A2E" stroke-width="1" stroke-linecap="round"/>
 
   <!-- Nose -->
-  <ellipse cx="60" cy="54" rx="2" ry="1.5" fill="#FFDCC8" stroke="#EEDAD0" stroke-width="0.3"/>
+  <ellipse cx="60" cy="52" rx="2.5" ry="2" fill="#FFD8C8" stroke="#F0C8B8" stroke-width="0.3"/>
 
-  <!-- Rosy cheeks - more vivid when happy -->
-  <ellipse cx="38" cy="55" rx="7" ry="5" fill="#FFB5B5" opacity="0.55"/>
-  <ellipse cx="82" cy="55" rx="7" ry="5" fill="#FFB5B5" opacity="0.55"/>
+  <!-- Big rosy cheeks (extra pink when happy) -->
+  <ellipse cx="35" cy="52" rx="8" ry="6" fill="#FFB0B0" opacity="0.6"/>
+  <ellipse cx="85" cy="52" rx="8" ry="6" fill="#FFB0B0" opacity="0.6"/>
 
-  <!-- Mouth - big happy smile -->
-  <path d="M48 60 Q54 70 60 71 Q66 70 72 60" fill="#F5A0A0" stroke="#E08888" stroke-width="1" stroke-linecap="round"/>
+  <!-- Big happy smile -->
+  <path d="M48 58 Q54 68 60 69 Q66 68 72 58" fill="#F5A0A0" stroke="#DD4455" stroke-width="1" stroke-linecap="round"/>
   <!-- Tongue -->
-  <ellipse cx="60" cy="67" rx="4" ry="3" fill="#FF8888" opacity="0.6"/>
+  <ellipse cx="60" cy="65" rx="4" ry="3" fill="#FF8888" opacity="0.5"/>
 
-  <!-- Sparkles around baby -->
-  <!-- Sparkle 1 - top left -->
-  <g transform="translate(18,22)">
+  <!-- Sparkles -->
+  <g transform="translate(16,20)">
     <line x1="0" y1="-4" x2="0" y2="4" stroke="#FFD700" stroke-width="1.2" stroke-linecap="round"/>
     <line x1="-4" y1="0" x2="4" y2="0" stroke="#FFD700" stroke-width="1.2" stroke-linecap="round"/>
-    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#FFD700" stroke-width="0.8" stroke-linecap="round"/>
-    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#FFD700" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#FFD700" stroke-width="0.7" stroke-linecap="round"/>
+    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#FFD700" stroke-width="0.7" stroke-linecap="round"/>
   </g>
-  <!-- Sparkle 2 - top right -->
-  <g transform="translate(102,18)">
+  <g transform="translate(104,18)">
     <line x1="0" y1="-3" x2="0" y2="3" stroke="#FFD700" stroke-width="1" stroke-linecap="round"/>
     <line x1="-3" y1="0" x2="3" y2="0" stroke="#FFD700" stroke-width="1" stroke-linecap="round"/>
-    <line x1="-2" y1="-2" x2="2" y2="2" stroke="#FFD700" stroke-width="0.6" stroke-linecap="round"/>
-    <line x1="2" y1="-2" x2="-2" y2="2" stroke="#FFD700" stroke-width="0.6" stroke-linecap="round"/>
   </g>
-  <!-- Sparkle 3 - right side -->
-  <g transform="translate(108,55)">
-    <line x1="0" y1="-3.5" x2="0" y2="3.5" stroke="#FFE44D" stroke-width="1" stroke-linecap="round"/>
-    <line x1="-3.5" y1="0" x2="3.5" y2="0" stroke="#FFE44D" stroke-width="1" stroke-linecap="round"/>
-  </g>
-  <!-- Sparkle 4 - left side small -->
-  <g transform="translate(12,58)">
-    <line x1="0" y1="-2.5" x2="0" y2="2.5" stroke="#FFE44D" stroke-width="0.8" stroke-linecap="round"/>
-    <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#FFE44D" stroke-width="0.8" stroke-linecap="round"/>
-  </g>
-  <!-- Small star dots -->
-  <circle cx="25" cy="15" r="1.2" fill="#FFD700" opacity="0.7"/>
-  <circle cx="95" cy="32" r="1" fill="#FFD700" opacity="0.6"/>
-  <circle cx="10" cy="42" r="0.8" fill="#FFE44D" opacity="0.5"/>
+  <circle cx="24" cy="12" r="1.2" fill="#FFD700" opacity="0.6"/>
+  <circle cx="96" cy="30" r="1" fill="#FFD700" opacity="0.5"/>
 
   <!-- Arms raised in joy -->
-  <path d="M36 85 Q25 78 20 72" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
-  <path d="M84 85 Q95 78 100 72" fill="none" stroke="#FFE8D6" stroke-width="5" stroke-linecap="round"/>
-  <path d="M36 85 Q25 78 20 72" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
-  <path d="M84 85 Q95 78 100 72" fill="none" stroke="#EEDAD0" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M34 84 Q24 76 20 70" fill="none" stroke="#FFE8DD" stroke-width="6" stroke-linecap="round"/>
+  <path d="M86 84 Q96 76 100 70" fill="none" stroke="#FFE8DD" stroke-width="6" stroke-linecap="round"/>
 </svg>
