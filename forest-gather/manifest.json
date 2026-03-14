@@ -1,6 +1,6 @@
 {
-  "name": "숲속 모험단",
-  "short_name": "숲속모험단",
+  "name": "리리탐험대",
+  "short_name": "리리탐험대",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",

@@ -90,13 +90,13 @@ export class TitleScene {
 
     // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillText('🌲 숲속 모험단 🌲', w / 2 + 2, titleY + bounce + 2);
+    ctx.fillText('🌲 리리탐험대 🌲', w / 2 + 2, titleY + bounce + 2);
 
     ctx.fillStyle = '#FFD700';
     ctx.strokeStyle = '#5D4037';
     ctx.lineWidth = 3;
-    ctx.strokeText('🌲 숲속 모험단 🌲', w / 2, titleY + bounce);
-    ctx.fillText('🌲 숲속 모험단 🌲', w / 2, titleY + bounce);
+    ctx.strokeText('🌲 리리탐험대 🌲', w / 2, titleY + bounce);
+    ctx.fillText('🌲 리리탐험대 🌲', w / 2, titleY + bounce);
 
     // Subtitle
     ctx.font = '18px sans-serif';

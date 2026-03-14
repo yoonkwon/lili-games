@@ -42,83 +42,218 @@ export class SpriteCache {
 
   _renderGirl(name, bodyColor, bodyDark, hairColor, hairStyle) {
     const [c, ctx] = this._mk(48, 64);
-    const cx = 24, cy = 32;
+    const cx = 24;
+    const headY = 18; // bigger head, chibi style
+    const bodyY = 38;
+    const skinColor = '#FDDCB5';
+    const eyeColor = name === 'lisa' ? '#6B4226' : '#2E4A1E';
 
-    // Body
-    ctx.fillStyle = bodyColor;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + 14, 14, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = bodyDark;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + 28, 14, 6, 0, 0, Math.PI);
-    ctx.fill();
-
-    // Head
-    ctx.fillStyle = '#FFE0BD';
-    ctx.beginPath();
-    ctx.arc(cx, cy - 8, 14, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Hair
+    // --- Hair back layer (behind head) ---
     ctx.fillStyle = hairColor;
     if (hairStyle === 'pigtails') {
-      // Pigtails
+      // Back hair volume
       ctx.beginPath();
-      ctx.arc(cx, cy - 8, 15, Math.PI, Math.PI * 2);
+      ctx.arc(cx, headY, 17, 0, Math.PI * 2);
       ctx.fill();
+      // Pigtail left
       ctx.beginPath();
-      ctx.ellipse(cx - 16, cy - 4, 5, 10, -0.3, 0, Math.PI * 2);
+      ctx.ellipse(cx - 17, headY + 4, 6, 12, -0.2, 0, Math.PI * 2);
       ctx.fill();
+      // Pigtail right
       ctx.beginPath();
-      ctx.ellipse(cx + 16, cy - 4, 5, 10, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(cx + 17, headY + 4, 6, 12, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // Hair ties
+      ctx.fillStyle = '#FF4081';
+      ctx.beginPath();
+      ctx.arc(cx - 17, headY - 5, 3, 0, Math.PI * 2);
+      ctx.arc(cx + 17, headY - 5, 3, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // Bob cut
+      // Bob cut back volume
       ctx.beginPath();
-      ctx.arc(cx, cy - 8, 15, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.arc(cx, headY - 1, 17, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillRect(cx - 15, cy - 8, 30, 8);
+      // Side hair
+      ctx.beginPath();
+      ctx.ellipse(cx - 14, headY + 6, 5, 10, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 14, headY + 6, 5, 10, 0.1, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Eyes
-    ctx.fillStyle = '#333';
+    // --- Body (dress) ---
+    ctx.fillStyle = bodyColor;
     ctx.beginPath();
-    ctx.arc(cx - 5, cy - 9, 2.5, 0, Math.PI * 2);
-    ctx.arc(cx + 5, cy - 9, 2.5, 0, Math.PI * 2);
+    ctx.moveTo(cx - 11, bodyY - 6);
+    ctx.quadraticCurveTo(cx - 14, bodyY + 12, cx - 12, bodyY + 16);
+    ctx.lineTo(cx + 12, bodyY + 16);
+    ctx.quadraticCurveTo(cx + 14, bodyY + 12, cx + 11, bodyY - 6);
+    ctx.closePath();
     ctx.fill();
 
-    // Eye shine
+    // Dress collar / detail
+    ctx.fillStyle = bodyDark;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, bodyY - 6);
+    ctx.lineTo(cx, bodyY - 2);
+    ctx.lineTo(cx + 6, bodyY - 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Arms
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 13, bodyY + 2, 4, 8, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 13, bodyY + 2, 4, 8, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sleeves
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 12, bodyY - 2, 5, 4, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 12, bodyY - 2, 5, 4, -0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // --- Head (face) ---
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(cx, headY, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // --- Hair front layer ---
+    ctx.fillStyle = hairColor;
+    if (hairStyle === 'pigtails') {
+      // Bangs
+      ctx.beginPath();
+      ctx.arc(cx, headY, 16, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.fill();
+      // Fringe detail
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, headY - 8);
+      ctx.quadraticCurveTo(cx - 6, headY - 2, cx, headY - 6);
+      ctx.quadraticCurveTo(cx + 6, headY - 2, cx + 12, headY - 8);
+      ctx.lineTo(cx + 15, headY - 12);
+      ctx.arc(cx, headY, 16, -0.4, Math.PI + 0.4, true);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Bob cut bangs
+      ctx.beginPath();
+      ctx.arc(cx, headY - 1, 16, Math.PI * 0.95, Math.PI * 2.05);
+      ctx.fill();
+      // Straight fringe
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, headY - 6);
+      ctx.quadraticCurveTo(cx - 7, headY - 1, cx, headY - 4);
+      ctx.quadraticCurveTo(cx + 7, headY - 1, cx + 14, headY - 6);
+      ctx.lineTo(cx + 16, headY - 10);
+      ctx.arc(cx, headY - 1, 16, -0.2, Math.PI + 0.2, true);
+      ctx.closePath();
+      ctx.fill();
+      // Hair clip (green)
+      ctx.fillStyle = '#81C784';
+      ctx.beginPath();
+      ctx.arc(cx + 12, headY - 6, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath();
+      ctx.arc(cx + 12, headY - 6, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Eyes (big, cute anime-style) ---
+    // Eye whites
     ctx.fillStyle = '#FFF';
     ctx.beginPath();
-    ctx.arc(cx - 4, cy - 10, 1, 0, Math.PI * 2);
-    ctx.arc(cx + 6, cy - 10, 1, 0, Math.PI * 2);
+    ctx.ellipse(cx - 6, headY + 2, 4.5, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, headY + 2, 4.5, 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Blush
-    ctx.fillStyle = 'rgba(255,150,150,0.3)';
+    // Iris
+    ctx.fillStyle = eyeColor;
     ctx.beginPath();
-    ctx.ellipse(cx - 8, cy - 5, 4, 2.5, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + 8, cy - 5, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 6, headY + 3, 3.5, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, headY + 3, 3.5, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Mouth
-    ctx.strokeStyle = '#E57373';
-    ctx.lineWidth = 1.5;
+    // Pupil
+    ctx.fillStyle = '#1A1A1A';
     ctx.beginPath();
-    ctx.arc(cx, cy - 4, 3, 0.2, Math.PI - 0.2);
+    ctx.arc(cx - 6, headY + 3.5, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 6, headY + 3.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye shine (two highlights per eye)
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(cx - 4.5, headY + 1.5, 1.5, 0, Math.PI * 2);
+    ctx.arc(cx + 7.5, headY + 1.5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx - 7, headY + 4.5, 0.8, 0, Math.PI * 2);
+    ctx.arc(cx + 5, headY + 4.5, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyelashes (top)
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx - 6, headY + 2, 4.5, 5, 0, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, headY + 2, 4.5, 5, 0, Math.PI * 1.1, Math.PI * 1.9);
     ctx.stroke();
 
-    // Legs
-    ctx.fillStyle = '#FFE0BD';
-    ctx.fillRect(cx - 6, cy + 28, 5, 8);
-    ctx.fillRect(cx + 1, cy + 28, 5, 8);
+    // Blush
+    ctx.fillStyle = 'rgba(255,140,140,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx - 9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose (tiny dot)
+    ctx.fillStyle = 'rgba(200,140,100,0.4)';
+    ctx.beginPath();
+    ctx.arc(cx, headY + 5, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth (happy smile)
+    ctx.strokeStyle = '#E57373';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx, headY + 8, 3, 0.3, Math.PI - 0.3);
+    ctx.stroke();
+
+    // --- Legs ---
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(cx - 6, bodyY + 14, 5, 8);
+    ctx.fillRect(cx + 1, bodyY + 14, 5, 8);
+
+    // Socks
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(cx - 6, bodyY + 18, 5, 4);
+    ctx.fillRect(cx + 1, bodyY + 18, 5, 4);
 
     // Shoes
     ctx.fillStyle = bodyDark;
     ctx.beginPath();
-    ctx.ellipse(cx - 4, cy + 37, 5, 3, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + 4, cy + 37, 5, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
     this.cache.set(`${name}-idle`, c);
