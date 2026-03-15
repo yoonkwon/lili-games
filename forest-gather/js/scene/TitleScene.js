@@ -2,13 +2,20 @@
  * Title screen - character/difficulty selection
  */
 import { DIFFICULTIES } from '../config.js';
+import { hasSave, loadSave } from '../SaveManager.js';
 
 const DIFF_KEYS = ['lisa', 'ria', 'together'];
 
 export class TitleScene {
   constructor(spriteCache) {
     this.spriteCache = spriteCache;
+    this.savedData = hasSave() ? loadSave() : null;
     this.selectedIndex = 1; // default: ria
+    // If save exists, pre-select the saved difficulty
+    if (this.savedData) {
+      const idx = DIFF_KEYS.indexOf(this.savedData.difficultyKey);
+      if (idx >= 0) this.selectedIndex = idx;
+    }
     this.phase = 0;
     this.sparkles = [];
     for (let i = 0; i < 20; i++) {
@@ -42,13 +49,22 @@ export class TitleScene {
       }
     }
 
-    // Start button
+    // Buttons area
     const sBtnW = Math.min(250, w * 0.6);
     const sBtnH = 65;
     const sBtnX = (w - sBtnW) / 2;
-    const sBtnY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
+    let btnAreaY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
 
-    if (x >= sBtnX && x <= sBtnX + sBtnW && y >= sBtnY && y <= sBtnY + sBtnH) {
+    // Continue button (if save exists)
+    if (this.savedData) {
+      if (x >= sBtnX && x <= sBtnX + sBtnW && y >= btnAreaY && y <= btnAreaY + sBtnH) {
+        return 'continue';
+      }
+      btnAreaY += sBtnH + 12;
+    }
+
+    // New game button
+    if (x >= sBtnX && x <= sBtnX + sBtnW && y >= btnAreaY && y <= btnAreaY + sBtnH) {
       return 'start';
     }
 
@@ -172,31 +188,57 @@ export class TitleScene {
       ctx.fillText(diff.desc, w / 2, by + 52);
     }
 
-    // Start button
+    // Buttons
     const sBtnW = Math.min(250, w * 0.6);
     const sBtnH = 65;
     const sBtnX = (w - sBtnW) / 2;
-    const sBtnY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
+    let curBtnY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
     const pulse = 1 + Math.sin(this.phase * 4) * 0.03;
 
-    ctx.save();
-    ctx.translate(w / 2, sBtnY + sBtnH / 2);
-    ctx.scale(pulse, pulse);
-    ctx.translate(-w / 2, -(sBtnY + sBtnH / 2));
+    // Continue button (if save exists)
+    if (this.savedData) {
+      ctx.save();
+      ctx.translate(w / 2, curBtnY + sBtnH / 2);
+      ctx.scale(pulse, pulse);
+      ctx.translate(-w / 2, -(curBtnY + sBtnH / 2));
 
-    const sGrad = ctx.createLinearGradient(sBtnX, sBtnY, sBtnX, sBtnY + sBtnH);
+      const cGrad = ctx.createLinearGradient(sBtnX, curBtnY, sBtnX, curBtnY + sBtnH);
+      cGrad.addColorStop(0, '#4CAF50');
+      cGrad.addColorStop(1, '#388E3C');
+      ctx.fillStyle = cGrad;
+      ctx.beginPath();
+      ctx.roundRect(sBtnX, curBtnY, sBtnW, sBtnH, 20);
+      ctx.fill();
+
+      ctx.font = 'Bold 24px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFF';
+      ctx.fillText(`▶ 이어하기 (R${this.savedData.round + 1})`, w / 2, curBtnY + sBtnH / 2);
+      ctx.restore();
+
+      curBtnY += sBtnH + 12;
+    }
+
+    // New game button
+    ctx.save();
+    ctx.translate(w / 2, curBtnY + sBtnH / 2);
+    ctx.scale(this.savedData ? 1 : pulse, this.savedData ? 1 : pulse);
+    ctx.translate(-w / 2, -(curBtnY + sBtnH / 2));
+
+    const sGrad = ctx.createLinearGradient(sBtnX, curBtnY, sBtnX, curBtnY + sBtnH);
     sGrad.addColorStop(0, '#FFB300');
     sGrad.addColorStop(1, '#FF8F00');
     ctx.fillStyle = sGrad;
     ctx.beginPath();
-    ctx.roundRect(sBtnX, sBtnY, sBtnW, sBtnH, 20);
+    ctx.roundRect(sBtnX, curBtnY, sBtnW, sBtnH, 20);
     ctx.fill();
 
-    ctx.font = 'Bold 28px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.font = `Bold ${this.savedData ? 22 : 28}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('🌿 모험 시작! 🌿', w / 2, sBtnY + sBtnH / 2);
+    ctx.fillText(this.savedData ? '🌿 새로 시작' : '🌿 모험 시작! 🌿', w / 2, curBtnY + sBtnH / 2);
     ctx.restore();
   }
 }

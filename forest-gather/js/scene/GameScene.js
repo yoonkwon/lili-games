@@ -1052,6 +1052,62 @@ export class GameScene {
     this._showRoundIntro();
   }
 
+  /** Save-worthy state for localStorage */
+  getSaveData() {
+    return {
+      round: this.round,
+      score: this.score,
+      totalCollected: this.totalCollected,
+      maxCombo: this.maxCombo,
+      timer: this.timer,
+      magicGauge: this.magicGauge,
+      rarityCount: { ...this.rarityCount },
+      companions: this.companions.map(c => c.type),
+      discoveryQueue: [...this.discoveryQueue],
+      difficultyKey: this.difficultyKey,
+      savedAt: Date.now(),
+    };
+  }
+
+  /** Restore state from save data (call right after constructor) */
+  loadSaveData(save) {
+    if (!save) return;
+    this.round = save.round || 0;
+    this.roundConfig = this._getRoundConfig();
+    this.score = save.score || 0;
+    this.totalCollected = save.totalCollected || 0;
+    this.maxCombo = save.maxCombo || 0;
+    this.timer = save.timer || ROUND_TIME;
+    this.magicGauge = save.magicGauge || 0;
+    this.rarityCount = save.rarityCount || { common: 0, shiny: 0, rare: 0, legendary: 0 };
+    this.target = Math.ceil(this.roundConfig.target * this.difficulty.targetMult);
+    this.collected = 0;
+    this.discoveryQueue = save.discoveryQueue || [];
+    // Restore companions
+    if (save.companions) {
+      this.companions = [];
+      for (const type of save.companions) {
+        this._addCompanionSilent(type);
+      }
+    }
+    // Re-spawn items for current round
+    this.items = [];
+    this._collectedCount = 0;
+    this._spawnInitialItems();
+    this.bgDecos = this._generateDecos();
+    this._showRoundIntro();
+  }
+
+  /** Add companion without message/particles (for save restore) */
+  _addCompanionSilent(type) {
+    const total = this.companions.length + 1;
+    const comp = new Companion(type, this.player, this.companions.length, total);
+    this.companions.push(comp);
+    for (let i = 0; i < this.companions.length; i++) {
+      this.companions[i].assignAngle(i, this.companions.length);
+    }
+  }
+
   getStats() {
     return {
       round: this.round + 1,

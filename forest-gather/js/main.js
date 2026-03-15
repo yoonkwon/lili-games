@@ -5,6 +5,7 @@ import { TitleScene } from './scene/TitleScene.js';
 import { GameScene } from './scene/GameScene.js';
 import { RoundClearScene } from './scene/RoundClearScene.js';
 import { GameOverScene } from './scene/GameOverScene.js';
+import { loadSave, writeSave, clearSave } from './SaveManager.js';
 
 // Initialize
 const spriteCache = new SpriteCache();
@@ -53,11 +54,21 @@ input.onTap((x, y) => {
   if (currentScene === 'title') {
     const result = titleScene.handleTap(x, y, canvas.width, canvas.height);
     if (result === 'start') {
+      clearSave();
       const difficulty = titleScene.selectedDifficulty;
       startTransition(() => {
         gameScene = new GameScene(canvas.width, canvas.height, safeTop, difficulty, spriteCache);
         currentScene = 'game';
       });
+    } else if (result === 'continue') {
+      const save = loadSave();
+      if (save) {
+        startTransition(() => {
+          gameScene = new GameScene(canvas.width, canvas.height, safeTop, save.difficultyKey, spriteCache);
+          gameScene.loadSaveData(save);
+          currentScene = 'game';
+        });
+      }
     }
   } else if (currentScene === 'game') {
     gameScene.handleTap(x, y);
@@ -66,6 +77,7 @@ input.onTap((x, y) => {
     if (result === 'continue') {
       startTransition(() => {
         gameScene.advanceRound();
+        writeSave(gameScene.getSaveData());
         currentScene = 'game';
       });
     } else if (result === 'home') {
@@ -146,12 +158,14 @@ function gameLoop(timestamp) {
     } else if (currentScene === 'game') {
       const result = gameScene.update(dt, canvas.width, canvas.height);
       if (result === 'roundClear' && !transition.active) {
+        writeSave(gameScene.getSaveData());
         startTransition(() => {
           const stats = gameScene.getStats();
           roundClearScene = new RoundClearScene(canvas.width, canvas.height, stats, gameScene.round + 1);
           currentScene = 'roundClear';
         });
       } else if (result === 'gameover' && !transition.active) {
+        clearSave();
         startTransition(() => {
           const stats = gameScene.getStats();
           gameOverScene = new GameOverScene(canvas.width, canvas.height, stats);
