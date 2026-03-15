@@ -17,11 +17,10 @@ export class GameScene {
     this.difficulty = diff;
 
     // Fixed world size (independent of screen resolution)
-    // Design target: 800x600 logical viewport
-    const logicalW = 800;
-    this.gameScale = Math.min(w / logicalW, h / (logicalW * 0.75));
-    this.mapWidth = 1600;
-    this.mapHeight = 1200;
+    this.mapWidth = 2000;
+    this.mapHeight = 1500;
+    // Scale so viewport never exceeds map (prevents seeing/collecting entire map)
+    this.gameScale = Math.max(w / this.mapWidth, h / this.mapHeight);
     this.screenW = w;
     this.screenH = h;
     // Logical viewport size (what the camera sees in world coords)
@@ -437,7 +436,7 @@ export class GameScene {
 
     this.screenW = w;
     this.screenH = h;
-    this.gameScale = Math.min(w / 800, h / 600);
+    this.gameScale = Math.max(w / this.mapWidth, h / this.mapHeight);
     this.viewW = w / this.gameScale;
     this.viewH = h / this.gameScale;
     this.gameTime += dt;
@@ -1056,6 +1055,8 @@ export class GameScene {
   getStats() {
     return {
       round: this.round + 1,
+      collected: this.collected,
+      target: this.target,
       totalCollected: this.totalCollected,
       score: Math.floor(this.score),
       maxCombo: this.maxCombo,
