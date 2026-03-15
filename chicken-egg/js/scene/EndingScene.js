@@ -130,12 +130,13 @@ export class EndingScene {
 
         ctx.globalAlpha = 1;
 
-        // Restart button (after 5 seconds)
+        // Buttons (after 5 seconds)
         if (this.timer > 5) {
             const bW = 220, bH = 65;
             const bX = w / 2 - bW / 2;
-            const bY = h - 110;
+            const bY = h - 180;
 
+            // Restart button
             ctx.fillStyle = 'rgba(0,0,0,0.15)';
             ctx.beginPath();
             ctx.roundRect(bX - 2, bY + 4, bW + 4, bH, 20);
@@ -161,6 +162,19 @@ export class EndingScene {
             ctx.fillText('다시 하기! 🔄', w / 2, bY + bH / 2);
 
             this._restartBtn = { x: bX, y: bY, w: bW, h: bH };
+
+            // "다른 게임하기" button
+            const hY = bY + bH + 14;
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.beginPath();
+            ctx.roundRect(bX, hY, bW, bH - 10, 20);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillText('🏠 다른 게임하기', w / 2, hY + (bH - 10) / 2);
+
+            this._homeBtn = { x: bX, y: hY, w: bW, h: bH - 10 };
         }
     }
 
@@ -209,6 +223,10 @@ export class EndingScene {
         const b = this._restartBtn;
         if (b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
             return 'restart';
+        }
+        const hb = this._homeBtn;
+        if (hb && x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) {
+            return 'home';
         }
         return null;
     }

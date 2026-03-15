@@ -54,6 +54,51 @@ function startTransition(action) {
     transition.nextAction = action;
 }
 
+// Save system
+const SAVE_KEY = 'chickenEgg_save';
+function loadChickenSave() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+function writeChickenSave(data) {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch { /* ignore */ }
+}
+function clearChickenSave() {
+    localStorage.removeItem(SAVE_KEY);
+}
+
+// Home confirm overlay
+function showHomeConfirm() {
+    if (document.getElementById('home-confirm')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'home-confirm';
+    Object.assign(overlay.style, {
+        position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '999',
+    });
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+        background: '#FFF', borderRadius: '20px', padding: '28px 24px', textAlign: 'center',
+        maxWidth: '300px', width: '85%', boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+        fontFamily: '"Apple SD Gothic Neo","Segoe UI",sans-serif',
+    });
+    box.innerHTML = `
+        <div style="font-size:36px;margin-bottom:12px">🏠</div>
+        <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">다른 게임 하러 갈까요?</div>
+        <div style="font-size:14px;color:#888;margin-bottom:20px">진행 중이던 게임은 종료돼요.</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+            <button id="home-cancel" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:700;background:#EEE;color:#555;cursor:pointer">취소</button>
+            <button id="home-ok" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);color:#FFF;cursor:pointer">이동하기</button>
+        </div>`;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    document.getElementById('home-cancel').onclick = () => overlay.remove();
+    document.getElementById('home-ok').onclick = () => { window.location.href = '../'; };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
 // Pause state
 let paused = false;
 
@@ -82,6 +127,12 @@ input.onTap((x, y) => {
                 gameScene = null;
             });
         }
+        // Home button
+        const hY = rY + bH + 15;
+        if (x >= bX && x <= bX + bW && y >= hY && y <= hY + bH) {
+            paused = false;
+            showHomeConfirm();
+        }
         return;
     }
 
@@ -92,6 +143,7 @@ input.onTap((x, y) => {
         const pbY = safeTop + 20;
         if (x >= pbX && x <= pbX + pbSize && y >= pbY && y <= pbY + pbSize) {
             paused = true;
+            writeChickenSave(gameScene.getSaveData());
             return;
         }
     }
@@ -101,6 +153,7 @@ input.onTap((x, y) => {
     if (currentScene === 'title') {
         const result = titleScene.handleTap(x, y);
         if (result === 'start') {
+            clearChickenSave();
             const difficulty = titleScene.selectedDifficulty;
             startTransition(() => {
                 gameScene = new GameScene(canvas.width, canvas.height, safeTop, difficulty);
@@ -108,6 +161,17 @@ input.onTap((x, y) => {
                 audio.play('cheer');
                 audio.playBgm();
             });
+        } else if (result === 'continue') {
+            const save = loadChickenSave();
+            if (save) {
+                startTransition(() => {
+                    gameScene = new GameScene(canvas.width, canvas.height, safeTop, save.difficultyKey);
+                    gameScene.loadSaveData(save);
+                    currentScene = 'game';
+                    audio.play('cheer');
+                    audio.playBgm();
+                });
+            }
         }
     } else if (currentScene === 'game') {
         gameScene.handleTap(x, y);
@@ -119,6 +183,8 @@ input.onTap((x, y) => {
                 titleScene = new TitleScene();
                 currentScene = 'title';
             });
+        } else if (result === 'home') {
+            showHomeConfirm();
         }
     } else if (currentScene === 'gameover') {
         const result = gameOverScene.handleTap(x, y);
@@ -128,6 +194,8 @@ input.onTap((x, y) => {
                 titleScene = new TitleScene();
                 currentScene = 'title';
             });
+        } else if (result === 'home') {
+            showHomeConfirm();
         }
     }
 });
@@ -164,7 +232,13 @@ function gameLoop(timestamp) {
                 titleScene.update(dt);
             } else if (currentScene === 'game') {
                 const result = gameScene.update(dt, canvas.width, canvas.height);
+                // Auto-save on stage change
+                if (gameScene.currentStage !== (gameScene._lastSavedStage ?? -1)) {
+                    gameScene._lastSavedStage = gameScene.currentStage;
+                    writeChickenSave(gameScene.getSaveData());
+                }
                 if (result === 'ending' && !transition.active) {
+                    clearChickenSave();
                     startTransition(() => {
                         audio.stopBgm();
                         // Final achievement check for clear
@@ -183,6 +257,7 @@ function gameLoop(timestamp) {
                         audio.play('ending');
                     });
                 } else if (result === 'gameover' && !transition.active) {
+                    clearChickenSave();
                     startTransition(() => {
                         audio.stopBgm();
                         const score = gameScene._calculateScore();
@@ -306,6 +381,17 @@ function _drawPauseOverlay(ctx, w, h) {
     ctx.fillStyle = '#FFF';
     ctx.font = 'bold 26px sans-serif';
     ctx.fillText('처음부터 🔄', w / 2, rY + bH / 2);
+
+    // Home button
+    const hY = rY + bH + 15;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.roundRect(bX, hY, bW, bH, 20);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('🏠 다른 게임하기', w / 2, hY + bH / 2);
 
     ctx.restore();
 }

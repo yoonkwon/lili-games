@@ -2,14 +2,27 @@
 import { DIFFICULTIES, DIFFICULTY_ORDER } from '../Difficulty.js';
 import { AchievementManager } from '../Achievement.js';
 
+const SAVE_KEY = 'chickenEgg_save';
+
 export class TitleScene {
     constructor() {
         this.bounce = 0;
         this._btn = null;
+        this._continueBtn = null;
         this._diffBtns = [];
         this._trophyBtn = null;
         this.selectedDifficulty = 'sister';
         this.achievements = new AchievementManager();
+
+        // Check for saved game
+        try {
+            const raw = localStorage.getItem(SAVE_KEY);
+            this.savedData = raw ? JSON.parse(raw) : null;
+        } catch { this.savedData = null; }
+        if (this.savedData) {
+            const idx = DIFFICULTY_ORDER.indexOf(this.savedData.difficultyKey);
+            if (idx >= 0) this.selectedDifficulty = this.savedData.difficultyKey;
+        }
 
         // Trophy overlay
         this.showTrophies = false;
@@ -162,35 +175,65 @@ export class TitleScene {
             this._diffBtns.push({ x: bx, y: diffY, w: diffBtnW, h: diffBtnH, key });
         }
 
-        // ===== Start button =====
+        // ===== Buttons =====
         const bW = 240, bH = 70;
         const bX = cx - bW / 2;
-        const bY = diffY + diffBtnH + 24;
+        let curBtnY = diffY + diffBtnH + 24;
         const bb = Math.sin(this.bounce * 2) * 3;
+        const pulse = 1 + Math.sin(this.bounce * 4) * 0.03;
 
+        // Continue button (if save exists)
+        this._continueBtn = null;
+        if (this.savedData) {
+            ctx.save();
+            ctx.translate(cx, curBtnY + bH / 2);
+            ctx.scale(pulse, pulse);
+            ctx.translate(-cx, -(curBtnY + bH / 2));
+
+            const cGrad = ctx.createLinearGradient(bX, curBtnY, bX, curBtnY + bH);
+            cGrad.addColorStop(0, '#4CAF50');
+            cGrad.addColorStop(1, '#388E3C');
+            ctx.fillStyle = cGrad;
+            ctx.beginPath(); ctx.roundRect(bX, curBtnY, bW, bH, 24); ctx.fill();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath(); ctx.roundRect(bX + 6, curBtnY + 4, bW - 12, bH / 2 - 4, [18, 18, 6, 6]); ctx.fill();
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`▶ 이어하기 (${this.savedData.basketEggs}🥚)`, cx, curBtnY + bH / 2);
+            ctx.restore();
+
+            this._continueBtn = { x: bX, y: curBtnY, w: bW, h: bH };
+            curBtnY += bH + 12;
+        }
+
+        // Start button
         ctx.save();
         ctx.translate(0, bb);
 
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.beginPath(); ctx.roundRect(bX - 2, bY + 5, bW + 4, bH, 24); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(bX - 2, curBtnY + 5, bW + 4, bH, 24); ctx.fill();
 
-        const btnGrad = ctx.createLinearGradient(bX, bY, bX, bY + bH);
+        const btnGrad = ctx.createLinearGradient(bX, curBtnY, bX, curBtnY + bH);
         btnGrad.addColorStop(0, '#FF6B6B');
         btnGrad.addColorStop(1, '#EE4444');
         ctx.fillStyle = btnGrad;
-        ctx.beginPath(); ctx.roundRect(bX, bY, bW, bH, 24); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(bX, curBtnY, bW, bH, 24); ctx.fill();
 
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.beginPath(); ctx.roundRect(bX + 6, bY + 4, bW - 12, bH / 2 - 4, [18, 18, 6, 6]); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(bX + 6, curBtnY + 4, bW - 12, bH / 2 - 4, [18, 18, 6, 6]); ctx.fill();
 
         ctx.fillStyle = '#FFF';
-        ctx.font = 'bold 32px sans-serif';
+        ctx.font = `bold ${this.savedData ? 26 : 32}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('시작하기! 🎮', cx, bY + bH / 2);
+        ctx.fillText(this.savedData ? '🐔 새로 시작' : '시작하기! 🎮', cx, curBtnY + bH / 2);
         ctx.restore();
 
-        this._btn = { x: bX, y: bY + bb, w: bW, h: bH };
+        this._btn = { x: bX, y: curBtnY + bb, w: bW, h: bH };
 
         // ===== Trophy button (bottom-right) =====
         const tSize = 48;
@@ -353,6 +396,12 @@ export class TitleScene {
                 this.selectedDifficulty = db.key;
                 return null;
             }
+        }
+
+        // Continue button
+        const cb = this._continueBtn;
+        if (cb && x >= cb.x && x <= cb.x + cb.w && y >= cb.y && y <= cb.y + cb.h) {
+            return 'continue';
         }
 
         // Start button

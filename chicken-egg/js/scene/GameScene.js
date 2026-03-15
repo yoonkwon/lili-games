@@ -151,6 +151,53 @@ export class GameScene {
         } catch (e) { /* ignore */ }
     }
 
+    getSaveData() {
+        return {
+            difficultyKey: this.difficultyKey,
+            basketEggs: this.basketEggs,
+            totalEggs: this.totalEggs,
+            goldenEggs: this.goldenEggs,
+            hp: this.hp,
+            currentStage: this.currentStage,
+            predatorsScared: this.predatorsScared,
+            chicksLost: this.chicksLost,
+            maxCombo: this.maxCombo,
+            dogSummons: this.dogSummons,
+            dogChargeBori: this.dogChargeBori,
+            dogChargeJopssal: this.dogChargeJopssal,
+            chicksCount: this.chicks.length,
+            unlockedHats: [...this.unlockedHats],
+            savedAt: Date.now(),
+        };
+    }
+
+    loadSaveData(save) {
+        this.basketEggs = save.basketEggs || 0;
+        this.totalEggs = save.totalEggs || 0;
+        this.goldenEggs = save.goldenEggs || 0;
+        this.hp = save.hp || this.maxHp;
+        this.currentStage = save.currentStage || 0;
+        this._lastStage = this.currentStage;
+        this.predatorsScared = save.predatorsScared || 0;
+        this.chicksLost = save.chicksLost || 0;
+        this.maxCombo = save.maxCombo || 0;
+        this.dogSummons = save.dogSummons || 0;
+        this.dogChargeBori = save.dogChargeBori || 0;
+        this.dogChargeJopssal = save.dogChargeJopssal || 0;
+        if (save.unlockedHats) {
+            this.unlockedHats = new Set(save.unlockedHats);
+            const hats = [...this.unlockedHats];
+            if (hats.length > 1) this.chicken.currentHat = hats[hats.length - 1];
+        }
+        // Restore chicks
+        const chickCount = save.chicksCount || 0;
+        for (let i = 0; i < chickCount; i++) {
+            const cx = this.nest.x + (Math.random() - 0.5) * 80;
+            const cy = this.groundY + 20 + Math.random() * 30;
+            this.chicks.push(new Chick(cx, cy));
+        }
+    }
+
     /**
      * Improvement 1: Check if any predator is occupying the nest (phase === 1)
      */
