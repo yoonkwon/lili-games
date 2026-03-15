@@ -7,6 +7,10 @@ import { EndingScene } from './scene/EndingScene.js';
 import { GameOverScene } from './scene/GameOverScene.js';
 import { audio } from './AudioManager.js';
 import { SpriteCache } from './SpriteCache.js';
+import { SaveManager } from '../../shared/SaveManager.js';
+import { showHomeConfirm } from '../../shared/ui/HomeConfirm.js';
+
+const save = new SaveManager('chickenEgg_save');
 
 // Initialize sprite cache
 const spriteCache = new SpriteCache();
@@ -42,6 +46,7 @@ let titleScene = new TitleScene();
 let gameScene = null;
 let endingScene = null;
 let gameOverScene = null;
+let lastSavedStage = -1;
 
 // Scene transition
 let transition = { active: false, alpha: 0, phase: 'none', nextAction: null };
@@ -54,50 +59,6 @@ function startTransition(action) {
     transition.nextAction = action;
 }
 
-// Save system
-const SAVE_KEY = 'chickenEgg_save';
-function loadChickenSave() {
-    try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-}
-function writeChickenSave(data) {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch { /* ignore */ }
-}
-function clearChickenSave() {
-    localStorage.removeItem(SAVE_KEY);
-}
-
-// Home confirm overlay
-function showHomeConfirm() {
-    if (document.getElementById('home-confirm')) return;
-    const overlay = document.createElement('div');
-    overlay.id = 'home-confirm';
-    Object.assign(overlay.style, {
-        position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.6)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '999',
-    });
-    const box = document.createElement('div');
-    Object.assign(box.style, {
-        background: '#FFF', borderRadius: '20px', padding: '28px 24px', textAlign: 'center',
-        maxWidth: '300px', width: '85%', boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-        fontFamily: '"Apple SD Gothic Neo","Segoe UI",sans-serif',
-    });
-    box.innerHTML = `
-        <div style="font-size:36px;margin-bottom:12px">🏠</div>
-        <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:8px">다른 게임 하러 갈까요?</div>
-        <div style="font-size:14px;color:#888;margin-bottom:20px">진행 중이던 게임은 종료돼요.</div>
-        <div style="display:flex;gap:10px;justify-content:center">
-            <button id="home-cancel" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:700;background:#EEE;color:#555;cursor:pointer">취소</button>
-            <button id="home-ok" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);color:#FFF;cursor:pointer">이동하기</button>
-        </div>`;
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    document.getElementById('home-cancel').onclick = () => overlay.remove();
-    document.getElementById('home-ok').onclick = () => { window.location.href = '../'; };
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-}
 
 // Pause state
 let paused = false;
@@ -143,7 +104,7 @@ input.onTap((x, y) => {
         const pbY = safeTop + 20;
         if (x >= pbX && x <= pbX + pbSize && y >= pbY && y <= pbY + pbSize) {
             paused = true;
-            writeChickenSave(gameScene.getSaveData());
+            save.write(gameScene.getSaveData());
             return;
         }
     }
@@ -153,7 +114,7 @@ input.onTap((x, y) => {
     if (currentScene === 'title') {
         const result = titleScene.handleTap(x, y);
         if (result === 'start') {
-            clearChickenSave();
+            save.clear();
             const difficulty = titleScene.selectedDifficulty;
             startTransition(() => {
                 gameScene = new GameScene(canvas.width, canvas.height, safeTop, difficulty);
@@ -162,11 +123,11 @@ input.onTap((x, y) => {
                 audio.playBgm();
             });
         } else if (result === 'continue') {
-            const save = loadChickenSave();
-            if (save) {
+            const savedData = save.load();
+            if (savedData) {
                 startTransition(() => {
-                    gameScene = new GameScene(canvas.width, canvas.height, safeTop, save.difficultyKey);
-                    gameScene.loadSaveData(save);
+                    gameScene = new GameScene(canvas.width, canvas.height, safeTop, savedData.difficultyKey);
+                    gameScene.loadSaveData(savedData);
                     currentScene = 'game';
                     audio.play('cheer');
                     audio.playBgm();
@@ -233,12 +194,12 @@ function gameLoop(timestamp) {
             } else if (currentScene === 'game') {
                 const result = gameScene.update(dt, canvas.width, canvas.height);
                 // Auto-save on stage change
-                if (gameScene.currentStage !== (gameScene._lastSavedStage ?? -1)) {
-                    gameScene._lastSavedStage = gameScene.currentStage;
-                    writeChickenSave(gameScene.getSaveData());
+                if (gameScene.currentStage !== lastSavedStage) {
+                    lastSavedStage = gameScene.currentStage;
+                    save.write(gameScene.getSaveData());
                 }
                 if (result === 'ending' && !transition.active) {
-                    clearChickenSave();
+                    save.clear();
                     startTransition(() => {
                         audio.stopBgm();
                         // Final achievement check for clear
@@ -257,7 +218,7 @@ function gameLoop(timestamp) {
                         audio.play('ending');
                     });
                 } else if (result === 'gameover' && !transition.active) {
-                    clearChickenSave();
+                    save.clear();
                     startTransition(() => {
                         audio.stopBgm();
                         const score = gameScene._calculateScore();

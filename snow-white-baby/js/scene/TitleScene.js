@@ -3,18 +3,14 @@
  * Forest theme with floating leaves and butterflies
  */
 import { drawSnowWhiteMom, drawBabySnowWhite } from '../draw-snow-white.js';
-
-const SAVE_KEY = 'snow-white-baby-save';
+import { SaveManager } from '../../../shared/SaveManager.js';
 
 export class TitleScene {
   constructor() {
     this.phase = 0;
 
     // Check for saved game
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      this.savedData = raw ? JSON.parse(raw) : null;
-    } catch { this.savedData = null; }
+    this.savedData = new SaveManager('snow-white-baby-save').load();
 
     // Floating leaves and butterflies
     this.floaters = [];

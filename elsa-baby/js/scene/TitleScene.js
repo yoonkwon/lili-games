@@ -2,18 +2,14 @@
  * Title scene - Elsa baby game
  */
 import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
-
-const SAVE_KEY = 'elsa-baby-save';
+import { SaveManager } from '../../../shared/SaveManager.js';
 
 export class TitleScene {
   constructor() {
     this.phase = 0;
 
     // Check for saved game
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      this.savedData = raw ? JSON.parse(raw) : null;
-    } catch { this.savedData = null; }
+    this.savedData = new SaveManager('elsa-baby-save').load();
 
     this.snowflakes = [];
     for (let i = 0; i < 30; i++) {

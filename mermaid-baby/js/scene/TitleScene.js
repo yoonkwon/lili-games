@@ -3,18 +3,14 @@
  * Ocean theme with floating bubbles and sea creatures
  */
 import { drawMermaidMom, drawBabyMermaid } from '../draw-mermaid.js';
-
-const SAVE_KEY = 'mermaid-baby-save';
+import { SaveManager } from '../../../shared/SaveManager.js';
 
 export class TitleScene {
   constructor() {
     this.phase = 0;
 
     // Check for saved game
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      this.savedData = raw ? JSON.parse(raw) : null;
-    } catch { this.savedData = null; }
+    this.savedData = new SaveManager('mermaid-baby-save').load();
 
     // Floating bubbles, shells, fish (float UPWARD)
     this.floaters = [];

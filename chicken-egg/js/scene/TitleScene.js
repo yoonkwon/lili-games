@@ -1,8 +1,7 @@
 // Title Screen Scene - with difficulty selection and achievement trophy
 import { DIFFICULTIES, DIFFICULTY_ORDER } from '../Difficulty.js';
 import { AchievementManager } from '../Achievement.js';
-
-const SAVE_KEY = 'chickenEgg_save';
+import { SaveManager } from '../../../shared/SaveManager.js';
 
 export class TitleScene {
     constructor() {
@@ -15,10 +14,7 @@ export class TitleScene {
         this.achievements = new AchievementManager();
 
         // Check for saved game
-        try {
-            const raw = localStorage.getItem(SAVE_KEY);
-            this.savedData = raw ? JSON.parse(raw) : null;
-        } catch { this.savedData = null; }
+        this.savedData = new SaveManager('chickenEgg_save').load();
         if (this.savedData) {
             const idx = DIFFICULTY_ORDER.indexOf(this.savedData.difficultyKey);
             if (idx >= 0) this.selectedDifficulty = this.savedData.difficultyKey;
