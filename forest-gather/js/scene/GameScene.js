@@ -1057,6 +1057,7 @@ export class GameScene {
       round: this.round + 1,
       collected: this.collected,
       target: this.target,
+      timer: this.timer,
       totalCollected: this.totalCollected,
       score: Math.floor(this.score),
       maxCombo: this.maxCombo,

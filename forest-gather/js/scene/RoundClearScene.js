@@ -9,9 +9,9 @@ export class RoundClearScene {
     this.nextRound = nextRound;
     this.phase = 0;
 
-    // Stars (based on current round collection vs target)
-    const ratio = stats.collected / stats.target;
-    this.stars = ratio >= 1.5 ? 3 : ratio >= 1.2 ? 2 : 1;
+    // Stars based on remaining time (speed/efficiency)
+    const timeLeft = stats.timer || 0;
+    this.stars = timeLeft >= 40 ? 3 : timeLeft >= 20 ? 2 : 1;
 
     // Celebration particles
     this.confetti = [];
