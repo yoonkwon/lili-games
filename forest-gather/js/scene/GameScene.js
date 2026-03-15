@@ -16,11 +16,17 @@ export class GameScene {
     const diff = DIFFICULTIES[difficultyKey];
     this.difficulty = diff;
 
-    // Map size (larger than screen, scrolls with player)
-    this.mapWidth = w * 2;
-    this.mapHeight = h * 1.5;
+    // Fixed world size (independent of screen resolution)
+    // Design target: 800x600 logical viewport
+    const logicalW = 800;
+    this.gameScale = Math.min(w / logicalW, h / (logicalW * 0.75));
+    this.mapWidth = 1600;
+    this.mapHeight = 1200;
     this.screenW = w;
     this.screenH = h;
+    // Logical viewport size (what the camera sees in world coords)
+    this.viewW = w / this.gameScale;
+    this.viewH = h / this.gameScale;
     this.safeTop = safeTop;
 
     // Camera
@@ -217,23 +223,23 @@ export class GameScene {
   handleTap(x, y) {
     if (this.state !== 'playing') return;
 
-    // Check if tapping the spell button (bottom right)
+    // Check if tapping the spell button (bottom right, in screen coords)
     const spellBtnX = this.screenW - 60;
     const spellBtnY = this.screenH - 70;
-    const dx = x - spellBtnX;
-    const dy = y - spellBtnY;
-    if (dx * dx + dy * dy < 1225) { // 35²
+    const sdx = x - spellBtnX;
+    const sdy = y - spellBtnY;
+    if (sdx * sdx + sdy * sdy < 1225) { // 35²
       if (this._isSpellReady()) {
         this._castSpell();
       } else {
-        // Cycle to next spell
         this.currentSpellIdx = (this.currentSpellIdx + 1) % this.spellList.length;
       }
       return;
     }
 
-    const mx = x + this.camX;
-    const my = y + this.camY;
+    // Convert screen coords to world coords
+    const mx = x / this.gameScale + this.camX;
+    const my = y / this.gameScale + this.camY;
 
     this.player.moveTo(mx, my);
     if (this.secondChar) {
@@ -281,28 +287,27 @@ export class GameScene {
     this.totalCollected += item.value;
     this.rarityCount[item.rarity]++;
 
-    this.particles.createParticles(item.x - this.camX, item.y - this.camY, item.color, 8);
+    this.particles.createParticles(this._toScreenX(item.x), this._toScreenY(item.y), item.color, 8);
     if (item.rarity !== 'common') {
-      this.particles.createStars(item.x - this.camX, item.y - this.camY, 3);
+      this.particles.createStars(this._toScreenX(item.x), this._toScreenY(item.y), 3);
     }
 
     // Floating text with combo info
+    const sx = this._toScreenX(item.x);
+    const sy = this._toScreenY(item.y);
     const valueText = item.value > 1 ? `+${item.value} ${item.emoji}` : `+1 ${item.emoji}`;
-    this.particles.addFloatingText(item.x - this.camX, item.y - this.camY - 20, valueText, item.color);
+    this.particles.addFloatingText(sx, sy - 20, valueText, item.color);
 
     if (this.combo >= 3) {
       const comboColor = this.combo >= COMBO.feverThreshold ? '#FF4444' : '#FFD700';
-      this.particles.addFloatingText(
-        item.x - this.camX, item.y - this.camY - 45,
-        `x${this.combo} COMBO!`, comboColor
-      );
+      this.particles.addFloatingText(sx, sy - 45, `x${this.combo} COMBO!`, comboColor);
     }
 
     // Time bonus on collection (capped to maintain tension)
     const timeBonus = COLLECT_TIME_BONUS[item.rarity] || 0.3;
     this.timer = Math.min(this.timer + timeBonus, TIMER_CAP);
     if (timeBonus >= 1) {
-      this.particles.addFloatingText(item.x - this.camX, item.y - this.camY - 40, `+${timeBonus}s`, '#7DF9FF');
+      this.particles.addFloatingText(sx, sy - 40, `+${timeBonus}s`, '#7DF9FF');
     }
 
     // Trigger fever mode at threshold
@@ -310,7 +315,7 @@ export class GameScene {
       this.fever = true;
       this.feverTimer = COMBO.feverDuration;
       this.message.show('FEVER MODE!', 2);
-      this.particles.createStars(this.player.x - this.camX, this.player.y - this.camY, 12);
+      this.particles.createStars(this._toScreenX(this.player.x), this._toScreenY(this.player.y), 12);
     }
 
     // Apply item effect (buff)
@@ -350,7 +355,7 @@ export class GameScene {
       if (dx * dx + dy * dy < rangeSq) {
         applyFn(item);
         affected++;
-        this.particles.createStars(item.x - this.camX, item.y - this.camY, starCount);
+        this.particles.createStars(this._toScreenX(item.x), this._toScreenY(item.y), starCount);
       }
     }
     return affected;
@@ -423,7 +428,7 @@ export class GameScene {
     }
     const config = COMPANIONS[type];
     this.message.show(`${config.name} 합류! - ${config.desc}`, 4);
-    this.particles.createStars(this.player.x - this.camX, this.player.y - this.camY, 8);
+    this.particles.createStars(this._toScreenX(this.player.x), this._toScreenY(this.player.y), 8);
   }
 
   update(dt, w, h) {
@@ -432,6 +437,9 @@ export class GameScene {
 
     this.screenW = w;
     this.screenH = h;
+    this.gameScale = Math.min(w / 800, h / 600);
+    this.viewW = w / this.gameScale;
+    this.viewH = h / this.gameScale;
     this.gameTime += dt;
 
     // Timer
@@ -656,13 +664,15 @@ export class GameScene {
       if (this.eventTimer <= 0) this.activeEvent = null;
     }
 
-    // Camera follow player
-    const targetCamX = this.player.x - w / 2;
-    const targetCamY = this.player.y - h / 2;
+    // Camera follow player (in world coords)
+    const vw = this.viewW;
+    const vh = this.viewH;
+    const targetCamX = this.player.x - vw / 2;
+    const targetCamY = this.player.y - vh / 2;
     this.camX += (targetCamX - this.camX) * Math.min(1, dt * 5);
     this.camY += (targetCamY - this.camY) * Math.min(1, dt * 5);
-    this.camX = Math.max(0, Math.min(this.mapWidth - w, this.camX));
-    this.camY = Math.max(0, Math.min(this.mapHeight - h, this.camY));
+    this.camX = Math.max(0, Math.min(this.mapWidth - vw, this.camX));
+    this.camY = Math.max(0, Math.min(this.mapHeight - vh, this.camY));
 
     // Effects
     this.particles.update(dt);
@@ -683,10 +693,17 @@ export class GameScene {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // Ground
-    const groundY = Math.max(0, h * 0.3 - this.camY);
-    ctx.fillStyle = this.roundConfig.groundColor;
-    ctx.fillRect(0, groundY, w, h - groundY);
+    // Apply game scale for world rendering
+    ctx.save();
+    ctx.scale(this.gameScale, this.gameScale);
+
+    // Ground (fixed world Y, drawn in viewport coords before translate)
+    const worldGroundY = this.mapHeight * 0.25;
+    const viewGroundY = worldGroundY - this.camY;
+    if (viewGroundY < this.viewH) {
+      ctx.fillStyle = this.roundConfig.groundColor;
+      ctx.fillRect(0, Math.max(0, viewGroundY), this.viewW, this.viewH - Math.max(0, viewGroundY));
+    }
 
     ctx.save();
     ctx.translate(-this.camX, -this.camY);
@@ -727,9 +744,10 @@ export class GameScene {
     // Player
     this.player.draw(ctx, this.spriteCache);
 
-    ctx.restore();
+    ctx.restore(); // end camera translate
+    ctx.restore(); // end game scale
 
-    // UI overlay
+    // UI overlay (in screen coords, not scaled)
     this._drawHUD(ctx, w, h);
     this._drawComboIndicator(ctx, w, h);
     this._drawBuffIndicators(ctx, w, h);
@@ -1011,6 +1029,11 @@ export class GameScene {
 
     ctx.restore();
   }
+
+  /** Convert world X to screen X for particles/HUD */
+  _toScreenX(worldX) { return (worldX - this.camX) * this.gameScale; }
+  /** Convert world Y to screen Y for particles/HUD */
+  _toScreenY(worldY) { return (worldY - this.camY) * this.gameScale; }
 
   advanceRound() {
     this.round++;
