@@ -68,9 +68,11 @@
             position: relative;
             overflow: hidden;
         }
-        .game-thumbnail svg {
+        .game-thumbnail svg,
+        .game-thumbnail canvas {
             width: 100%;
             height: 100%;
+            display: block;
         }
         .game-info {
             padding: 16px 20px 20px;
@@ -142,58 +144,7 @@
         <!-- 꼬꼬닭 알 낳기 -->
         <a href="chicken-egg/" class="game-card">
             <div class="game-thumbnail">
-                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
-                    <!-- sky -->
-                    <rect width="400" height="240" fill="#87CEEB"/>
-                    <!-- clouds -->
-                    <ellipse cx="80" cy="50" rx="50" ry="22" fill="white" opacity="0.8"/>
-                    <ellipse cx="120" cy="45" rx="40" ry="18" fill="white" opacity="0.8"/>
-                    <ellipse cx="320" cy="70" rx="45" ry="20" fill="white" opacity="0.7"/>
-                    <!-- ground -->
-                    <rect x="0" y="170" width="400" height="70" fill="#7EC850"/>
-                    <rect x="0" y="175" width="400" height="65" fill="#6AB840"/>
-                    <!-- fence -->
-                    <rect x="30" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
-                    <rect x="80" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
-                    <rect x="130" y="140" width="8" height="50" rx="2" fill="#C8956C"/>
-                    <rect x="25" y="148" width="120" height="6" rx="2" fill="#D4A574"/>
-                    <rect x="25" y="165" width="120" height="6" rx="2" fill="#D4A574"/>
-                    <!-- chicken body -->
-                    <ellipse cx="250" cy="158" rx="32" ry="28" fill="#FFF5E0"/>
-                    <ellipse cx="250" cy="160" rx="30" ry="26" fill="white"/>
-                    <!-- chicken head -->
-                    <circle cx="272" cy="136" r="16" fill="white"/>
-                    <!-- comb -->
-                    <circle cx="272" cy="120" r="5" fill="#FF4444"/>
-                    <circle cx="266" cy="122" r="4" fill="#FF4444"/>
-                    <circle cx="278" cy="122" r="4" fill="#FF4444"/>
-                    <!-- eye -->
-                    <circle cx="278" cy="133" r="3" fill="#333"/>
-                    <circle cx="279" cy="132" r="1" fill="white"/>
-                    <!-- beak -->
-                    <polygon points="288,136 298,140 288,144" fill="#FF9800"/>
-                    <!-- wing -->
-                    <ellipse cx="240" cy="155" rx="16" ry="12" fill="#F5E6C8" transform="rotate(-15,240,155)"/>
-                    <!-- legs -->
-                    <line x1="242" y1="183" x2="238" y2="200" stroke="#FF9800" stroke-width="3"/>
-                    <line x1="258" y1="183" x2="262" y2="200" stroke="#FF9800" stroke-width="3"/>
-                    <line x1="238" y1="200" x2="230" y2="203" stroke="#FF9800" stroke-width="2"/>
-                    <line x1="262" y1="200" x2="270" y2="203" stroke="#FF9800" stroke-width="2"/>
-                    <!-- tail -->
-                    <path d="M218,148 Q205,130 210,118" stroke="#D4A060" stroke-width="3" fill="none"/>
-                    <path d="M220,150 Q202,135 204,122" stroke="#C89050" stroke-width="3" fill="none"/>
-                    <!-- nest -->
-                    <ellipse cx="335" cy="200" rx="40" ry="18" fill="#A0722A"/>
-                    <ellipse cx="335" cy="200" rx="35" ry="14" fill="#C49A3C"/>
-                    <ellipse cx="335" cy="200" rx="28" ry="10" fill="#F5E6C8"/>
-                    <!-- eggs in nest -->
-                    <ellipse cx="325" cy="195" rx="10" ry="13" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1"/>
-                    <ellipse cx="340" cy="193" rx="10" ry="13" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1"/>
-                    <ellipse cx="350" cy="196" rx="9" ry="12" fill="#FFF8E7" stroke="#E8D5A8" stroke-width="1"/>
-                    <!-- sparkles -->
-                    <text x="310" y="170" font-size="16" text-anchor="middle">✨</text>
-                    <text x="350" y="160" font-size="14" text-anchor="middle">⭐</text>
-                </svg>
+                <canvas id="thumb-chicken"></canvas>
             </div>
             <div class="game-info">
                 <span class="game-badge">플레이 가능</span>
@@ -206,90 +157,7 @@
         <!-- 리리탐험대 -->
         <a href="forest-gather/" class="game-card">
             <div class="game-thumbnail">
-                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
-                    <!-- sky -->
-                    <rect width="400" height="240" fill="#87CEEB"/>
-                    <!-- clouds -->
-                    <ellipse cx="90" cy="40" rx="45" ry="18" fill="white" opacity="0.8"/>
-                    <ellipse cx="310" cy="55" rx="50" ry="20" fill="white" opacity="0.7"/>
-                    <!-- ground -->
-                    <rect x="0" y="160" width="400" height="80" fill="#7EC850"/>
-                    <rect x="0" y="168" width="400" height="72" fill="#6AB840"/>
-                    <!-- trees -->
-                    <polygon points="60,90 30,165 90,165" fill="#2E7D32"/>
-                    <polygon points="60,110 40,165 80,165" fill="#388E3C"/>
-                    <rect x="55" y="165" width="10" height="20" fill="#5D4037"/>
-                    <polygon points="340,80 305,165 375,165" fill="#2E7D32"/>
-                    <polygon points="340,100 315,165 365,165" fill="#388E3C"/>
-                    <rect x="335" y="165" width="10" height="20" fill="#5D4037"/>
-                    <!-- flowers -->
-                    <text x="120" y="195" font-size="22">🌷</text>
-                    <text x="160" y="210" font-size="18">🌻</text>
-                    <text x="250" y="200" font-size="20">🍓</text>
-                    <text x="290" y="215" font-size="16">🦋</text>
-                    <!-- 언니 (리아) - 양갈래 머리 -->
-                    <g transform="translate(185,155)">
-                        <!-- body -->
-                        <rect x="-8" y="10" width="16" height="20" rx="3" fill="#FF7043"/>
-                        <!-- skirt -->
-                        <path d="M-10,28 Q-12,38 -8,40 L8,40 Q12,38 10,28Z" fill="#EF5350"/>
-                        <!-- legs -->
-                        <rect x="-6" y="38" width="4" height="8" rx="1" fill="#FFCCBC"/>
-                        <rect x="2" y="38" width="4" height="8" rx="1" fill="#FFCCBC"/>
-                        <!-- head -->
-                        <circle cx="0" cy="2" r="10" fill="#FFE0B2"/>
-                        <!-- eyes -->
-                        <circle cx="-3" cy="1" r="1.5" fill="#4E342E"/>
-                        <circle cx="3" cy="1" r="1.5" fill="#4E342E"/>
-                        <!-- smile -->
-                        <path d="M-3,4 Q0,7 3,4" stroke="#4E342E" stroke-width="0.8" fill="none"/>
-                        <!-- pigtails (양갈래) -->
-                        <circle cx="-11" cy="-2" r="5" fill="#5D4037"/>
-                        <circle cx="11" cy="-2" r="5" fill="#5D4037"/>
-                        <ellipse cx="-11" cy="4" rx="3" ry="6" fill="#5D4037"/>
-                        <ellipse cx="11" cy="4" rx="3" ry="6" fill="#5D4037"/>
-                        <!-- hair top -->
-                        <ellipse cx="0" cy="-6" rx="10" ry="6" fill="#5D4037"/>
-                        <!-- hair ties -->
-                        <circle cx="-11" cy="0" r="2" fill="#FF80AB"/>
-                        <circle cx="11" cy="0" r="2" fill="#FF80AB"/>
-                        <!-- blush -->
-                        <ellipse cx="-5" cy="4" rx="2" ry="1" fill="rgba(255,150,150,0.4)"/>
-                        <ellipse cx="5" cy="4" rx="2" ry="1" fill="rgba(255,150,150,0.4)"/>
-                    </g>
-                    <!-- 여동생 (리사) - 단발 -->
-                    <g transform="translate(220,162)">
-                        <!-- body -->
-                        <rect x="-7" y="8" width="14" height="17" rx="3" fill="#42A5F5"/>
-                        <!-- skirt -->
-                        <path d="M-9,23 Q-10,32 -7,34 L7,34 Q10,32 9,23Z" fill="#1E88E5"/>
-                        <!-- legs -->
-                        <rect x="-5" y="32" width="3.5" height="7" rx="1" fill="#FFCCBC"/>
-                        <rect x="1.5" y="32" width="3.5" height="7" rx="1" fill="#FFCCBC"/>
-                        <!-- head -->
-                        <circle cx="0" cy="1" r="9" fill="#FFE0B2"/>
-                        <!-- eyes -->
-                        <circle cx="-3" cy="0" r="1.3" fill="#4E342E"/>
-                        <circle cx="3" cy="0" r="1.3" fill="#4E342E"/>
-                        <!-- smile -->
-                        <path d="M-2,3 Q0,5.5 2,3" stroke="#4E342E" stroke-width="0.7" fill="none"/>
-                        <!-- bob hair (단발) -->
-                        <ellipse cx="0" cy="-5" rx="9.5" ry="6" fill="#4E342E"/>
-                        <rect x="-10" y="-5" width="20" height="8" rx="3" fill="#4E342E"/>
-                        <!-- bangs -->
-                        <path d="M-7,-6 Q-4,-10 0,-9 Q4,-10 7,-6" fill="#3E2723"/>
-                        <!-- blush -->
-                        <ellipse cx="-4" cy="3" rx="1.8" ry="0.9" fill="rgba(255,150,150,0.4)"/>
-                        <ellipse cx="4" cy="3" rx="1.8" ry="0.9" fill="rgba(255,150,150,0.4)"/>
-                    </g>
-                    <!-- companions -->
-                    <text x="140" y="208" font-size="20">🐕</text>
-                    <text x="250" y="180" font-size="20">🐶</text>
-                    <!-- sparkles -->
-                    <text x="200" y="130" font-size="18">✨</text>
-                    <text x="150" y="150" font-size="14">⭐</text>
-                    <text x="260" y="140" font-size="16">🌟</text>
-                </svg>
+                <canvas id="thumb-forest"></canvas>
             </div>
             <div class="game-info">
                 <span class="game-badge">플레이 가능</span>
@@ -301,38 +169,7 @@
         <!-- 엘사 아기 키우기 -->
         <a href="elsa-baby/" class="game-card">
             <div class="game-thumbnail">
-                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
-                    <!-- dark blue magical bg -->
-                    <defs>
-                        <linearGradient id="elsaBg" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#0d1b3e"/>
-                            <stop offset="60%" stop-color="#1a3a5c"/>
-                            <stop offset="100%" stop-color="#4fc3f7"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="400" height="240" fill="url(#elsaBg)"/>
-                    <!-- snowflakes -->
-                    <text x="60" y="50" font-size="16" opacity="0.4">❄️</text>
-                    <text x="150" y="80" font-size="12" opacity="0.3">❄️</text>
-                    <text x="320" y="40" font-size="14" opacity="0.35">❄️</text>
-                    <text x="280" y="90" font-size="10" opacity="0.25">❄️</text>
-                    <text x="100" y="140" font-size="11" opacity="0.3">❄️</text>
-                    <!-- elsa mom -->
-                    <text x="130" y="110" font-size="50">👸</text>
-                    <!-- magic circle/belly -->
-                    <circle cx="260" cy="130" r="55" fill="rgba(79,195,247,0.15)" stroke="rgba(79,195,247,0.3)" stroke-width="2"/>
-                    <!-- baby -->
-                    <text x="242" y="145" font-size="40">👶</text>
-                    <!-- sparkles -->
-                    <text x="200" y="90" font-size="16">✨</text>
-                    <text x="310" y="80" font-size="14">🌟</text>
-                    <text x="230" y="200" font-size="12">💕</text>
-                    <!-- foods -->
-                    <text x="50" y="200" font-size="22">🍓</text>
-                    <text x="100" y="220" font-size="18">🍦</text>
-                    <text x="310" y="210" font-size="20">🍰</text>
-                    <text x="350" y="190" font-size="16">🍫</text>
-                </svg>
+                <canvas id="thumb-elsa"></canvas>
             </div>
             <div class="game-info">
                 <span class="game-badge">플레이 가능</span>
@@ -344,37 +181,7 @@
         <!-- 백설공주 아기 키우기 -->
         <a href="snow-white-baby/" class="game-card">
             <div class="game-thumbnail">
-                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
-                    <!-- dark forest bg -->
-                    <defs>
-                        <linearGradient id="swBg" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#1a2a1a"/>
-                            <stop offset="60%" stop-color="#2d4a2d"/>
-                            <stop offset="100%" stop-color="#4a7a4a"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="400" height="240" fill="url(#swBg)"/>
-                    <!-- trees -->
-                    <polygon points="50,60 20,180 80,180" fill="#1a3a1a" opacity="0.6"/>
-                    <polygon points="350,50 315,180 385,180" fill="#1a3a1a" opacity="0.6"/>
-                    <!-- fireflies -->
-                    <circle cx="80" cy="100" r="3" fill="#FFD700" opacity="0.6"/>
-                    <circle cx="300" cy="80" r="2" fill="#FFD700" opacity="0.5"/>
-                    <circle cx="180" cy="60" r="2" fill="#FFD700" opacity="0.4"/>
-                    <!-- snow white mom -->
-                    <text x="120" y="120" font-size="50">👸</text>
-                    <!-- baby circle -->
-                    <circle cx="260" cy="130" r="50" fill="rgba(255,215,0,0.1)" stroke="rgba(255,215,0,0.3)" stroke-width="2"/>
-                    <text x="242" y="145" font-size="40">👶</text>
-                    <!-- animals -->
-                    <text x="60" y="210" font-size="22">🐰</text>
-                    <text x="150" y="220" font-size="18">🐦</text>
-                    <text x="310" y="215" font-size="20">🦌</text>
-                    <text x="250" y="210" font-size="16">🐿️</text>
-                    <!-- sparkles -->
-                    <text x="200" y="80" font-size="16">✨</text>
-                    <text x="330" y="120" font-size="14">🌟</text>
-                </svg>
+                <canvas id="thumb-snow-white"></canvas>
             </div>
             <div class="game-info">
                 <span class="game-badge">플레이 가능</span>
@@ -386,40 +193,7 @@
         <!-- 인어공주 아기 키우기 -->
         <a href="mermaid-baby/" class="game-card">
             <div class="game-thumbnail">
-                <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
-                    <!-- deep ocean bg -->
-                    <defs>
-                        <linearGradient id="mermaidBg" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#050520"/>
-                            <stop offset="50%" stop-color="#0a1a3a"/>
-                            <stop offset="100%" stop-color="#1a4060"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="400" height="240" fill="url(#mermaidBg)"/>
-                    <!-- light rays -->
-                    <polygon points="120,0 140,0 180,240 150,240" fill="rgba(79,195,247,0.06)"/>
-                    <polygon points="250,0 275,0 310,240 280,240" fill="rgba(79,195,247,0.05)"/>
-                    <!-- bubbles -->
-                    <circle cx="70" cy="120" r="4" fill="rgba(255,255,255,0.2)"/>
-                    <circle cx="330" cy="80" r="3" fill="rgba(255,255,255,0.15)"/>
-                    <circle cx="180" cy="60" r="2" fill="rgba(255,255,255,0.2)"/>
-                    <!-- coral bottom -->
-                    <ellipse cx="60" cy="230" rx="30" ry="15" fill="#1a3050" opacity="0.5"/>
-                    <ellipse cx="340" cy="225" rx="35" ry="18" fill="#1a3050" opacity="0.5"/>
-                    <!-- mermaid mom -->
-                    <text x="120" y="120" font-size="50">🧜‍♀️</text>
-                    <!-- baby circle -->
-                    <circle cx="260" cy="130" r="50" fill="rgba(0,188,212,0.1)" stroke="rgba(0,188,212,0.3)" stroke-width="2"/>
-                    <text x="242" y="145" font-size="40">👶</text>
-                    <!-- sea creatures -->
-                    <text x="50" y="200" font-size="22">🐠</text>
-                    <text x="150" y="215" font-size="18">🐢</text>
-                    <text x="310" y="210" font-size="20">🦑</text>
-                    <text x="250" y="205" font-size="16">🦀</text>
-                    <!-- sparkles -->
-                    <text x="200" y="80" font-size="16">🫧</text>
-                    <text x="330" y="120" font-size="14">✨</text>
-                </svg>
+                <canvas id="thumb-mermaid"></canvas>
             </div>
             <div class="game-info">
                 <span class="game-badge">플레이 가능</span>
@@ -429,6 +203,10 @@
             </div>
         </a>
     </div>
+    <script type="module">
+        import { initThumbnails } from './js/hub-thumbnails.js';
+        initThumbnails();
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
