@@ -66,14 +66,17 @@ export class Character {
     const bobY = Math.sin(this.bobPhase) * 3 * this.bobAmount;
     spriteCache.draw(ctx, `${this.type}-idle`, this.x, this.y + bobY, 1, !this.facingRight);
 
-    // Name label
+    // Name label (above head)
     const name = this.type === 'lisa' ? '리사' : '리아';
-    ctx.font = 'Bold 11px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
+    ctx.save();
+    ctx.font = 'Bold 11px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillText(name, this.x + 1, this.y + 29);
+    ctx.textBaseline = 'bottom';
+    const labelY = this.y + bobY - 22;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillText(name, this.x + 1, labelY + 1);
     ctx.fillStyle = '#FFF';
-    ctx.fillText(name, this.x, this.y + 28);
+    ctx.fillText(name, this.x, labelY);
+    ctx.restore();
   }
 }

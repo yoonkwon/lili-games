@@ -113,6 +113,7 @@ export class Companion {
    * @param {Companion[]} allCompanions
    */
   update(dt, items, onReveal, rangeBonus = 0, speedBonus = 0, allCompanions = []) {
+    this._allCompanions = allCompanions;
     this.currentRangeBonus = rangeBonus;
     this.bobPhase += dt * 6;
 
@@ -360,16 +361,39 @@ export class Companion {
   }
 
   _findNearestUndiscovered(items) {
+    // Avoid items already claimed by other companions
+    const claimedItems = new Set();
+    const allComps = this._allCompanions || [];
+    for (const other of allComps) {
+      if (other === this) continue;
+      if (other.seekingItem && !other.seekingItem.discovered) {
+        claimedItems.add(other.seekingItem);
+      }
+    }
+
     let nearest = null;
     let minDist = Infinity;
     for (const item of items) {
-      if (item.discovered) continue;
+      if (item.discovered || claimedItems.has(item)) continue;
       const dx = item.x - this.owner.x;
       const dy = item.y - this.owner.y;
       const d = dx * dx + dy * dy;
       if (d < 90000 && d < minDist) { // within 300px of owner
         minDist = d;
         nearest = item;
+      }
+    }
+    // Fallback: if all nearby items are claimed, pick closest anyway
+    if (!nearest) {
+      for (const item of items) {
+        if (item.discovered) continue;
+        const dx = item.x - this.owner.x;
+        const dy = item.y - this.owner.y;
+        const d = dx * dx + dy * dy;
+        if (d < 90000 && d < minDist) {
+          minDist = d;
+          nearest = item;
+        }
       }
     }
     return nearest;
@@ -442,6 +466,16 @@ export class Companion {
     if (this.seekTimer > 0 && this.seekingItem && !this.seekingItem.discovered) return;
     this.seekTimer = 0.5 + Math.random() * 0.5;
 
+    // Collect items already being sought by other companions
+    const claimedItems = new Set();
+    const allComps = this._allCompanions || [];
+    for (const other of allComps) {
+      if (other === this) continue;
+      if (other.seekingItem && !other.seekingItem.discovered) {
+        claimedItems.add(other.seekingItem);
+      }
+    }
+
     let bestItem = null;
     let bestScore = -Infinity;
 
@@ -458,6 +492,9 @@ export class Companion {
 
       let score = 300 - Math.sqrt(distFromSelfSq);
       if (this._isInSector(item.x, item.y)) score += 200;
+
+      // Heavy penalty if another companion is already going there
+      if (claimedItems.has(item)) score -= 400;
 
       if (score > bestScore) {
         bestScore = score;

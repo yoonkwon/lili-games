@@ -304,6 +304,8 @@ export class QuizGameScene {
     this.player.targetX = this.player.x;
     this.player.targetY = this.player.y;
     this._placeCollectItems();
+    // Reset companions to default (prevent duplication across rounds)
+    this.companions = [new Companion('ikdol', this.player, 0, 1)];
     // Regenerate terrain for variety
     const terrainPreset = TERRAIN_PRESETS[this.stageConfig.terrain] || TERRAIN_PRESETS.forest;
     this.terrain = generateTerrain(terrainPreset, this.mapWidth, this.mapHeight);
