@@ -47,9 +47,14 @@ export class BornScene {
     const btnW = 220;
     const btnH = 55;
     const btnX = (this.w - btnW) / 2;
-    const btnY = this.h * 0.85;
+    const btnY = this.h * 0.78;
     if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
       return 'restart';
+    }
+    const hY = btnY + btnH + 12;
+    const hH = 45;
+    if (x >= btnX && x <= btnX + btnW && y >= hY && y <= hY + hH) {
+      return 'home';
     }
     return null;
   }
@@ -177,12 +182,12 @@ export class BornScene {
       ctx.restore();
     }
 
-    // Restart button
+    // Buttons
     if (this.phase > 4) {
       const btnW = 220;
       const btnH = 55;
       const btnX = (w - btnW) / 2;
-      const btnY = h * 0.85;
+      const btnY = h * 0.78;
 
       ctx.save();
       const pulse = 1 + Math.sin(this.phase * 3) * 0.02;
@@ -204,6 +209,20 @@ export class BornScene {
       ctx.fillStyle = '#FFF';
       ctx.fillText('다시 하기 🌸', w / 2, btnY + btnH / 2);
       ctx.restore();
+
+      // "다른 게임하기" button
+      const hY = btnY + btnH + 12;
+      const hH = 45;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath();
+      ctx.roundRect(btnX, hY, btnW, hH, 16);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = 'Bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🏠 다른 게임하기', w / 2, hY + hH / 2);
     }
   }
 }

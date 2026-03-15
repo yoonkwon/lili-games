@@ -4,9 +4,17 @@
  */
 import { drawMermaidMom, drawBabyMermaid } from '../draw-mermaid.js';
 
+const SAVE_KEY = 'mermaid-baby-save';
+
 export class TitleScene {
   constructor() {
     this.phase = 0;
+
+    // Check for saved game
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      this.savedData = raw ? JSON.parse(raw) : null;
+    } catch { this.savedData = null; }
 
     // Floating bubbles, shells, fish (float UPWARD)
     this.floaters = [];
@@ -28,8 +36,16 @@ export class TitleScene {
     const btnW = Math.min(260, w * 0.65);
     const btnH = 65;
     const btnX = (w - btnW) / 2;
-    const btnY = h * 0.72;
-    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+    let curBtnY = this.savedData ? h * 0.64 : h * 0.72;
+
+    if (this.savedData) {
+      if (x >= btnX && x <= btnX + btnW && y >= curBtnY && y <= curBtnY + btnH) {
+        return 'continue';
+      }
+      curBtnY += btnH + 12;
+    }
+
+    if (x >= btnX && x <= btnX + btnW && y >= curBtnY && y <= curBtnY + btnH) {
       return 'start';
     }
     return null;
@@ -125,33 +141,62 @@ export class TitleScene {
     drawBabyMermaid(ctx, 0, 0, 25, 'neutral', this.phase, 0.3);
     ctx.restore();
 
-    // Start button
+    // Buttons
     const btnW = Math.min(260, w * 0.65);
     const btnH = 65;
     const btnX = (w - btnW) / 2;
-    const btnY = h * 0.72;
+    let curBtnY = this.savedData ? h * 0.64 : h * 0.72;
     const pulse = 1 + Math.sin(this.phase * 4) * 0.03;
 
-    ctx.save();
-    ctx.translate(w / 2, btnY + btnH / 2);
-    ctx.scale(pulse, pulse);
-    ctx.translate(-w / 2, -(btnY + btnH / 2));
+    // Continue button (if save exists)
+    if (this.savedData) {
+      ctx.save();
+      ctx.translate(w / 2, curBtnY + btnH / 2);
+      ctx.scale(pulse, pulse);
+      ctx.translate(-w / 2, -(curBtnY + btnH / 2));
 
-    const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
+      const cGrad = ctx.createLinearGradient(btnX, curBtnY, btnX, curBtnY + btnH);
+      cGrad.addColorStop(0, '#FF8F00');
+      cGrad.addColorStop(1, '#E65100');
+      ctx.fillStyle = cGrad;
+      ctx.beginPath();
+      ctx.roundRect(btnX, curBtnY, btnW, btnH, 22);
+      ctx.fill();
+
+      ctx.shadowColor = '#FF8F00';
+      ctx.shadowBlur = 15;
+      ctx.font = 'Bold 24px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFF';
+      const pct = Math.round(this.savedData.growth || 0);
+      ctx.fillText(`▶ 이어하기 (${pct}%)`, w / 2, curBtnY + btnH / 2);
+      ctx.restore();
+
+      curBtnY += btnH + 12;
+    }
+
+    // Start button
+    ctx.save();
+    ctx.translate(w / 2, curBtnY + btnH / 2);
+    ctx.scale(this.savedData ? 1 : pulse, this.savedData ? 1 : pulse);
+    ctx.translate(-w / 2, -(curBtnY + btnH / 2));
+
+    const btnGrad = ctx.createLinearGradient(btnX, curBtnY, btnX, curBtnY + btnH);
     btnGrad.addColorStop(0, '#0097A7');
     btnGrad.addColorStop(1, '#00695C');
     ctx.fillStyle = btnGrad;
     ctx.beginPath();
-    ctx.roundRect(btnX, btnY, btnW, btnH, 22);
+    ctx.roundRect(btnX, curBtnY, btnW, btnH, 22);
     ctx.fill();
 
     ctx.shadowColor = '#0097A7';
     ctx.shadowBlur = 15;
-    ctx.font = 'Bold 26px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.font = `Bold ${this.savedData ? 22 : 26}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('🌊 시작하기 🌊', w / 2, btnY + btnH / 2);
+    ctx.fillText(this.savedData ? '🌊 새로 시작' : '🌊 시작하기 🌊', w / 2, curBtnY + btnH / 2);
     ctx.restore();
 
     // Footer hint

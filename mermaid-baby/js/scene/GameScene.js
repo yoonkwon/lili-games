@@ -893,6 +893,25 @@ export class GameScene {
     ctx.restore();
   }
 
+  getSaveData() {
+    return {
+      growth: this.growth,
+      dislike: this.dislike,
+      combo: this.combo,
+      totalFed: this.totalFed,
+      correctFed: this.correctFed,
+      savedAt: Date.now(),
+    };
+  }
+
+  loadSaveData(save) {
+    this.growth = save.growth || 0;
+    this.dislike = save.dislike || 0;
+    this.combo = save.combo || 0;
+    this.totalFed = save.totalFed || 0;
+    this.correctFed = save.correctFed || 0;
+  }
+
   getStats() {
     return {
       growth: this.growth,
