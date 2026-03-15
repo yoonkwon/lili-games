@@ -29,7 +29,7 @@ window.addEventListener('resize', resize);
 
 // Scene management
 let currentScene = 'title';
-let titleScene = new TitleScene();
+let titleScene = new TitleScene(spriteCache);
 let gameScene = null;
 let roundClearScene = null;
 let gameOverScene = null;
@@ -68,15 +68,19 @@ input.onTap((x, y) => {
         gameScene.advanceRound();
         currentScene = 'game';
       });
+    } else if (result === 'home') {
+      window.location.href = '../';
     }
   } else if (currentScene === 'gameover') {
     const result = gameOverScene.handleTap(x, y);
     if (result === 'restart') {
       startTransition(() => {
-        titleScene = new TitleScene();
+        titleScene = new TitleScene(spriteCache);
         currentScene = 'title';
         gameScene = null;
       });
+    } else if (result === 'home') {
+      window.location.href = '../';
     }
   }
 });

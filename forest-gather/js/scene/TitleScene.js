@@ -6,7 +6,8 @@ import { DIFFICULTIES } from '../config.js';
 const DIFF_KEYS = ['lisa', 'ria', 'together'];
 
 export class TitleScene {
-  constructor() {
+  constructor(spriteCache) {
+    this.spriteCache = spriteCache;
     this.selectedIndex = 1; // default: ria
     this.phase = 0;
     this.sparkles = [];
@@ -104,13 +105,13 @@ export class TitleScene {
     ctx.fillText('반짝이 열매를 모아 숲을 깨워줘요!', w / 2, titleY + bounce + 40);
     ctx.restore();
 
-    // Character preview
+    // Character preview (using sprite assets)
     const previewY = h * 0.28;
-    ctx.font = '50px sans-serif';
-    ctx.textAlign = 'center';
     const charBob = Math.sin(this.phase * 3) * 3;
-    ctx.fillText('🧒', w / 2 - 30, previewY + charBob);
-    ctx.fillText('👧', w / 2 + 30, previewY - charBob);
+    if (this.spriteCache) {
+      this.spriteCache.draw(ctx, 'ria-idle', w / 2 - 30, previewY + charBob, 1.5);
+      this.spriteCache.draw(ctx, 'lisa-idle', w / 2 + 30, previewY - charBob, 1.5);
+    }
 
     // Difficulty buttons
     const btnW = Math.min(200, w * 0.4);
@@ -146,12 +147,25 @@ export class TitleScene {
       }
       ctx.restore();
 
-      // Button text
+      // Button text with character sprites
       ctx.font = 'Bold 22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#FFF';
-      ctx.fillText(`${diff.emoji} ${diff.label}`, w / 2, by + 28);
+      const labelX = w / 2 + 12;
+      ctx.fillText(diff.label, labelX, by + 28);
+      // Draw character sprite(s) left of label
+      if (this.spriteCache) {
+        const spriteX = labelX - ctx.measureText(diff.label).width / 2 - 18;
+        if (key === 'lisa') {
+          this.spriteCache.draw(ctx, 'lisa-idle', spriteX, by + 28, 0.5);
+        } else if (key === 'ria') {
+          this.spriteCache.draw(ctx, 'ria-idle', spriteX, by + 28, 0.5);
+        } else {
+          this.spriteCache.draw(ctx, 'lisa-idle', spriteX - 8, by + 28, 0.45);
+          this.spriteCache.draw(ctx, 'ria-idle', spriteX + 8, by + 28, 0.45);
+        }
+      }
 
       ctx.font = '14px sans-serif';
       ctx.fillStyle = selected ? '#FFF' : 'rgba(255,255,255,0.6)';

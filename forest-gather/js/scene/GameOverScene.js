@@ -15,10 +15,17 @@ export class GameOverScene {
     const btnW = 220;
     const btnH = 55;
     const btnX = (this.w - btnW) / 2;
-    const btnY = this.h * 0.72;
 
+    // Restart button
+    const btnY = this.h * 0.68;
     if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
       return 'restart';
+    }
+
+    // Other games button
+    const otherY = btnY + btnH + 14;
+    if (x >= btnX && x <= btnX + btnW && y >= otherY && y <= otherY + btnH) {
+      return 'home';
     }
     return null;
   }
@@ -83,13 +90,14 @@ export class GameOverScene {
       }
     }
 
-    // Restart button
+    // Buttons
     if (this.phase > 1) {
       const btnW = 220;
       const btnH = 55;
       const btnX = (w - btnW) / 2;
-      const btnY = h * 0.72;
+      const btnY = h * 0.68;
 
+      // Restart button
       const pulse = 1 + Math.sin(this.phase * 4) * 0.02;
       ctx.save();
       ctx.translate(w / 2, btnY + btnH / 2);
@@ -110,6 +118,22 @@ export class GameOverScene {
       ctx.fillStyle = '#FFF';
       ctx.fillText('다시 도전! 🔄', w / 2, btnY + btnH / 2);
       ctx.restore();
+
+      // Other games button
+      const otherY = btnY + btnH + 14;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath();
+      ctx.roundRect(btnX, otherY, btnW, btnH, 18);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFF';
+      ctx.fillText('🏠 다른 게임하기', w / 2, otherY + btnH / 2);
     }
   }
 }
