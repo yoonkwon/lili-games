@@ -1,3 +1,5 @@
+import { drawNameLabel } from '../drawUtils.js';
+
 /**
  * Player character - Ria or Lisa
  */
@@ -68,15 +70,6 @@ export class Character {
 
     // Name label (above head)
     const name = this.type === 'lisa' ? '리사' : '리아';
-    ctx.save();
-    ctx.font = 'Bold 11px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    const labelY = this.y + bobY - 22;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillText(name, this.x + 1, labelY + 1);
-    ctx.fillStyle = '#FFF';
-    ctx.fillText(name, this.x, labelY);
-    ctx.restore();
+    drawNameLabel(ctx, name, this.x, this.y + bobY - 22);
   }
 }

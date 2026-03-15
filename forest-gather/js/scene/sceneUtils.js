@@ -3,68 +3,6 @@
  */
 import { Companion } from '../entity/Companion.js';
 
-/** Draw companion (보리) with optional speech bubble */
-export function drawCompanion(ctx, comp, player, spriteCache) {
-  const bobY = Math.sin(comp.phase * 2.5) * 3;
-
-  if (spriteCache) {
-    const flip = comp.x < player.x;
-    spriteCache.draw(ctx, 'bori-idle', comp.x, comp.y + bobY, 0.7, flip);
-  } else {
-    ctx.font = '24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🐕', comp.x, comp.y + bobY);
-  }
-
-  ctx.font = 'Bold 10px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#FFF';
-  ctx.fillText('보리', comp.x, comp.y + 22);
-
-  if (comp.speechBubble) {
-    const bx = comp.x;
-    const by = comp.y - 30;
-    const bw = comp._bubbleWidth || 150;
-    const bh = 32;
-
-    ctx.save();
-    ctx.font = '12px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.beginPath();
-    ctx.roundRect(bx - bw / 2, by - bh, bw, bh, 10);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(bx - 5, by);
-    ctx.lineTo(bx + 5, by);
-    ctx.lineTo(bx, by + 8);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#333';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(comp.speechBubble, bx, by - bh / 2);
-    ctx.restore();
-  }
-}
-
-/** Set companion speech with cached bubble width */
-export function setCompanionSpeech(comp, text, duration, ctx) {
-  comp.speechBubble = text;
-  comp.speechTimer = duration;
-  // Cache bubble width to avoid measureText per frame
-  if (ctx) {
-    ctx.save();
-    ctx.font = '12px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
-    comp._bubbleWidth = ctx.measureText(text).width + 20;
-    ctx.restore();
-  } else {
-    comp._bubbleWidth = text.length * 12 + 20; // rough estimate
-  }
-}
-
 /** Draw wrapped text (character-by-character for CJK) */
 export function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
   const chars = text.split('');

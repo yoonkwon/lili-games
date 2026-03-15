@@ -7,6 +7,7 @@
  * find items by revealing hidden ones and boosting visibility.
  */
 import { COMPANIONS } from '../config.js';
+import { drawNameLabel } from '../drawUtils.js';
 
 // Separation physics constants
 const SEPARATION_RADIUS = 45;
@@ -360,43 +361,41 @@ export class Companion {
     }
   }
 
-  _findNearestUndiscovered(items) {
-    // Avoid items already claimed by other companions
-    const claimedItems = new Set();
+  /** Items already being sought by other companions */
+  _getClaimedItems() {
+    const claimed = new Set();
     const allComps = this._allCompanions || [];
     for (const other of allComps) {
       if (other === this) continue;
       if (other.seekingItem && !other.seekingItem.discovered) {
-        claimedItems.add(other.seekingItem);
+        claimed.add(other.seekingItem);
       }
     }
+    return claimed;
+  }
 
+  _findNearestUndiscovered(items) {
+    const claimedItems = this._getClaimedItems();
     let nearest = null;
+    let nearestFallback = null;
     let minDist = Infinity;
+    let minDistFallback = Infinity;
     for (const item of items) {
-      if (item.discovered || claimedItems.has(item)) continue;
+      if (item.discovered) continue;
       const dx = item.x - this.owner.x;
       const dy = item.y - this.owner.y;
       const d = dx * dx + dy * dy;
-      if (d < 90000 && d < minDist) { // within 300px of owner
+      if (d >= 90000) continue; // within 300px of owner
+      if (!claimedItems.has(item) && d < minDist) {
         minDist = d;
         nearest = item;
       }
-    }
-    // Fallback: if all nearby items are claimed, pick closest anyway
-    if (!nearest) {
-      for (const item of items) {
-        if (item.discovered) continue;
-        const dx = item.x - this.owner.x;
-        const dy = item.y - this.owner.y;
-        const d = dx * dx + dy * dy;
-        if (d < 90000 && d < minDist) {
-          minDist = d;
-          nearest = item;
-        }
+      if (d < minDistFallback) {
+        minDistFallback = d;
+        nearestFallback = item;
       }
     }
-    return nearest;
+    return nearest || nearestFallback;
   }
 
   /** Reveal items near companion during dash/swoop */
@@ -466,15 +465,7 @@ export class Companion {
     if (this.seekTimer > 0 && this.seekingItem && !this.seekingItem.discovered) return;
     this.seekTimer = 0.5 + Math.random() * 0.5;
 
-    // Collect items already being sought by other companions
-    const claimedItems = new Set();
-    const allComps = this._allCompanions || [];
-    for (const other of allComps) {
-      if (other === this) continue;
-      if (other.seekingItem && !other.seekingItem.discovered) {
-        claimedItems.add(other.seekingItem);
-      }
-    }
+    const claimedItems = this._getClaimedItems();
 
     let bestItem = null;
     let bestScore = -Infinity;
@@ -654,15 +645,6 @@ export class Companion {
     }
 
     // Name label
-    ctx.save();
-    ctx.font = 'Bold 11px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    const labelY = this.y + bobY + flyY - 22;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillText(this.name, this.x + 1, labelY + 1);
-    ctx.fillStyle = '#FFF';
-    ctx.fillText(this.name, this.x, labelY);
-    ctx.restore();
+    drawNameLabel(ctx, this.name, this.x, this.y + bobY + flyY - 22);
   }
 }
