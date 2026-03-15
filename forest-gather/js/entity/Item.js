@@ -1,239 +1,183 @@
 /**
- * Collectible item on the map
- * Supports round modifiers: drifting, shy (flee), fading, swarm
+ * Discoverable item on the map
+ * Hidden in the environment - player must get close and tap to discover
  */
-import { RARITY } from '../config.js';
+import { DISCOVER_RADIUS, HINT_RADIUS } from '../config.js';
+
+const DISCOVER_RADIUS_SQ = DISCOVER_RADIUS * DISCOVER_RADIUS;
+const HINT_RADIUS_SQ = HINT_RADIUS * HINT_RADIUS;
 
 export class Item {
-  constructor(x, y, itemDef, rarity) {
+  constructor(x, y, itemDef, hideStyle) {
     this.x = x;
     this.y = y;
-    this.type = itemDef.type;
+    this.id = itemDef.id;
     this.emoji = itemDef.emoji;
     this.name = itemDef.name;
-    this.rarity = rarity;
-    this.value = RARITY[rarity].value;
-    this.color = RARITY[rarity].color;
-    this.glow = RARITY[rarity].glow;
-    this.stars = this._getStars(rarity);
-    this.collected = false;
-    this.hidden = false;
-    this.sky = false;
+    this.desc = itemDef.desc;
+    this.displaySize = itemDef.size || 32;
+
+    // Discovery state
+    this.discovered = false;
+    this.discoveredAnim = 0; // 0→1 pop animation when discovered
+
+    // Visibility based on player proximity
+    this.visibility = 0; // 0 = hidden, 1 = fully visible
+    this.hintGlow = 0; // pulsing glow when in hint range
+
+    // How item is hidden in the environment
+    this.hideStyle = hideStyle; // 'bush', 'rock', 'sparkle', 'plain'
+    this.hideEmoji = this._getHideEmoji(hideStyle);
 
     // Animation
     this.phase = Math.random() * Math.PI * 2;
-    this.spawnAnim = 0;
-    this.collectAnim = 0;
-    this.size = 28;
+    this.bobSpeed = 1.5 + Math.random() * 1;
 
-    // Modifier state
-    this.modifier = null;
+    // Interaction indicator
+    this.tapReady = false; // true when player is close enough to tap
 
-    // Magnet pull (set by spells/system)
-    this.magnetPull = false;
-    this.magnetStrength = 0;
-
-    // Frozen state (blizzard spell)
-    this.frozen = false;
-    this.frozenTimer = 0;
-
-    // Drifting: slow random movement
-    this.driftAngle = Math.random() * Math.PI * 2;
-    this.driftSpeed = 15 + Math.random() * 20;
-    this.driftChangeTimer = 2 + Math.random() * 3;
-
-    // Shy: flee from player when close
-    this.fleeing = false;
-    this.fleeVx = 0;
-    this.fleeVy = 0;
-
-    // Fading: lifetime countdown
-    this.lifetime = 12 + Math.random() * 8; // 12-20 seconds to live
-    this.age = 0;
-    this.fadingOut = false;
-
-    // Swarm: group movement
-    this.swarmCenterX = x;
-    this.swarmCenterY = y;
-    this.swarmAngle = Math.random() * Math.PI * 2;
-    this.swarmRadius = 20 + Math.random() * 30;
+    // Cached font strings (avoid per-frame allocation)
+    this._fontMain = `${this.displaySize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    this._fontDiscovered = `${this.displaySize * 0.7}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
   }
 
-  _getStars(rarity) {
-    return rarity === 'shiny' ? '✦' : rarity === 'rare' ? '✦✦' : rarity === 'legendary' ? '✦✦✦' : '';
+  _getHideEmoji(style) {
+    switch (style) {
+      case 'bush': return '🌿';
+      case 'rock': return '🪨';
+      case 'tree': return '🌳';
+      case 'flower': return '🌺';
+      case 'sparkle': return '✨';
+      default: return null;
+    }
   }
 
-  upgradeRarity(newRarity) {
-    this.rarity = newRarity;
-    this.value = RARITY[newRarity].value;
-    this.color = RARITY[newRarity].color;
-    this.glow = RARITY[newRarity].glow;
-    this.stars = this._getStars(newRarity);
+  updateProximity(playerX, playerY) {
+    const dx = this.x - playerX;
+    const dy = this.y - playerY;
+    const distSq = dx * dx + dy * dy;
+
+    if (distSq < DISCOVER_RADIUS_SQ) {
+      this.tapReady = true;
+      this.visibility = 1;
+    } else if (distSq < HINT_RADIUS_SQ) {
+      this.tapReady = false;
+      // Only compute sqrt for the interpolation in hint range
+      const dist = Math.sqrt(distSq);
+      this.visibility = 0.3 + 0.7 * (1 - (dist - DISCOVER_RADIUS) / (HINT_RADIUS - DISCOVER_RADIUS));
+    } else {
+      this.tapReady = false;
+      this.visibility = 0;
+    }
   }
 
-  setModifier(mod) {
-    this.modifier = mod;
-  }
-
-  _clampToBounds(mapW, mapH) {
-    this.x = Math.max(40, Math.min((mapW || 2000) - 40, this.x));
-    this.y = Math.max(80, Math.min((mapH || 1500) - 40, this.y));
-  }
-
-  update(dt, playerX, playerY, mapW, mapH) {
-    this.phase += dt * 3;
-    if (this.spawnAnim < 1) {
-      this.spawnAnim = Math.min(1, this.spawnAnim + dt * 4);
+  update(dt) {
+    this.phase += dt * this.bobSpeed;
+    if (this.tapReady && !this.discovered) {
+      this.hintGlow = 0.5 + Math.sin(this.phase * 3) * 0.5;
+    } else {
+      this.hintGlow *= 0.9;
     }
-    if (this.collected) {
-      this.collectAnim += dt * 5;
-      return;
-    }
-
-    if (!this.modifier) return;
-
-    // === Drifting: gentle random movement ===
-    if (this.modifier === 'drifting') {
-      this.driftChangeTimer -= dt;
-      if (this.driftChangeTimer <= 0) {
-        this.driftAngle += (Math.random() - 0.5) * Math.PI;
-        this.driftChangeTimer = 2 + Math.random() * 3;
-      }
-      this.x += Math.cos(this.driftAngle) * this.driftSpeed * dt;
-      this.y += Math.sin(this.driftAngle) * this.driftSpeed * dt;
-      // Bounce off map edges
-      if (this.x < 40 || this.x > (mapW || 2000) - 40) this.driftAngle = Math.PI - this.driftAngle;
-      if (this.y < 80 || this.y > (mapH || 1500) - 40) this.driftAngle = -this.driftAngle;
-      this._clampToBounds(mapW, mapH);
-    }
-
-    // === Shy: flee when player gets close ===
-    if (this.modifier === 'shy' && playerX !== undefined) {
-      const dx = this.x - playerX;
-      const dy = this.y - playerY;
-      const distSq = dx * dx + dy * dy;
-      const fleeRange = 100;
-
-      if (distSq < fleeRange * fleeRange && distSq > 0) {
-        this.fleeing = true;
-        const dist = Math.sqrt(distSq);
-        const fleeForce = (1 - dist / fleeRange) * 250;
-        this.fleeVx = (dx / dist) * fleeForce;
-        this.fleeVy = (dy / dist) * fleeForce;
-      } else {
-        this.fleeing = false;
-        this.fleeVx *= 0.9;
-        this.fleeVy *= 0.9;
-      }
-      this.x += this.fleeVx * dt;
-      this.y += this.fleeVy * dt;
-      this._clampToBounds(mapW, mapH);
-    }
-
-    // === Fading: items disappear over time ===
-    if (this.modifier === 'fading') {
-      this.age += dt;
-      if (this.age > this.lifetime * 0.7) {
-        this.fadingOut = true;
-      }
-      if (this.age > this.lifetime) {
-        this.collected = true; // remove without scoring
-        this.collectAnim = 1.1;
-      }
-    }
-
-    // === Swarm: orbit around a center point that drifts ===
-    if (this.modifier === 'swarm') {
-      this.swarmAngle += dt * 1.5;
-      this.driftChangeTimer -= dt;
-      if (this.driftChangeTimer <= 0) {
-        this.driftAngle += (Math.random() - 0.5) * Math.PI * 0.5;
-        this.driftChangeTimer = 3 + Math.random() * 3;
-      }
-      // Drift the center slowly
-      this.swarmCenterX += Math.cos(this.driftAngle) * 25 * dt;
-      this.swarmCenterY += Math.sin(this.driftAngle) * 25 * dt;
-      this.swarmCenterX = Math.max(80, Math.min((mapW || 2000) - 80, this.swarmCenterX));
-      this.swarmCenterY = Math.max(120, Math.min((mapH || 1500) - 80, this.swarmCenterY));
-      // Orbit around center
-      this.x = this.swarmCenterX + Math.cos(this.swarmAngle) * this.swarmRadius;
-      this.y = this.swarmCenterY + Math.sin(this.swarmAngle) * this.swarmRadius;
+    if (this.discovered && this.discoveredAnim < 1) {
+      this.discoveredAnim = Math.min(1, this.discoveredAnim + dt * 3);
     }
   }
 
   draw(ctx) {
-    if (this.collected && this.collectAnim > 1) return;
-    if (this.hidden) return;
+    if (this.discovered) {
+      this._drawDiscovered(ctx);
+      return;
+    }
+
+    // Not visible yet - show nothing or faint sparkle
+    if (this.visibility <= 0) return;
 
     ctx.save();
 
     const bobY = Math.sin(this.phase) * 3;
-    const scale = this.spawnAnim * (this.collected ? Math.max(0, 1 - this.collectAnim) : 1);
-    let alpha = this.collected ? Math.max(0, 1 - this.collectAnim) : 1;
+    ctx.translate(this.x, this.y + bobY);
 
-    // Fading effect: blink when about to disappear
-    if (this.fadingOut && !this.collected) {
-      const fadeProgress = (this.age - this.lifetime * 0.7) / (this.lifetime * 0.3);
-      alpha *= 1 - fadeProgress * 0.7;
-      // Blink faster as time runs out
-      if (fadeProgress > 0.5) {
-        alpha *= 0.5 + Math.sin(this.phase * 4) * 0.5;
+    // If hidden behind something, show the hiding element when far
+    if (this.hideEmoji && this.visibility < 0.6) {
+      ctx.globalAlpha = 0.7;
+      ctx.font = '30px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.hideEmoji, 0, 0);
+      // Faint sparkle to hint something is here
+      if (this.visibility > 0.1) {
+        ctx.globalAlpha = this.visibility * 0.5;
+        ctx.font = '14px sans-serif';
+        ctx.fillText('✨', 8, -12);
       }
+      ctx.restore();
+      return;
     }
 
-    // Shy: visual shake when fleeing
-    let shakeX = 0;
-    if (this.fleeing) {
-      shakeX = Math.sin(this.phase * 8) * 3;
-    }
+    ctx.globalAlpha = Math.min(1, this.visibility);
 
-    ctx.globalAlpha = alpha;
-    ctx.translate(this.x + shakeX, this.y + bobY);
-    ctx.scale(scale, scale);
-
-    // Frozen tint
-    if (this.frozen) {
-      ctx.globalAlpha = alpha * 0.85;
-      ctx.fillStyle = 'rgba(135,206,235,0.4)';
+    // Tap-ready glow ring
+    if (this.tapReady) {
+      ctx.save();
+      ctx.globalAlpha = this.hintGlow * 0.4;
+      ctx.fillStyle = '#FFD700';
       ctx.beginPath();
-      ctx.arc(0, 0, this.size * 0.6, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.displaySize * 0.8, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = alpha;
+      ctx.restore();
+
+      // "?" indicator
+      ctx.save();
+      ctx.globalAlpha = 0.6 + this.hintGlow * 0.4;
+      ctx.font = 'Bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText('❓', 0, -this.displaySize * 0.7);
+      ctx.restore();
     }
 
-    // Glow effect for rare+ items
-    if (this.glow && !this.collected) {
-      const glowAlpha = 0.2 + Math.sin(this.phase * 2) * 0.15;
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 15;
-      ctx.globalAlpha = alpha * (0.5 + glowAlpha);
-
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = alpha;
-    }
-
-    // Draw emoji
-    ctx.font = `${this.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    // Show the actual item (partially revealed)
+    ctx.font = this._fontMain;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.emoji, 0, 0);
 
-    // Rarity indicator
-    if (this.stars) {
-      ctx.font = '10px sans-serif';
-      ctx.fillStyle = this.color;
-      ctx.fillText(this.stars, 0, this.size * 0.6);
-    }
+    ctx.restore();
+  }
+
+  _drawDiscovered(ctx) {
+    ctx.save();
+    const bobY = Math.sin(this.phase) * 1.5;
+    ctx.translate(this.x, this.y + bobY);
+
+    // Pop animation
+    const popScale = this.discoveredAnim < 1
+      ? 0.5 + this.discoveredAnim * 0.7 + Math.sin(this.discoveredAnim * Math.PI) * 0.3
+      : 1;
+
+    ctx.globalAlpha = 0.5;
+    ctx.scale(popScale * 0.8, popScale * 0.8);
+
+    // Dimmed (already collected) item with checkmark
+    ctx.font = this._fontDiscovered;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.emoji, 0, 0);
+
+    // Checkmark
+    ctx.globalAlpha = 0.8;
+    ctx.font = '16px sans-serif';
+    ctx.fillText('✅', this.displaySize * 0.4, -this.displaySize * 0.3);
 
     ctx.restore();
   }
 
-  isFinished() {
-    return this.collected && this.collectAnim > 1;
+  /** Check if a tap at (tx, ty) hits this item */
+  hitTest(tx, ty) {
+    if (this.discovered || !this.tapReady) return false;
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    return dx * dx + dy * dy < (this.displaySize + 15) * (this.displaySize + 15);
   }
 }

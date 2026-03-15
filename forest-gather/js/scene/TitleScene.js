@@ -1,74 +1,75 @@
 /**
- * Title screen - character/difficulty selection
+ * Title screen - stage selection map
+ * Shows encyclopedia stages + quiz stages
  */
-import { DIFFICULTIES } from '../config.js';
+import { STAGES, QUIZ_STAGES } from '../config.js';
 import { hasSave, loadSave } from '../SaveManager.js';
 
-const DIFF_KEYS = ['lisa', 'ria', 'together'];
-
 export class TitleScene {
-  constructor(spriteCache) {
+  constructor(spriteCache, encyclopedia) {
     this.spriteCache = spriteCache;
+    this.encyclopedia = encyclopedia || {}; // { stageId: [discoveredItemIds] }
     this.savedData = hasSave() ? loadSave() : null;
-    this.selectedIndex = 1; // default: ria
-    // If save exists, pre-select the saved difficulty
-    if (this.savedData) {
-      const idx = DIFF_KEYS.indexOf(this.savedData.difficultyKey);
-      if (idx >= 0) this.selectedIndex = idx;
-    }
     this.phase = 0;
+    this.selectedStage = null;
+    this.selectedType = null; // 'explore' or 'quiz'
+    this.scrollY = 0;
+
+    // All stages combined for display
+    this.allStages = [
+      ...STAGES.map((s, i) => ({ ...s, type: 'explore', originalIndex: i })),
+      ...QUIZ_STAGES.map((s, i) => ({ ...s, type: 'quiz', originalIndex: i })),
+    ];
+
+    // Sparkle decorations
     this.sparkles = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 25; i++) {
       this.sparkles.push({
         x: Math.random(),
         y: Math.random(),
-        speed: 0.3 + Math.random() * 0.5,
+        speed: 0.2 + Math.random() * 0.4,
         phase: Math.random() * Math.PI * 2,
-        size: 8 + Math.random() * 12,
+        size: 8 + Math.random() * 14,
+        emoji: ['✨', '🌟', '🍃', '🌸', '🦋'][Math.floor(Math.random() * 5)],
       });
     }
   }
 
-  get selectedDifficulty() {
-    return DIFF_KEYS[this.selectedIndex];
-  }
-
   handleTap(x, y, w, h) {
-    // Difficulty buttons
-    const btnW = Math.min(200, w * 0.4);
-    const btnH = 70;
-    const startY = h * 0.42;
-    const gap = 15;
+    const btnW = Math.min(300, w * 0.85);
+    const btnH = 66;
+    const startY = h * 0.24;
+    const gap = 8;
 
-    for (let i = 0; i < DIFF_KEYS.length; i++) {
+    for (let i = 0; i < this.allStages.length; i++) {
+      const stage = this.allStages[i];
       const bx = (w - btnW) / 2;
-      const by = startY + i * (btnH + gap);
+      const by = startY + i * (btnH + gap) - this.scrollY;
+
+      if (by + btnH < 0 || by > h) continue; // off screen
+
       if (x >= bx && x <= bx + btnW && y >= by && y <= by + btnH) {
-        this.selectedIndex = i;
-        return null;
+        this.selectedStage = stage.originalIndex;
+        this.selectedType = stage.type;
+
+        // Check if saved data matches
+        if (this.savedData) {
+          if (stage.type === 'explore' && this.savedData.stageIndex === stage.originalIndex && !this.savedData.quizIndex) {
+            return 'continue';
+          }
+          if (stage.type === 'quiz' && this.savedData.quizIndex === stage.originalIndex) {
+            return 'continue';
+          }
+        }
+        return 'start';
       }
-    }
-
-    // Buttons area
-    const sBtnW = Math.min(250, w * 0.6);
-    const sBtnH = 65;
-    const sBtnX = (w - sBtnW) / 2;
-    let btnAreaY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
-
-    // Continue button (if save exists)
-    if (this.savedData) {
-      if (x >= sBtnX && x <= sBtnX + sBtnW && y >= btnAreaY && y <= btnAreaY + sBtnH) {
-        return 'continue';
-      }
-      btnAreaY += sBtnH + 12;
-    }
-
-    // New game button
-    if (x >= sBtnX && x <= sBtnX + sBtnW && y >= btnAreaY && y <= btnAreaY + sBtnH) {
-      return 'start';
     }
 
     return null;
+  }
+
+  handleScroll(dy) {
+    this.scrollY = Math.max(0, this.scrollY + dy);
   }
 
   update(dt) {
@@ -87,158 +88,137 @@ export class TitleScene {
     // Sparkles
     for (const s of this.sparkles) {
       const sy = ((s.y + this.phase * s.speed * 0.05) % 1.2) - 0.1;
-      const alpha = 0.3 + Math.sin(this.phase * 3 + s.phase) * 0.3;
+      const alpha = 0.3 + Math.sin(this.phase * 2 + s.phase) * 0.25;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.font = `${s.size}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('✨', s.x * w, sy * h);
+      ctx.fillText(s.emoji, s.x * w, sy * h);
       ctx.restore();
     }
 
     // Title
     ctx.save();
-    const titleY = h * 0.12;
-    const bounce = Math.sin(this.phase * 2) * 5;
+    const titleY = h * 0.05;
+    const bounce = Math.sin(this.phase * 2) * 3;
 
-    ctx.font = `Bold 42px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
+    ctx.font = `Bold ${Math.min(36, w * 0.08)}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillText('🌲 리리탐험대 🌲', w / 2 + 2, titleY + bounce + 2);
+    ctx.fillText('📚 리리 백과사전 📚', w / 2 + 2, titleY + bounce + 2);
 
     ctx.fillStyle = '#FFD700';
     ctx.strokeStyle = '#5D4037';
     ctx.lineWidth = 3;
-    ctx.strokeText('🌲 리리탐험대 🌲', w / 2, titleY + bounce);
-    ctx.fillText('🌲 리리탐험대 🌲', w / 2, titleY + bounce);
+    ctx.strokeText('📚 리리 백과사전 📚', w / 2, titleY + bounce);
+    ctx.fillText('📚 리리 백과사전 📚', w / 2, titleY + bounce);
 
-    // Subtitle
-    ctx.font = '18px sans-serif';
+    ctx.font = '14px sans-serif';
     ctx.fillStyle = '#C8E6C9';
-    ctx.fillText('반짝이 열매를 모아 숲을 깨워줘요!', w / 2, titleY + bounce + 40);
+    ctx.fillText('탐험하며 배우는 신기한 세계!', w / 2, titleY + bounce + 30);
     ctx.restore();
 
-    // Character preview (using sprite assets)
-    const previewY = h * 0.28;
+    // Character preview
+    const previewY = h * 0.16;
     const charBob = Math.sin(this.phase * 3) * 3;
     if (this.spriteCache) {
-      this.spriteCache.draw(ctx, 'ria-idle', w / 2 - 30, previewY + charBob, 1.5);
-      this.spriteCache.draw(ctx, 'lisa-idle', w / 2 + 30, previewY - charBob, 1.5);
+      this.spriteCache.draw(ctx, 'ria-idle', w / 2 - 20, previewY + charBob, 1);
+      this.spriteCache.draw(ctx, 'bori-idle', w / 2 + 22, previewY - charBob + 4, 0.6);
     }
 
-    // Difficulty buttons
-    const btnW = Math.min(200, w * 0.4);
-    const btnH = 70;
-    const startY = h * 0.42;
-    const gap = 15;
+    // Stage buttons
+    const btnW = Math.min(300, w * 0.85);
+    const btnH = 66;
+    const startY = h * 0.24;
+    const gap = 8;
 
-    for (let i = 0; i < DIFF_KEYS.length; i++) {
-      const key = DIFF_KEYS[i];
-      const diff = DIFFICULTIES[key];
+    for (let i = 0; i < this.allStages.length; i++) {
+      const stage = this.allStages[i];
       const bx = (w - btnW) / 2;
-      const by = startY + i * (btnH + gap);
-      const selected = i === this.selectedIndex;
+      const by = startY + i * (btnH + gap) - this.scrollY;
+
+      if (by + btnH < 0 || by > h) continue;
+
+      // Separator before quiz section
+      if (i === STAGES.length) {
+        ctx.font = 'Bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillText('── 🔍 스무고개 ──', w / 2, by - 4);
+      }
+
+      const isQuiz = stage.type === 'quiz';
+
+      // Completion check
+      let isComplete = false;
+      let hasProgress = false;
+      let progressText = '';
+
+      if (isQuiz) {
+        const quizEnc = this.encyclopedia[stage.id];
+        isComplete = quizEnc && quizEnc.complete;
+        if (quizEnc && quizEnc.solved) {
+          hasProgress = true;
+          progressText = `${quizEnc.solved}/${stage.rounds.length}`;
+        }
+      } else {
+        const completedItems = (this.encyclopedia[stage.id] || []).length;
+        const totalItems = stage.items.length;
+        isComplete = completedItems >= totalItems;
+        hasProgress = completedItems > 0;
+        if (hasProgress) progressText = `${completedItems}/${totalItems}`;
+      }
 
       // Button bg
       ctx.save();
-      if (selected) {
-        ctx.shadowColor = diff.color;
-        ctx.shadowBlur = 15;
-      }
       const btnGrad = ctx.createLinearGradient(bx, by, bx, by + btnH);
-      btnGrad.addColorStop(0, selected ? diff.color : 'rgba(255,255,255,0.15)');
-      btnGrad.addColorStop(1, selected ? diff.color + 'CC' : 'rgba(255,255,255,0.05)');
+      if (isComplete) {
+        btnGrad.addColorStop(0, '#FFD700');
+        btnGrad.addColorStop(1, '#FFA000');
+      } else if (isQuiz) {
+        btnGrad.addColorStop(0, 'rgba(156,39,176,0.25)');
+        btnGrad.addColorStop(1, 'rgba(156,39,176,0.1)');
+      } else {
+        btnGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+        btnGrad.addColorStop(1, 'rgba(255,255,255,0.05)');
+      }
       ctx.fillStyle = btnGrad;
       ctx.beginPath();
-      ctx.roundRect(bx, by, btnW, btnH, 16);
+      ctx.roundRect(bx, by, btnW, btnH, 14);
       ctx.fill();
-
-      if (selected) {
-        ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
       ctx.restore();
 
-      // Button text with character sprites
-      ctx.font = 'Bold 22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-      ctx.textAlign = 'center';
+      // Stage emoji + name
+      ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#FFF';
-      const labelX = w / 2 + 12;
-      ctx.fillText(diff.label, labelX, by + 28);
-      // Draw character sprite(s) left of label
-      if (this.spriteCache) {
-        const spriteX = labelX - ctx.measureText(diff.label).width / 2 - 18;
-        if (key === 'lisa') {
-          this.spriteCache.draw(ctx, 'lisa-idle', spriteX, by + 28, 0.5);
-        } else if (key === 'ria') {
-          this.spriteCache.draw(ctx, 'ria-idle', spriteX, by + 28, 0.5);
-        } else {
-          this.spriteCache.draw(ctx, 'lisa-idle', spriteX - 8, by + 28, 0.45);
-          this.spriteCache.draw(ctx, 'ria-idle', spriteX + 8, by + 28, 0.45);
-        }
+      ctx.fillStyle = isComplete ? '#5D4037' : '#FFF';
+      ctx.fillText(`${stage.emoji} ${stage.name}`, bx + 14, by + 26);
+
+      // Description
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = isComplete ? '#795548' : 'rgba(255,255,255,0.55)';
+      ctx.fillText(stage.desc, bx + 14, by + 48);
+
+      // Right side progress
+      ctx.textAlign = 'right';
+      if (isComplete) {
+        ctx.font = 'Bold 15px sans-serif';
+        ctx.fillStyle = '#5D4037';
+        ctx.fillText('✅ 완료!', bx + btnW - 14, by + 33);
+      } else if (hasProgress) {
+        ctx.font = '13px sans-serif';
+        ctx.fillStyle = '#C8E6C9';
+        ctx.fillText(progressText, bx + btnW - 14, by + 33);
       }
-
-      ctx.font = '14px sans-serif';
-      ctx.fillStyle = selected ? '#FFF' : 'rgba(255,255,255,0.6)';
-      ctx.fillText(diff.desc, w / 2, by + 52);
     }
 
-    // Buttons
-    const sBtnW = Math.min(250, w * 0.6);
-    const sBtnH = 65;
-    const sBtnX = (w - sBtnW) / 2;
-    let curBtnY = startY + DIFF_KEYS.length * (btnH + gap) + 20;
-    const pulse = 1 + Math.sin(this.phase * 4) * 0.03;
-
-    // Continue button (if save exists)
-    if (this.savedData) {
-      ctx.save();
-      ctx.translate(w / 2, curBtnY + sBtnH / 2);
-      ctx.scale(pulse, pulse);
-      ctx.translate(-w / 2, -(curBtnY + sBtnH / 2));
-
-      const cGrad = ctx.createLinearGradient(sBtnX, curBtnY, sBtnX, curBtnY + sBtnH);
-      cGrad.addColorStop(0, '#4CAF50');
-      cGrad.addColorStop(1, '#388E3C');
-      ctx.fillStyle = cGrad;
-      ctx.beginPath();
-      ctx.roundRect(sBtnX, curBtnY, sBtnW, sBtnH, 20);
-      ctx.fill();
-
-      ctx.font = 'Bold 24px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#FFF';
-      ctx.fillText(`▶ 이어하기 (R${this.savedData.round + 1})`, w / 2, curBtnY + sBtnH / 2);
-      ctx.restore();
-
-      curBtnY += sBtnH + 12;
-    }
-
-    // New game button
-    ctx.save();
-    ctx.translate(w / 2, curBtnY + sBtnH / 2);
-    ctx.scale(this.savedData ? 1 : pulse, this.savedData ? 1 : pulse);
-    ctx.translate(-w / 2, -(curBtnY + sBtnH / 2));
-
-    const sGrad = ctx.createLinearGradient(sBtnX, curBtnY, sBtnX, curBtnY + sBtnH);
-    sGrad.addColorStop(0, '#FFB300');
-    sGrad.addColorStop(1, '#FF8F00');
-    ctx.fillStyle = sGrad;
-    ctx.beginPath();
-    ctx.roundRect(sBtnX, curBtnY, sBtnW, sBtnH, 20);
-    ctx.fill();
-
-    ctx.font = `Bold ${this.savedData ? 22 : 28}px "Segoe UI", "Apple SD Gothic Neo", sans-serif`;
+    // Footer
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText(this.savedData ? '🌿 새로 시작' : '🌿 모험 시작! 🌿', w / 2, curBtnY + sBtnH / 2);
-    ctx.restore();
+    ctx.fillText('스테이지를 선택해서 탐험을 시작하세요!', w / 2, h * 0.97);
   }
 }

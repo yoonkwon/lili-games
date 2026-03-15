@@ -1,7 +1,10 @@
 /**
  * Companion - patrols an assigned sector around the player,
- * autonomously seeks and collects items within its zone.
+ * autonomously seeks items and reveals them (boosts visibility).
  * Each companion has a unique, visible ability with distinctive behavior.
+ *
+ * In discovery mode, companions don't auto-collect - they help the player
+ * find items by revealing hidden ones and boosting visibility.
  */
 import { COMPANIONS } from '../config.js';
 
@@ -13,6 +16,10 @@ const PLAYER_SEPARATION_RADIUS = 35;
 const PLAYER_SEPARATION_RADIUS_SQ = PLAYER_SEPARATION_RADIUS * PLAYER_SEPARATION_RADIUS;
 const PLAYER_SEPARATION_FORCE = 250;
 
+// How close a companion must be to reveal an item
+const REVEAL_RADIUS = 70;
+const REVEAL_RADIUS_SQ = REVEAL_RADIUS * REVEAL_RADIUS;
+
 export class Companion {
   constructor(type, ownerRef, angleIndex, totalCompanions) {
     const config = COMPANIONS[type];
@@ -20,7 +27,6 @@ export class Companion {
     this.name = config.name;
     this.emoji = config.emoji;
     this.range = config.range;
-    this.collectSpeed = config.collectSpeed;
     this.ability = config.ability;
     this.abilityInterval = config.abilityInterval || 0;
     this.speed = config.speed;
@@ -33,7 +39,7 @@ export class Companion {
     this.vy = 0;
     this.facingRight = true;
 
-    this.collectTimer = 0;
+    this.revealTimer = 0;
     this.abilityTimer = 0;
     this.bobPhase = Math.random() * Math.PI * 2;
 
@@ -48,19 +54,25 @@ export class Companion {
     this.seekTimer = 0;
     this.currentRangeBonus = 0;
 
+    // Speech bubble (for ability feedback)
+    this.speechBubble = null;
+    this.speechTimer = 0;
+    this._speechBubbleWidth = 0;
+
     // === Ability-specific state ===
 
-    // Detect (보리): sniffing animation + bark pulse
+    // Detect (보리/아찌): sniffing animation + bark pulse
     this.sniffPhase = 0;
-    this.barkPulse = 0; // visual pulse radius (0 = no pulse)
+    this.barkPulse = 0;
     this.barkPulseAlpha = 0;
+    this.detectCooldown = 0;
 
     // Dash (좁쌀이): sprint state
     this.dashing = false;
     this.dashTimer = 0;
     this.dashTargetX = 0;
     this.dashTargetY = 0;
-    this.dashTrail = []; // [{x, y, age}]
+    this.dashTrail = [];
 
     // Swoop (익돌이): dive-bomb state
     this.swooping = false;
@@ -70,24 +82,16 @@ export class Companion {
     this.swoopEndX = 0;
     this.swoopEndY = 0;
     this.swoopProgress = 0;
-    this.swoopCollectCount = 0;
 
     // Lucky (고순이): sparkle aura
     this.auraPhase = 0;
-    this.auraFlash = 0; // flash when upgrading items
+    this.auraFlash = 0;
   }
 
   assignAngle(index, total) {
     const baseAngle = -Math.PI * 0.75;
     this.sectorAngle = baseAngle + (2 * Math.PI * index) / Math.max(1, total);
     this.sectorSpread = Math.PI / Math.max(2, total);
-  }
-
-  _getPatrolCenter() {
-    return {
-      x: this.owner.x + Math.cos(this.sectorAngle) * this.patrolRadius,
-      y: this.owner.y + Math.sin(this.sectorAngle) * this.patrolRadius,
-    };
   }
 
   _isInSector(wx, wy) {
@@ -100,16 +104,30 @@ export class Companion {
     return Math.abs(diff) < this.sectorSpread + 0.3;
   }
 
-  update(dt, items, onCollect, rangeBonus = 0, speedBonus = 0, allCompanions = []) {
+  /**
+   * @param {number} dt
+   * @param {Item[]} items - items with .discovered property
+   * @param {function} onReveal - callback(item) when companion reveals an item
+   * @param {number} rangeBonus
+   * @param {number} speedBonus
+   * @param {Companion[]} allCompanions
+   */
+  update(dt, items, onReveal, rangeBonus = 0, speedBonus = 0, allCompanions = []) {
     this.currentRangeBonus = rangeBonus;
     this.bobPhase += dt * 6;
 
+    // Speech timer
+    if (this.speechTimer > 0) {
+      this.speechTimer -= dt;
+      if (this.speechTimer <= 0) this.speechBubble = null;
+    }
+
     // Update ability-specific behavior
-    this._updateAbility(dt, items, onCollect);
+    this._updateAbility(dt, items, onReveal);
 
     // If in special movement state (dash/swoop), skip normal movement
     if (this.dashing || this.swooping) {
-      this._updateSpecialMovement(dt, items, onCollect);
+      this._updateSpecialMovement(dt, items, onReveal);
       return;
     }
 
@@ -117,7 +135,7 @@ export class Companion {
     this._updateSeekTarget(dt, items);
 
     let tx, ty;
-    if (this.seekingItem && !this.seekingItem.collected) {
+    if (this.seekingItem && !this.seekingItem.discovered) {
       tx = this.seekingItem.x;
       ty = this.seekingItem.y;
     } else {
@@ -184,160 +202,195 @@ export class Companion {
     this.y += this.vy * dt;
     if (Math.abs(this.vx) > 2) this.facingRight = this.vx > 0;
 
-    // 4. Auto-collect nearby items
-    this.collectTimer -= dt;
-    if (this.collectTimer <= 0) {
-      const collectRange = this.range * 0.5 + rangeBonus;
-      const collectRangeSq = collectRange * collectRange;
-      for (let i = items.length - 1; i >= 0; i--) {
-        const item = items[i];
-        if (item.collected) continue;
-        if (item.sky && this.ability !== 'swoop') continue;
+    // 4. Reveal nearby items (boost visibility instead of auto-collecting)
+    this.revealTimer -= dt;
+    if (this.revealTimer <= 0) {
+      this.revealTimer = 0.3;
+      const revealRange = REVEAL_RADIUS + rangeBonus;
+      const revealRangeSq = revealRange * revealRange;
+      for (const item of items) {
+        if (item.discovered) continue;
         const ix = item.x - this.x;
         const iy = item.y - this.y;
-        if (ix * ix + iy * iy < collectRangeSq) {
-          this.collectTimer = this.collectSpeed;
-          this.seekingItem = null;
-          onCollect(item, i);
-          break;
+        if (ix * ix + iy * iy < revealRangeSq) {
+          // Boost item visibility so player can see and tap it
+          if (item.visibility < 0.8) {
+            item.visibility = Math.min(1, item.visibility + 0.4);
+            item.tapReady = true;
+            onReveal(item);
+          }
         }
       }
     }
   }
 
+  /** Set speech bubble text with cached width estimate */
+  setSpeech(text, duration) {
+    this.speechBubble = text;
+    this.speechTimer = duration;
+    this._speechBubbleWidth = text.length * 8 + 16; // estimate, avoids per-frame measureText
+  }
+
   // ==================== ABILITY LOGIC ====================
 
-  _updateAbility(dt, items, onCollect) {
+  _updateAbility(dt, items, onReveal) {
     if (this.abilityInterval > 0) {
       this.abilityTimer += dt;
     }
 
-    // Detect: proximity sniffing (check every 0.3s, not every frame)
+    // Detect: proximity sniffing + bark pulse to reveal items
     if (this.ability === 'detect') {
       this.sniffPhase += dt * 4;
-      this.detectCooldown = (this.detectCooldown || 0) - dt;
+      this.detectCooldown -= dt;
       if (this.detectCooldown <= 0) {
-        this.detectCooldown = 0.3;
+        this.detectCooldown = 0.5;
         const detectR = this.config.detectRadius || 60;
         const detectRSq = detectR * detectR;
         for (const item of items) {
-          if (!item.hidden || item.collected) continue;
+          if (item.discovered) continue;
           const dx = item.x - this.x;
           const dy = item.y - this.y;
           if (dx * dx + dy * dy < detectRSq) {
-            item.hidden = false;
-            this.barkPulse = 1;
-            this.barkPulseAlpha = 0.6;
+            if (item.visibility < 0.6) {
+              item.visibility = 0.8;
+              item.tapReady = true;
+              this.barkPulse = 1;
+              this.barkPulseAlpha = 0.6;
+              onReveal(item);
+            }
           }
         }
       }
       // Bark pulse decay
       if (this.barkPulse > 0) {
-        this.barkPulse += dt * 150; // expand
+        this.barkPulse += dt * 150;
         this.barkPulseAlpha -= dt * 1.2;
         if (this.barkPulseAlpha <= 0) {
           this.barkPulse = 0;
           this.barkPulseAlpha = 0;
         }
       }
+
+      // Periodic big bark pulse
+      if (this.abilityTimer >= this.abilityInterval) {
+        this.abilityTimer = 0;
+        this.barkPulse = 1;
+        this.barkPulseAlpha = 0.8;
+        // Reveal all items in a large radius
+        const bigRadius = 200;
+        const bigRadiusSq = bigRadius * bigRadius;
+        for (const item of items) {
+          if (item.discovered) continue;
+          const dx = item.x - this.x;
+          const dy = item.y - this.y;
+          if (dx * dx + dy * dy < bigRadiusSq) {
+            item.visibility = 1;
+            item.tapReady = true;
+            onReveal(item);
+          }
+        }
+        this.setSpeech('킁킁! 여기 뭔가 있어!', 2);
+      }
     }
 
-    // Dash: sprint cooldown
+    // Dash: sprint cooldown + trail
     if (this.ability === 'dash') {
-      // Update trail
       for (let i = this.dashTrail.length - 1; i >= 0; i--) {
         this.dashTrail[i].age += dt;
         if (this.dashTrail[i].age > 0.3) this.dashTrail.splice(i, 1);
       }
+
+      // Auto-trigger dash toward nearest undiscovered item
+      if (!this.dashing && this.abilityTimer >= this.abilityInterval) {
+        const target = this._findNearestUndiscovered(items);
+        if (target) {
+          this.abilityTimer = 0;
+          this.dashing = true;
+          this.dashTimer = this.config.dashDuration || 0.8;
+          this.dashTargetX = target.x;
+          this.dashTargetY = target.y;
+          this.seekingItem = target;
+          this.setSpeech('달려!', 1.5);
+        }
+      }
     }
 
-    // Swoop: handled in _updateSpecialMovement
-    // Lucky: aura animation
+    // Swoop: auto-trigger dive toward items
+    if (this.ability === 'swoop') {
+      if (!this.swooping && this.abilityTimer >= this.abilityInterval) {
+        const target = this._findNearestUndiscovered(items);
+        if (target) {
+          this.abilityTimer = 0;
+          this.swooping = true;
+          this.swoopTimer = 0;
+          this.swoopStartX = this.x;
+          this.swoopStartY = this.y - 60;
+          this.swoopEndX = target.x;
+          this.swoopEndY = target.y;
+          this.swoopProgress = 0;
+          this.setSpeech('위에서 찾아볼게!', 1.5);
+        }
+      }
+    }
+
+    // Lucky: aura animation + passive reveal boost
     if (this.ability === 'lucky') {
       this.auraPhase += dt * 3;
       if (this.auraFlash > 0) this.auraFlash -= dt * 3;
+
+      // Periodic aura pulse that boosts nearby item visibility
+      if (this.abilityTimer >= this.abilityInterval) {
+        this.abilityTimer = 0;
+        this.auraFlash = 1;
+        const auraR = this.config.luckAuraRadius || 100;
+        const auraRSq = auraR * auraR;
+        for (const item of items) {
+          if (item.discovered) continue;
+          const dx = item.x - this.x;
+          const dy = item.y - this.y;
+          if (dx * dx + dy * dy < auraRSq) {
+            item.visibility = 1;
+            item.tapReady = true;
+            onReveal(item);
+          }
+        }
+        this.setSpeech('반짝! 행운이야!', 2);
+      }
     }
   }
 
-  /** Check if the big bark pulse ability should trigger (GameScene calls this) */
-  shouldBarkPulse() {
-    if (this.ability !== 'detect') return false;
-    if (this.abilityTimer >= this.abilityInterval) {
-      this.abilityTimer = 0;
-      this.barkPulse = 1;
-      this.barkPulseAlpha = 0.8;
-      return true;
+  _findNearestUndiscovered(items) {
+    let nearest = null;
+    let minDist = Infinity;
+    for (const item of items) {
+      if (item.discovered) continue;
+      const dx = item.x - this.owner.x;
+      const dy = item.y - this.owner.y;
+      const d = dx * dx + dy * dy;
+      if (d < 90000 && d < minDist) { // within 300px of owner
+        minDist = d;
+        nearest = item;
+      }
     }
-    return false;
+    return nearest;
   }
 
-  /** Check if dash should trigger */
-  shouldDash() {
-    if (this.ability !== 'dash' || this.dashing) return false;
-    if (this.abilityTimer >= this.abilityInterval) {
-      this.abilityTimer = 0;
-      return true;
-    }
-    return false;
-  }
-
-  /** Start a dash toward a target item */
-  startDash(targetItem) {
-    this.dashing = true;
-    this.dashTimer = this.config.dashDuration || 0.8;
-    this.dashTargetX = targetItem.x;
-    this.dashTargetY = targetItem.y;
-    this.seekingItem = targetItem;
-  }
-
-  /** Check if swoop should trigger */
-  shouldSwoop() {
-    if (this.ability !== 'swoop' || this.swooping) return false;
-    if (this.abilityTimer >= this.abilityInterval) {
-      this.abilityTimer = 0;
-      return true;
-    }
-    return false;
-  }
-
-  /** Start a swoop dive from current position toward a target */
-  startSwoop(targetX, targetY) {
-    this.swooping = true;
-    this.swoopTimer = 0;
-    this.swoopStartX = this.x;
-    this.swoopStartY = this.y - 60; // launch up first
-    this.swoopEndX = targetX;
-    this.swoopEndY = targetY;
-    this.swoopProgress = 0;
-    this.swoopCollectCount = 0;
-  }
-
-  /** Check if lucky aura should pulse */
-  shouldLuckyAura() {
-    if (this.ability !== 'lucky') return false;
-    if (this.abilityTimer >= this.abilityInterval) {
-      this.abilityTimer = 0;
-      this.auraFlash = 1;
-      return true;
-    }
-    return false;
-  }
-
-  /** Collect all items within range of current position */
-  _collectNearby(rangeSq, items, onCollect) {
-    for (let i = items.length - 1; i >= 0; i--) {
-      const item = items[i];
-      if (item.collected) continue;
+  /** Reveal items near companion during dash/swoop */
+  _revealNearby(rangeSq, items, onReveal) {
+    for (const item of items) {
+      if (item.discovered) continue;
       const ix = item.x - this.x;
       const iy = item.y - this.y;
       if (ix * ix + iy * iy < rangeSq) {
-        onCollect(item, i);
+        item.visibility = 1;
+        item.tapReady = true;
+        onReveal(item);
       }
     }
   }
 
   /** Handle dash and swoop special movement */
-  _updateSpecialMovement(dt, items, onCollect) {
+  _updateSpecialMovement(dt, items, onReveal) {
     if (this.dashing) {
       this.dashTimer -= dt;
       this.dashTrail.push({ x: this.x, y: this.y, age: 0 });
@@ -353,7 +406,7 @@ export class Companion {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
         if (Math.abs(this.vx) > 2) this.facingRight = this.vx > 0;
-        this._collectNearby(1600, items, onCollect); // 40²
+        this._revealNearby(2500, items, onReveal); // 50px radius
       } else {
         this.dashing = false;
         this.vx *= 0.3;
@@ -373,7 +426,7 @@ export class Companion {
       this.facingRight = this.swoopEndX > this.swoopStartX;
 
       if (t > 0.3) {
-        this._collectNearby(2500, items, onCollect); // 50²
+        this._revealNearby(4900, items, onReveal); // 70px radius - wider for aerial
       }
 
       if (this.swoopProgress >= 1) {
@@ -386,15 +439,14 @@ export class Companion {
 
   _updateSeekTarget(dt, items) {
     this.seekTimer -= dt;
-    if (this.seekTimer > 0 && this.seekingItem && !this.seekingItem.collected) return;
+    if (this.seekTimer > 0 && this.seekingItem && !this.seekingItem.discovered) return;
     this.seekTimer = 0.5 + Math.random() * 0.5;
 
     let bestItem = null;
     let bestScore = -Infinity;
 
     for (const item of items) {
-      if (item.collected || item.hidden) continue;
-      if (item.sky && this.ability !== 'swoop') continue;
+      if (item.discovered) continue;
 
       const odx = item.x - this.owner.x;
       const ody = item.y - this.owner.y;
@@ -406,15 +458,6 @@ export class Companion {
 
       let score = 300 - Math.sqrt(distFromSelfSq);
       if (this._isInSector(item.x, item.y)) score += 200;
-
-      // Lucky companions prefer rare items
-      if (this.ability === 'lucky' && (item.rarity === 'rare' || item.rarity === 'legendary')) {
-        score += 150;
-      }
-      // Detect companions prefer hidden-adjacent areas
-      if (this.ability === 'detect' && item.rarity !== 'common') {
-        score += 80;
-      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -436,7 +479,6 @@ export class Companion {
     // Detect: sniffing head bob + bark pulse
     if (this.ability === 'detect') {
       const sniffBob = Math.sin(this.sniffPhase) * 1.5;
-      // Bark pulse ring
       if (this.barkPulse > 0) {
         ctx.save();
         ctx.globalAlpha = this.barkPulseAlpha;
@@ -445,7 +487,6 @@ export class Companion {
         ctx.beginPath();
         ctx.arc(this.x, this.y + bobY, this.barkPulse, 0, Math.PI * 2);
         ctx.stroke();
-        // Inner pulse
         ctx.globalAlpha = this.barkPulseAlpha * 0.3;
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
@@ -458,14 +499,12 @@ export class Companion {
 
     // Dash: speed trail
     else if (this.ability === 'dash') {
-      // Draw trail
       for (const t of this.dashTrail) {
         ctx.save();
         ctx.globalAlpha = 0.4 * (1 - t.age / 0.3);
         spriteCache.draw(ctx, `${this.type}-idle`, t.x, t.y + bobY, 0.8, !this.facingRight);
         ctx.restore();
       }
-      // Dash visual: stretch sprite slightly when dashing
       if (this.dashing) {
         ctx.save();
         ctx.translate(this.x, this.y + bobY);
@@ -482,7 +521,6 @@ export class Companion {
     // Swoop: swooping arc with motion lines
     else if (this.ability === 'swoop') {
       if (this.swooping) {
-        // Motion lines behind the swoop
         ctx.save();
         ctx.globalAlpha = 0.5;
         ctx.strokeStyle = '#FF8C00';
@@ -495,10 +533,9 @@ export class Companion {
           ctx.stroke();
         }
         ctx.restore();
-        // Draw sprite with swoop tilt
         ctx.save();
         ctx.translate(this.x, this.y);
-        const tilt = this.swoopProgress < 0.5 ? -0.3 : 0.3; // nose up then down
+        const tilt = this.swoopProgress < 0.5 ? -0.3 : 0.3;
         ctx.rotate(tilt * (this.facingRight ? 1 : -1));
         spriteCache.draw(ctx, `${this.type}-idle`, 0, 0, 1.1, !this.facingRight);
         ctx.restore();
@@ -509,7 +546,6 @@ export class Companion {
 
     // Lucky: sparkle aura
     else if (this.ability === 'lucky') {
-      // Sparkle ring
       const auraR = this.config.luckAuraRadius || 100;
       ctx.save();
       const auraAlpha = 0.08 + Math.sin(this.auraPhase) * 0.04;
@@ -523,7 +559,6 @@ export class Companion {
       ctx.setLineDash([]);
       ctx.restore();
 
-      // Floating sparkles
       ctx.save();
       ctx.fillStyle = '#FFD700';
       ctx.font = '8px sans-serif';
@@ -538,7 +573,6 @@ export class Companion {
       }
       ctx.restore();
 
-      // Aura flash when upgrading
       if (this.auraFlash > 0) {
         ctx.save();
         ctx.globalAlpha = this.auraFlash * 0.3;
@@ -552,12 +586,37 @@ export class Companion {
       spriteCache.draw(ctx, `${this.type}-idle`, this.x, this.y + bobY, 1, !this.facingRight);
     }
 
-    // Default draw (shouldn't reach here normally)
+    // Default draw
     else {
       spriteCache.draw(ctx, `${this.type}-idle`, this.x, this.y + bobY + flyY, 1, !this.facingRight);
     }
 
-    // Name label above companion
+    // Speech bubble
+    if (this.speechBubble) {
+      ctx.save();
+      const bx = this.x;
+      const by = this.y + bobY + flyY - 35;
+      ctx.font = '11px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
+      const bw = this._speechBubbleWidth || (this.speechBubble.length * 8 + 16);
+      const bh = 22;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.roundRect(bx - bw / 2, by - bh, bw, bh, 8);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(bx - 4, by);
+      ctx.lineTo(bx + 4, by);
+      ctx.lineTo(bx, by + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.speechBubble, bx, by - bh / 2);
+      ctx.restore();
+    }
+
+    // Name label
     ctx.save();
     ctx.font = 'Bold 11px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';

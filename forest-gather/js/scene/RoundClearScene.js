@@ -1,58 +1,60 @@
 /**
- * Round clear celebration scene
+ * Stage clear celebration scene
+ * Shows what was discovered and celebrates completion
  */
 export class RoundClearScene {
-  constructor(w, h, stats, nextRound) {
+  constructor(w, h, stats) {
     this.w = w;
     this.h = h;
     this.stats = stats;
-    this.nextRound = nextRound;
     this.phase = 0;
-
-    // Stars based on remaining time (speed/efficiency)
-    const timeLeft = stats.timer || 0;
-    this.stars = timeLeft >= 40 ? 3 : timeLeft >= 20 ? 2 : 1;
 
     // Celebration particles
     this.confetti = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 35; i++) {
       this.confetti.push({
         x: Math.random() * w,
-        y: -20 - Math.random() * 200,
-        vy: 80 + Math.random() * 60,
-        vx: (Math.random() - 0.5) * 40,
-        color: ['#FFD700', '#FF69B4', '#4CAF50', '#2196F3', '#FF9800'][Math.floor(Math.random() * 5)],
-        size: 4 + Math.random() * 4,
+        y: -20 - Math.random() * 300,
+        vy: 60 + Math.random() * 50,
+        vx: (Math.random() - 0.5) * 30,
+        color: ['#FFD700', '#FF69B4', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0'][Math.floor(Math.random() * 6)],
+        size: 4 + Math.random() * 5,
         rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 8,
+        rotSpeed: (Math.random() - 0.5) * 6,
       });
     }
   }
 
   handleTap(x, y) {
-    if (this.phase < 1.5) return null;
+    if (this.phase < 2) return null;
 
-    const btnW = 220;
+    const btnW = 240;
     const btnH = 55;
     const btnX = (this.w - btnW) / 2;
 
-    // Continue button
+    // Next stage button
     const btnY = this.h * 0.72;
     if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
-      return 'continue';
+      return 'nextStage';
     }
 
-    // Other games button
-    const otherY = btnY + btnH + 14;
-    if (x >= btnX && x <= btnX + btnW && y >= otherY && y <= otherY + btnH) {
+    // Home button
+    const homeY = btnY + btnH + 14;
+    if (x >= btnX && x <= btnX + btnW && y >= homeY && y <= homeY + btnH) {
       return 'home';
     }
+
+    // Back to menu button
+    const menuY = homeY + btnH + 14;
+    if (x >= btnX && x <= btnX + btnW && y >= menuY && y <= menuY + btnH) {
+      return 'menu';
+    }
+
     return null;
   }
 
   update(dt) {
     this.phase += dt;
-
     for (const c of this.confetti) {
       c.y += c.vy * dt;
       c.x += c.vx * dt;
@@ -89,69 +91,77 @@ export class RoundClearScene {
     const titleAlpha = Math.min(1, this.phase * 2);
     ctx.save();
     ctx.globalAlpha = titleAlpha;
-    ctx.font = 'Bold 40px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.font = 'Bold 36px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFD700';
-    ctx.fillText('🎉 라운드 클리어! 🎉', w / 2, h * 0.15);
+    ctx.fillText('🎉 탐험 완료! 🎉', w / 2, h * 0.1);
     ctx.restore();
 
     // Stars
     if (this.phase > 0.5) {
-      const starY = h * 0.25;
-      ctx.font = '40px sans-serif';
+      const starY = h * 0.2;
+      ctx.font = '44px sans-serif';
       ctx.textAlign = 'center';
       for (let i = 0; i < 3; i++) {
         const delay = 0.5 + i * 0.3;
         if (this.phase > delay) {
           const scale = Math.min(1, (this.phase - delay) * 3);
           ctx.save();
-          ctx.translate(w / 2 + (i - 1) * 50, starY);
+          ctx.translate(w / 2 + (i - 1) * 55, starY);
           ctx.scale(scale, scale);
-          ctx.globalAlpha = i < this.stars ? 1 : 0.2;
           ctx.fillText('⭐', 0, 0);
           ctx.restore();
         }
       }
     }
 
-    // Stats
+    // Stage info
     if (this.phase > 1) {
-      ctx.font = '22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.font = 'Bold 28px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#FFF';
-      const statsY = h * 0.38;
-      ctx.fillText(`🧺 수집: ${this.stats.totalCollected}개`, w / 2, statsY);
-      ctx.fillText(`🏆 점수: ${this.stats.score}`, w / 2, statsY + 35);
-      if (this.stats.maxCombo >= 3) {
-        ctx.fillStyle = '#FFD700';
-        ctx.fillText(`x${this.stats.maxCombo} 최대 콤보!`, w / 2, statsY + 70);
-        ctx.fillStyle = '#FFF';
-      }
-      ctx.fillText(`📍 라운드 ${this.stats.round}`, w / 2, statsY + 105);
+      ctx.fillText(`${this.stats.stageEmoji} ${this.stats.stageName}`, w / 2, h * 0.32);
+
+      ctx.font = '20px sans-serif';
+      ctx.fillStyle = '#C8E6C9';
+      ctx.fillText(`📖 ${this.stats.discovered}개 모두 발견!`, w / 2, h * 0.39);
     }
 
-    // Companion info
-    if (this.stats.companions && this.phase > 1.5) {
-      const compY = h * 0.6;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, (this.phase - 1.5) * 2);
-      ctx.font = '18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#C8E6C9';
-      ctx.fillText(`동료: ${this.stats.companions}`, w / 2, compY);
-      ctx.restore();
+    // Encouragement
+    if (this.phase > 1.5) {
+      ctx.font = '18px sans-serif';
+      ctx.fillStyle = '#A5D6A7';
+      ctx.fillText('대단해요! 백과사전 박사가 되고 있어요!', w / 2, h * 0.46);
+
+      // Show discovered emojis in a grid
+      const items = this.stats.items || [];
+      if (items.length > 0) {
+        const cols = Math.min(7, items.length);
+        const emojiSize = 32;
+        const gridW = cols * (emojiSize + 8);
+        const startX = w / 2 - gridW / 2 + emojiSize / 2;
+        const startItemY = h * 0.52;
+        ctx.font = `${emojiSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < items.length; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          ctx.fillText(items[i], startX + col * (emojiSize + 8), startItemY + row * (emojiSize + 8));
+        }
+      }
     }
 
     // Buttons
-    if (this.phase > 1.5) {
-      const btnW = 220;
+    if (this.phase > 2) {
+      const btnW = 240;
       const btnH = 55;
       const btnX = (w - btnW) / 2;
       const btnY = h * 0.72;
-
-      // Continue button
       const pulse = 1 + Math.sin(this.phase * 4) * 0.02;
+
+      // Next stage button
       ctx.save();
       ctx.translate(w / 2, btnY + btnH / 2);
       ctx.scale(pulse, pulse);
@@ -165,28 +175,34 @@ export class RoundClearScene {
       ctx.roundRect(btnX, btnY, btnW, btnH, 18);
       ctx.fill();
 
-      ctx.font = 'Bold 24px sans-serif';
+      ctx.font = 'Bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#FFF';
-      ctx.fillText('다음 라운드! ▶', w / 2, btnY + btnH / 2);
+      ctx.fillText('다음 스테이지! ▶', w / 2, btnY + btnH / 2);
       ctx.restore();
 
-      // Other games button
-      const otherY = btnY + btnH + 14;
+      // Other games
+      const homeY = btnY + btnH + 14;
       ctx.fillStyle = 'rgba(255,255,255,0.15)';
       ctx.beginPath();
-      ctx.roundRect(btnX, otherY, btnW, btnH, 18);
+      ctx.roundRect(btnX, homeY, btnW, btnH, 18);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#FFF';
-      ctx.fillText('🏠 다른 게임하기', w / 2, otherY + btnH / 2);
+      ctx.fillText('🏠 다른 게임하기', w / 2, homeY + btnH / 2);
+
+      // Back to stage select
+      const menuY = homeY + btnH + 14;
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.beginPath();
+      ctx.roundRect(btnX, menuY, btnW, btnH, 18);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = 'Bold 18px sans-serif';
+      ctx.fillText('📚 스테이지 선택', w / 2, menuY + btnH / 2);
     }
   }
 }
