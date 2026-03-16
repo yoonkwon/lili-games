@@ -255,7 +255,7 @@ async function renderBabyGame(canvasId, bgFn, momSvg, babySvg, extraFn) {
   bgFn(ctx, w, h);
   const [mom, baby] = await Promise.all([loadImg(momSvg), loadImg(babySvg)]);
   if (mom) ctx.drawImage(mom, w * 0.16, h * 0.1, 90, 135);
-  if (baby) ctx.drawImage(baby, w * 0.56, h * 0.22, 65, 97);
+  if (baby) ctx.drawImage(baby, w * 0.52, h * 0.25, 80, 80);
   if (extraFn) extraFn(ctx, w, h);
 }
 
