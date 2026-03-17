@@ -152,6 +152,10 @@ export const STAGES = [
   },
 ];
 
+// Letter pools for word builder distractors
+export const HANGUL_LETTERS = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ','ㅏ','ㅓ','ㅗ','ㅜ','ㅡ','ㅣ'];
+export const ENGLISH_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 // How close the player needs to be to discover an item
 export const DISCOVER_RADIUS = 80;
 

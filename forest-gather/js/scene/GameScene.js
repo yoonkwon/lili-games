@@ -11,7 +11,7 @@ import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
 import { CollectionTray } from '../ui/CollectionTray.js';
 import { WordBuilder } from '../ui/WordBuilder.js';
-import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera } from './sceneUtils.js';
+import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera, drawSpriteOrEmoji } from './sceneUtils.js';
 
 export class GameScene {
   constructor(w, h, safeTop, stageIndex, spriteCache) {
@@ -478,19 +478,7 @@ export class GameScene {
     ctx.fillText(`🎉 새로운 발견! (${this.discoveredCount}/${this.totalItems})`, 0, -cardH / 2 + 22);
 
     // Big emoji or sprite
-    if (this.popup.sprite && this.spriteCache) {
-      const s = this.spriteCache.get(this.popup.sprite);
-      if (s) {
-        const sz = this.popup.displaySize * 2;
-        ctx.drawImage(s, -sz / 2, -cardH / 2 + 100 - sz / 2, sz, sz);
-      } else {
-        ctx.font = `${this.popup.displaySize * 2}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-        ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 100);
-      }
-    } else {
-      ctx.font = `${this.popup.displaySize * 2}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-      ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 100);
-    }
+    drawSpriteOrEmoji(ctx, this.spriteCache, this.popup.sprite, this.popup.emoji, 0, -cardH / 2 + 100, this.popup.displaySize * 2);
 
     // Name
     ctx.font = 'Bold 22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';

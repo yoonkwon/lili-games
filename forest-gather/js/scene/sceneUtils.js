@@ -274,6 +274,21 @@ export function findNearestUndiscovered(items, playerX, playerY) {
   return nearest;
 }
 
+/** Draw a sprite if available, otherwise draw emoji text */
+export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
+  if (sprite && spriteCache) {
+    const s = spriteCache.get(sprite);
+    if (s) {
+      ctx.drawImage(s, x - size / 2, y - size / 2, size, size);
+      return;
+    }
+  }
+  ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, x, y);
+}
+
 /** Get directional hint text for companion */
 export function getDirectionHint(fromX, fromY, toX, toY) {
   const dx = toX - fromX;

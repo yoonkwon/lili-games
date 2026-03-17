@@ -1,6 +1,7 @@
 /**
  * CollectionTray - displays collected item emojis in a horizontal tray at the bottom of the screen.
  */
+import { drawSpriteOrEmoji } from '../scene/sceneUtils.js';
 export class CollectionTray {
   constructor(spriteCache) {
     this.items = [];       // array of { emoji, sprite, anim }
@@ -76,24 +77,7 @@ export class CollectionTray {
       ctx.translate(ix, iy);
       ctx.scale(scale, scale);
 
-      // Draw sprite if available, otherwise emoji text
-      if (item.sprite && this.spriteCache) {
-        const s = this.spriteCache.get(item.sprite);
-        if (s) {
-          const sz = itemSize;
-          ctx.drawImage(s, -sz / 2, -sz / 2, sz, sz);
-        } else {
-          ctx.font = `${itemSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(item.emoji, 0, 0);
-        }
-      } else {
-        ctx.font = `${itemSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.emoji, 0, 0);
-      }
+      drawSpriteOrEmoji(ctx, this.spriteCache, item.sprite, item.emoji, 0, 0, itemSize);
 
       ctx.restore();
     }

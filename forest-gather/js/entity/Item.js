@@ -3,6 +3,7 @@
  * Hidden in the environment - player must get close and tap to discover
  */
 import { DISCOVER_RADIUS, HINT_RADIUS } from '../config.js';
+import { drawSpriteOrEmoji } from '../scene/sceneUtils.js';
 
 const DISCOVER_RADIUS_SQ = DISCOVER_RADIUS * DISCOVER_RADIUS;
 const HINT_RADIUS_SQ = HINT_RADIUS * HINT_RADIUS;
@@ -139,24 +140,9 @@ export class Item {
     }
 
     // Show the actual item (partially revealed)
-    this._drawEmoji(ctx, spriteCache, this._fontMain, 1);
+    drawSpriteOrEmoji(ctx, spriteCache, this.sprite, this.emoji, 0, 0, this.displaySize);
 
     ctx.restore();
-  }
-
-  /** Draw emoji or sprite at current transform origin */
-  _drawEmoji(ctx, spriteCache, font, scale) {
-    if (this.sprite && spriteCache) {
-      const s = spriteCache.get(this.sprite);
-      if (s) {
-        ctx.drawImage(s, -s.width * scale / 2, -s.height * scale / 2, s.width * scale, s.height * scale);
-        return;
-      }
-    }
-    ctx.font = font;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.emoji, 0, 0);
   }
 
   _drawDiscovered(ctx, spriteCache) {
@@ -173,7 +159,7 @@ export class Item {
     ctx.scale(popScale * 0.8, popScale * 0.8);
 
     // Dimmed (already collected) item with checkmark
-    this._drawEmoji(ctx, spriteCache, this._fontDiscovered, 0.7);
+    drawSpriteOrEmoji(ctx, spriteCache, this.sprite, this.emoji, 0, 0, this.displaySize * 0.7);
 
     // Checkmark
     ctx.globalAlpha = 0.8;
