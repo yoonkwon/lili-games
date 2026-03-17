@@ -38,9 +38,6 @@ export class Item {
     // Interaction indicator
     this.tapReady = false; // true when player is close enough to tap
 
-    // Cached font strings (avoid per-frame allocation)
-    this._fontMain = `${this.displaySize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-    this._fontDiscovered = `${this.displaySize * 0.7}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
   }
 
   _getHideEmoji(style) {

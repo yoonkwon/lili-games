@@ -275,6 +275,7 @@ export function findNearestUndiscovered(items, playerX, playerY) {
 }
 
 /** Draw a sprite if available, otherwise draw emoji text */
+const _fontCache = {};
 export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
   if (sprite && spriteCache) {
     const s = spriteCache.get(sprite);
@@ -283,7 +284,7 @@ export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
       return;
     }
   }
-  ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  ctx.font = _fontCache[size] || (_fontCache[size] = `${size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(emoji, x, y);
