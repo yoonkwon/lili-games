@@ -290,6 +290,19 @@ export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
   ctx.fillText(emoji, x, y);
 }
 
+/** Update buddy character (Lisa) to follow the main player (Ria) */
+export function updateBuddy(buddy, leader, dt, mapWidth, mapHeight) {
+  const offX = leader.facingRight ? -28 : 28;
+  const tx = leader.x + offX;
+  const ty = leader.y + 18;
+  const dx = tx - buddy.x;
+  const dy = ty - buddy.y;
+  if (dx * dx + dy * dy > 20 * 20) {
+    buddy.moveTo(tx, ty);
+  }
+  buddy.update(dt, mapWidth, mapHeight);
+}
+
 /** Get directional hint text for companion */
 export function getDirectionHint(fromX, fromY, toX, toY) {
   const dx = toX - fromX;

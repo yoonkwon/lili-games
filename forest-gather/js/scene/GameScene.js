@@ -11,7 +11,7 @@ import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
 import { CollectionTray } from '../ui/CollectionTray.js';
 import { WordBuilder } from '../ui/WordBuilder.js';
-import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera, drawSpriteOrEmoji } from './sceneUtils.js';
+import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera, drawSpriteOrEmoji, updateBuddy } from './sceneUtils.js';
 
 export class GameScene {
   constructor(w, h, safeTop, stageIndex, spriteCache) {
@@ -262,16 +262,8 @@ export class GameScene {
     // Player
     this.player.update(dt, this.mapWidth, this.mapHeight);
 
-    // Lisa follows Ria (offset to the side)
-    const lisaOffX = this.player.facingRight ? -28 : 28;
-    const lisaTargetX = this.player.x + lisaOffX;
-    const lisaTargetY = this.player.y + 18;
-    const ldx = lisaTargetX - this.lisa.x;
-    const ldy = lisaTargetY - this.lisa.y;
-    if (ldx * ldx + ldy * ldy > 20 * 20) {
-      this.lisa.moveTo(lisaTargetX, lisaTargetY);
-    }
-    this.lisa.update(dt, this.mapWidth, this.mapHeight);
+    // Lisa follows Ria
+    updateBuddy(this.lisa, this.player, dt, this.mapWidth, this.mapHeight);
 
     // Companions
     this._updateCompanions(dt);

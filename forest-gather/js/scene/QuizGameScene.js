@@ -12,7 +12,7 @@ import { CompanionNPC } from '../entity/CompanionNPC.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
 import { CollectionTray } from '../ui/CollectionTray.js';
-import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera } from './sceneUtils.js';
+import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera, updateBuddy } from './sceneUtils.js';
 
 export class QuizGameScene {
   constructor(w, h, safeTop, quizIndex, spriteCache) {
@@ -380,15 +380,7 @@ export class QuizGameScene {
     this.player.update(dt, this.mapWidth, this.mapHeight);
 
     // Lisa follows Ria
-    const lisaOffX = this.player.facingRight ? -28 : 28;
-    const lisaTargetX = this.player.x + lisaOffX;
-    const lisaTargetY = this.player.y + 18;
-    const ldx = lisaTargetX - this.lisa.x;
-    const ldy = lisaTargetY - this.lisa.y;
-    if (ldx * ldx + ldy * ldy > 20 * 20) {
-      this.lisa.moveTo(lisaTargetX, lisaTargetY);
-    }
-    this.lisa.update(dt, this.mapWidth, this.mapHeight);
+    updateBuddy(this.lisa, this.player, dt, this.mapWidth, this.mapHeight);
 
     this._updateCompanions(dt);
 
