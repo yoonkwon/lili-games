@@ -70,6 +70,14 @@ export class WordBuilder {
       return 'consumed';
     }
 
+    // Back button (top-left)
+    const backBtnX = 40;
+    const backBtnY = h * 0.08;
+    if (Math.abs(x - backBtnX) < 28 && Math.abs(y - backBtnY) < 28) {
+      this.close();
+      return 'wordCancel';
+    }
+
     // Reset button
     const resetBtnX = w / 2 + 100;
     const resetBtnY = h * 0.35;
@@ -178,6 +186,17 @@ export class WordBuilder {
     ctx.save();
     ctx.fillStyle = `rgba(0,0,0,${anim * 0.65})`;
     ctx.fillRect(0, 0, w, h);
+
+    // Back button (top-left)
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath();
+    ctx.roundRect(12, h * 0.08 - 22, 56, 44, 12);
+    ctx.fill();
+    ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFF';
+    ctx.fillText('← 닫기', 40, h * 0.08);
 
     // Hint emoji + instruction
     ctx.font = '60px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';

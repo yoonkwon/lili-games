@@ -156,6 +156,10 @@ export class GameScene {
         this.wordReadyMission = null;
         this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
         if (this.state === 'complete') return 'stageClear';
+      } else if (result === 'wordCancel') {
+        this.wordReadyMission = null;
+        this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
+        if (this.state === 'complete') return 'stageClear';
       }
       return null;
     }
