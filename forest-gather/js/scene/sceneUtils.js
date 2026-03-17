@@ -279,7 +279,7 @@ const _fontCache = {};
 export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
   if (sprite && spriteCache) {
     const s = spriteCache.get(sprite);
-    if (s) {
+    if (s && (s.width || s instanceof HTMLCanvasElement)) {
       ctx.drawImage(s, x - size / 2, y - size / 2, size, size);
       return;
     }
