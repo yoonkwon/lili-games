@@ -6,7 +6,7 @@
 import { FOODS, TROLL, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
-import { drawElsaMom, drawBabyElsa } from '../draw-elsa.js';
+import { drawElsaMom, drawBabyElsa, drawTroll } from '../draw-elsa.js';
 
 export class GameScene {
   constructor(w, h, safeTop) {
@@ -719,7 +719,7 @@ export class GameScene {
       ctx.textBaseline = 'middle';
       ctx.fillText(s.food.emoji, 0, 0);
 
-      // Troll warning glow
+      // Troll warning glow + small troll icon hint
       if (s.isTroll && !s.collected) {
         const warnWidth = 1.5 + Math.sin(s.wobblePhase * 2) * 1.5;
         ctx.strokeStyle = '#AA44DD';
@@ -727,6 +727,10 @@ export class GameScene {
         ctx.beginPath();
         ctx.arc(0, 0, s.size * 0.65, 0, Math.PI * 2);
         ctx.stroke();
+        // Small troll sprite hint at corner
+        ctx.globalAlpha = 0.4 + Math.sin(s.wobblePhase * 3) * 0.2;
+        drawTroll(ctx, s.size * 0.4, -s.size * 0.35, s.size * 0.35, '⛄');
+        ctx.globalAlpha = 1;
       }
 
       ctx.restore();

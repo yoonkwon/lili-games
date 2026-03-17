@@ -5,7 +5,7 @@
 import { FOODS, ANIMALS, POISON, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
-import { drawSnowWhiteMom, drawBabySnowWhite } from '../draw-snow-white.js';
+import { drawSnowWhiteMom, drawBabySnowWhite, drawWitch } from '../draw-snow-white.js';
 
 export class GameScene {
   constructor(w, h, safeTop) {
@@ -802,12 +802,16 @@ export class GameScene {
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Animal emoji
-      const animalFontSize = Math.max(20, a.size * 0.65);
-      ctx.font = `${animalFontSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(a.animalType.emoji, 0, -a.size * 0.25);
+      // Animal emoji or witch sprite
+      if (a.isCrow) {
+        drawWitch(ctx, 0, -a.size * 0.25, a.size * 0.7, POISON.emoji);
+      } else {
+        const animalFontSize = Math.max(20, a.size * 0.65);
+        ctx.font = `${animalFontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(a.animalType.emoji, 0, -a.size * 0.25);
+      }
 
       // Food emoji (below animal)
       const foodFontSize = Math.max(16, a.size * 0.5);

@@ -12,24 +12,45 @@ function loadImage(src) {
   });
 }
 
+/** Try PNG first, fall back to SVG */
+function loadImageWithFallback(pngSrc) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      // Fallback: try .svg
+      const svgSrc = pngSrc.replace(/\.png$/, '.svg');
+      const img2 = new Image();
+      img2.onload = () => resolve(img2);
+      img2.onerror = () => resolve(null);
+      img2.src = svgSrc;
+    };
+    img.src = pngSrc;
+  });
+}
+
 /**
- * @param {string} assetPrefix - e.g. 'assets/elsa' → loads assets/elsa-mom.svg, assets/baby-elsa.svg, etc.
- * @param {string} charName - e.g. 'elsa' for baby-elsa*.svg naming
+ * @param {string} assetPrefix - e.g. 'assets/elsa' → loads assets/elsa-mom.png, assets/baby-elsa.png, etc.
+ * @param {string} charName - e.g. 'elsa' for baby-elsa*.png naming
  * @param {string} sparkleEmoji - emoji shown near baby at later growth stages
+ * @param {string} [villainFile] - optional villain asset filename e.g. 'assets/troll.png'
  */
-export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji) {
+export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, villainFile) {
   const assets = {};
 
   const assetsReady = (async () => {
     const list = {
-      mom: `${assetPrefix}-mom.svg`,
-      baby: `assets/baby-${charName}.svg`,
-      babyHappy: `assets/baby-${charName}-happy.svg`,
-      babySad: `assets/baby-${charName}-sad.svg`,
-      babyAngry: `assets/baby-${charName}-angry.svg`,
+      mom: `${assetPrefix}-mom.png`,
+      baby: `assets/baby-${charName}.png`,
+      babyHappy: `assets/baby-${charName}-happy.png`,
+      babySad: `assets/baby-${charName}-sad.png`,
+      babyAngry: `assets/baby-${charName}-angry.png`,
     };
+    if (villainFile) list.villain = villainFile;
     const entries = Object.entries(list);
-    const results = await Promise.all(entries.map(([, src]) => loadImage(src)));
+    const results = await Promise.all(entries.map(([key, src]) =>
+      key === 'villain' ? loadImage(src) : loadImageWithFallback(src)
+    ));
     entries.forEach(([key], i) => { assets[key] = results[i]; });
   })();
 
@@ -76,5 +97,17 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji) {
     ctx.restore();
   }
 
-  return { assetsReady, drawMom, drawBaby };
+  function drawVillain(ctx, x, y, size, fallbackEmoji) {
+    const img = assets.villain;
+    if (img) {
+      ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+    } else if (fallbackEmoji) {
+      ctx.font = `${size}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fallbackEmoji, x, y);
+    }
+  }
+
+  return { assetsReady, drawMom, drawBaby, drawVillain };
 }
