@@ -105,6 +105,12 @@ input.onTap((x, y) => {
       const stats = gameScene.getStats();
       const stageId = STAGES[stats.stageIndex].id;
       updateEncyclopedia(stageId, gameScene.getDiscoveredIds());
+      // Save completed words to encyclopedia
+      if (gameScene.completedWords && gameScene.completedWords.length > 0) {
+        const enc = loadEncyclopedia();
+        enc[stageId + '_words'] = gameScene.completedWords;
+        saveEncyclopedia(enc);
+      }
       clearSave();
 
       startTransition(() => {

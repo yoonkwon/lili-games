@@ -2,13 +2,15 @@
  * Main exploration scene - educational encyclopedia adventure
  * Zelda/Animal Crossing style: free roam, discover items, fill encyclopedia
  */
-import { STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS } from '../config.js';
+import { STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS, WORD_MISSIONS } from '../config.js';
 import { Character } from '../entity/Character.js';
 import { Item } from '../entity/Item.js';
 import { Companion } from '../entity/Companion.js';
 import { CompanionNPC } from '../entity/CompanionNPC.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
+import { CollectionTray } from '../ui/CollectionTray.js';
+import { WordBuilder } from '../ui/WordBuilder.js';
 import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera } from './sceneUtils.js';
 
 export class GameScene {
@@ -67,8 +69,17 @@ export class GameScene {
     // Mini-map
     this.showMiniMap = true;
 
+    // Collection tray
+    this.collectionTray = new CollectionTray(spriteCache);
+
+    // Word builder
+    this.wordBuilder = new WordBuilder();
+    this.completedWords = [];
+    this.wordMissions = WORD_MISSIONS[this.stageConfig.id] || [];
+    this.wordReadyMission = null; // mission ready to start
+
     // State
-    this.state = 'exploring'; // exploring, popup, complete
+    this.state = 'exploring'; // exploring, popup, complete, wordReady, wordBuilding
 
     // Show intro
     this.message.show(`${this.stageConfig.emoji} ${this.stageConfig.name}에 오신 걸 환영해요!\n돌아다니며 숨겨진 것들을 찾아보세요!`, 4);
@@ -122,6 +133,30 @@ export class GameScene {
       this.popup = null;
       this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
       if (this.state === 'complete') return 'stageClear';
+      // Check word missions after dismissing popup
+      this._checkWordMissions();
+      return null;
+    }
+
+    // Word ready - tap to start building
+    if (this.state === 'wordReady') {
+      if (this.wordReadyMission) {
+        this.wordBuilder.start(this.wordReadyMission);
+        this.state = 'wordBuilding';
+      }
+      return null;
+    }
+
+    // Word building - delegate to word builder
+    if (this.state === 'wordBuilding') {
+      const result = this.wordBuilder.handleTap(x, y, this.screenW, this.screenH);
+      if (result === 'wordSuccess') {
+        this.completedWords.push(this.wordReadyMission.word);
+        this.particles.createStars(this.screenW / 2, this.screenH / 2, 25);
+        this.wordReadyMission = null;
+        this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
+        if (this.state === 'complete') return 'stageClear';
+      }
       return null;
     }
 
@@ -148,6 +183,9 @@ export class GameScene {
     item.discovered = true;
     this.discoveredCount++;
 
+    // Add to collection tray
+    this.collectionTray.addItem(item.emoji, item.sprite);
+
     // Celebration particles
     const sx = this._toScreenX(item.x);
     const sy = this._toScreenY(item.y);
@@ -159,6 +197,26 @@ export class GameScene {
     this.popup = item;
     this.popupAnim = 0;
     this.state = 'popup';
+
+    // Check word missions after popup dismiss is handled in handleTap
+  }
+
+  _checkWordMissions() {
+    if (this.wordMissions.length === 0) return;
+
+    const discoveredIds = new Set(this.items.filter(i => i.discovered).map(i => i.emoji));
+
+    for (const mission of this.wordMissions) {
+      if (this.completedWords.includes(mission.word)) continue;
+
+      const hasAll = mission.display.every(letter => discoveredIds.has(letter));
+      if (hasAll) {
+        this.wordReadyMission = mission;
+        this.state = 'wordReady';
+        this.message.show(`✨ "${mission.word}" 글자가 모두 모였어요! 터치해서 단어를 만들어보세요!`, 5);
+        return;
+      }
+    }
   }
 
   _updateCompanions(dt) {
@@ -218,6 +276,12 @@ export class GameScene {
       this.popupAnim = Math.min(1, this.popupAnim + dt * 4);
     }
 
+    // Collection tray
+    this.collectionTray.update(dt);
+
+    // Word builder
+    this.wordBuilder.update(dt);
+
     // Effects
     this.particles.update(dt);
     this.message.update(dt);
@@ -249,7 +313,7 @@ export class GameScene {
 
     // Items
     for (const item of this.items) {
-      item.draw(ctx);
+      item.draw(ctx, this.spriteCache);
     }
 
     // CompanionNPCs
@@ -276,6 +340,9 @@ export class GameScene {
       this._drawMiniMap(ctx, w, h);
     }
 
+    // Collection tray
+    this.collectionTray.draw(ctx, w, h);
+
     // Particles
     this.particles.draw(ctx);
 
@@ -286,6 +353,40 @@ export class GameScene {
     if (this.popup) {
       this._drawPopup(ctx, w, h);
     }
+
+    // Word ready banner
+    if (this.state === 'wordReady' && this.wordReadyMission) {
+      this._drawWordReadyBanner(ctx, w, h);
+    }
+
+    // Word builder overlay
+    if (this.state === 'wordBuilding') {
+      this.wordBuilder.draw(ctx, w, h);
+    }
+  }
+
+  _drawWordReadyBanner(ctx, w, h) {
+    const bannerH = 60;
+    const bannerY = h / 2 - bannerH / 2;
+    const pulse = 1 + Math.sin(this.gameTime * 4) * 0.03;
+
+    ctx.save();
+    ctx.translate(w / 2, bannerY + bannerH / 2);
+    ctx.scale(pulse, pulse);
+    ctx.translate(-w / 2, -(bannerY + bannerH / 2));
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.beginPath();
+    ctx.roundRect(20, bannerY, w - 40, bannerH, 16);
+    ctx.fill();
+
+    ctx.font = 'Bold 20px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(`${this.wordReadyMission.emoji} "${this.wordReadyMission.word}" 만들기! 터치!`, w / 2, bannerY + bannerH / 2);
+
+    ctx.restore();
   }
 
   _drawHUD(ctx, w, h) {
@@ -376,9 +477,20 @@ export class GameScene {
     ctx.fillStyle = '#5D4037';
     ctx.fillText(`🎉 새로운 발견! (${this.discoveredCount}/${this.totalItems})`, 0, -cardH / 2 + 22);
 
-    // Big emoji
-    ctx.font = `${this.popup.displaySize * 2}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-    ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 100);
+    // Big emoji or sprite
+    if (this.popup.sprite && this.spriteCache) {
+      const s = this.spriteCache.get(this.popup.sprite);
+      if (s) {
+        const sz = this.popup.displaySize * 2;
+        ctx.drawImage(s, -sz / 2, -cardH / 2 + 100 - sz / 2, sz, sz);
+      } else {
+        ctx.font = `${this.popup.displaySize * 2}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 100);
+      }
+    } else {
+      ctx.font = `${this.popup.displaySize * 2}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 100);
+    }
 
     // Name
     ctx.font = 'Bold 22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
@@ -415,6 +527,7 @@ export class GameScene {
       discovered: this.items.filter(i => i.discovered).map(i => i.id),
       playerX: this.player.x,
       playerY: this.player.y,
+      completedWords: [...this.completedWords],
       savedAt: Date.now(),
     };
   }
@@ -436,6 +549,11 @@ export class GameScene {
       this.player.targetX = save.playerX;
       this.player.targetY = save.playerY;
     }
+    // Restore completed words
+    this.completedWords = save.completedWords || [];
+    // Restore collection tray from discovered items
+    const discoveredItems = this.items.filter(i => i.discovered);
+    this.collectionTray.restore(discoveredItems.map(i => ({ emoji: i.emoji, sprite: i.sprite })));
   }
 
   getDiscoveredIds() {

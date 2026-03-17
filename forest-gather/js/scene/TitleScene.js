@@ -2,7 +2,7 @@
  * Title screen - stage selection map
  * Shows encyclopedia stages + quiz stages
  */
-import { STAGES, QUIZ_STAGES } from '../config.js';
+import { STAGES, QUIZ_STAGES, WORD_MISSIONS } from '../config.js';
 import { hasSave, loadSave } from '../SaveManager.js';
 
 export class TitleScene {
@@ -207,11 +207,24 @@ export class TitleScene {
       if (isComplete) {
         ctx.font = 'Bold 15px sans-serif';
         ctx.fillStyle = '#5D4037';
-        ctx.fillText('✅ 완료!', bx + btnW - 14, by + 33);
+        ctx.fillText('✅ 완료!', bx + btnW - 14, by + 26);
       } else if (hasProgress) {
         ctx.font = '13px sans-serif';
         ctx.fillStyle = '#C8E6C9';
-        ctx.fillText(progressText, bx + btnW - 14, by + 33);
+        ctx.fillText(progressText, bx + btnW - 14, by + 26);
+      }
+
+      // Show completed words count for hangul/english stages
+      if (!isQuiz) {
+        const missions = WORD_MISSIONS[stage.id];
+        if (missions && missions.length > 0) {
+          const completedWords = (this.encyclopedia[stage.id + '_words'] || []).length;
+          if (completedWords > 0) {
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(`📝 ${completedWords}/${missions.length}`, bx + btnW - 14, by + 46);
+          }
+        }
       }
     }
 

@@ -11,6 +11,7 @@ import { Companion } from '../entity/Companion.js';
 import { CompanionNPC } from '../entity/CompanionNPC.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
+import { CollectionTray } from '../ui/CollectionTray.js';
 import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera } from './sceneUtils.js';
 
 export class QuizGameScene {
@@ -64,6 +65,9 @@ export class QuizGameScene {
 
     // Stage 3: Quiz
     this.selectedChoice = -1;
+
+    // Collection tray
+    this.collectionTray = new CollectionTray(spriteCache);
 
     // Place items on map
     this._placeCollectItems();
@@ -228,6 +232,9 @@ export class QuizGameScene {
     item.discovered = true;
     this.collectedCount++;
 
+    // Add to collection tray
+    this.collectionTray.addItem(item.emoji, item.sprite);
+
     const sx = this._toScreenX(item.x);
     const sy = this._toScreenY(item.y);
     this.particles.createStars(sx, sy, 8);
@@ -306,6 +313,8 @@ export class QuizGameScene {
     this._placeCollectItems();
     // Reset companions to default (prevent duplication across rounds)
     this.companions = [new Companion('ikdol', this.player, 0, 1)];
+    // Reset collection tray for new round
+    this.collectionTray = new CollectionTray(this.spriteCache);
     // Regenerate terrain for variety
     const terrainPreset = TERRAIN_PRESETS[this.stageConfig.terrain] || TERRAIN_PRESETS.forest;
     this.terrain = generateTerrain(terrainPreset, this.mapWidth, this.mapHeight);
@@ -377,6 +386,7 @@ export class QuizGameScene {
     if (this.popup) this.popupAnim = Math.min(1, this.popupAnim + dt * 4);
     if (this.state === 'guessing') this.guessAnim = Math.min(1, this.guessAnim + dt * 4);
 
+    this.collectionTray.update(dt);
     this.particles.update(dt);
     this.message.update(dt);
 
@@ -406,7 +416,7 @@ export class QuizGameScene {
 
     // Collection items
     for (const item of this.collectItems) {
-      item.draw(ctx);
+      item.draw(ctx, this.spriteCache);
     }
 
     // CompanionNPCs (discoverable on map)
@@ -438,6 +448,9 @@ export class QuizGameScene {
     if (this.state === 'exploring' && this.cluesUnlocked >= QUIZ_MIN_CLUES) {
       this._drawGuessButton(ctx, w, h);
     }
+
+    // Collection tray
+    this.collectionTray.draw(ctx, w, h);
 
     // Particles & messages
     this.particles.draw(ctx);

@@ -13,6 +13,7 @@ export class Item {
     this.y = y;
     this.id = itemDef.id;
     this.emoji = itemDef.emoji;
+    this.sprite = itemDef.sprite || null; // optional sprite key for custom rendering
     this.name = itemDef.name;
     this.desc = itemDef.desc;
     this.displaySize = itemDef.size || 32;
@@ -83,9 +84,9 @@ export class Item {
     }
   }
 
-  draw(ctx) {
+  draw(ctx, spriteCache) {
     if (this.discovered) {
-      this._drawDiscovered(ctx);
+      this._drawDiscovered(ctx, spriteCache);
       return;
     }
 
@@ -138,15 +139,27 @@ export class Item {
     }
 
     // Show the actual item (partially revealed)
-    ctx.font = this._fontMain;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.emoji, 0, 0);
+    this._drawEmoji(ctx, spriteCache, this._fontMain, 1);
 
     ctx.restore();
   }
 
-  _drawDiscovered(ctx) {
+  /** Draw emoji or sprite at current transform origin */
+  _drawEmoji(ctx, spriteCache, font, scale) {
+    if (this.sprite && spriteCache) {
+      const s = spriteCache.get(this.sprite);
+      if (s) {
+        ctx.drawImage(s, -s.width * scale / 2, -s.height * scale / 2, s.width * scale, s.height * scale);
+        return;
+      }
+    }
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.emoji, 0, 0);
+  }
+
+  _drawDiscovered(ctx, spriteCache) {
     ctx.save();
     const bobY = Math.sin(this.phase) * 1.5;
     ctx.translate(this.x, this.y + bobY);
@@ -160,10 +173,7 @@ export class Item {
     ctx.scale(popScale * 0.8, popScale * 0.8);
 
     // Dimmed (already collected) item with checkmark
-    ctx.font = this._fontDiscovered;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.emoji, 0, 0);
+    this._drawEmoji(ctx, spriteCache, this._fontDiscovered, 0.7);
 
     // Checkmark
     ctx.globalAlpha = 0.8;
