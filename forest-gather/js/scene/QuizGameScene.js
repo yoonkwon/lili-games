@@ -34,10 +34,11 @@ export class QuizGameScene {
     this.camX = 0;
     this.camY = 0;
 
-    // Player
+    // Players — Ria (main) & Lisa (buddy)
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
+    this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - start with default (리아→익돌이)
+    // Companions - start with default (익돌이)
     this.companions = [new Companion('ikdol', this.player, 0, 1)];
 
     // Companion NPCs discoverable on the map
@@ -305,11 +306,15 @@ export class QuizGameScene {
     }
     this.roundData = this.stageConfig.rounds[this.currentRound];
     this.totalClues = this.roundData.clues.length;
-    // Reset player
+    // Reset players
     this.player.x = this.mapWidth / 2;
     this.player.y = this.mapHeight / 2;
     this.player.targetX = this.player.x;
     this.player.targetY = this.player.y;
+    this.lisa.x = this.player.x + 30;
+    this.lisa.y = this.player.y + 20;
+    this.lisa.targetX = this.lisa.x;
+    this.lisa.targetY = this.lisa.y;
     this._placeCollectItems();
     // Reset companions to default (prevent duplication across rounds)
     this.companions = [new Companion('ikdol', this.player, 0, 1)];
@@ -373,6 +378,18 @@ export class QuizGameScene {
     }
 
     this.player.update(dt, this.mapWidth, this.mapHeight);
+
+    // Lisa follows Ria
+    const lisaOffX = this.player.facingRight ? -28 : 28;
+    const lisaTargetX = this.player.x + lisaOffX;
+    const lisaTargetY = this.player.y + 18;
+    const ldx = lisaTargetX - this.lisa.x;
+    const ldy = lisaTargetY - this.lisa.y;
+    if (ldx * ldx + ldy * ldy > 20 * 20) {
+      this.lisa.moveTo(lisaTargetX, lisaTargetY);
+    }
+    this.lisa.update(dt, this.mapWidth, this.mapHeight);
+
     this._updateCompanions(dt);
 
     for (const item of this.collectItems) {
@@ -429,7 +446,10 @@ export class QuizGameScene {
       comp.draw(ctx, this.spriteCache);
     }
 
-    // Player
+    // Lisa (behind Ria)
+    this.lisa.draw(ctx, this.spriteCache);
+
+    // Player (Ria)
     this.player.draw(ctx, this.spriteCache);
 
     ctx.restore();

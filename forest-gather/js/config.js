@@ -1,6 +1,6 @@
 /**
  * Game configuration - educational encyclopedia stages
- * 숲속 백과사전 탐험
+ * 리리탐험대 - 교육 탐험 게임
  */
 
 // Stage definitions - each stage is an educational theme

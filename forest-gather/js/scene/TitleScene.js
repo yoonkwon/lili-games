@@ -107,25 +107,26 @@ export class TitleScene {
     ctx.textBaseline = 'middle';
 
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillText('📚 리리 백과사전 📚', w / 2 + 2, titleY + bounce + 2);
+    ctx.fillText('🌟 리리탐험대 🌟', w / 2 + 2, titleY + bounce + 2);
 
     ctx.fillStyle = '#FFD700';
     ctx.strokeStyle = '#5D4037';
     ctx.lineWidth = 3;
-    ctx.strokeText('📚 리리 백과사전 📚', w / 2, titleY + bounce);
-    ctx.fillText('📚 리리 백과사전 📚', w / 2, titleY + bounce);
+    ctx.strokeText('🌟 리리탐험대 🌟', w / 2, titleY + bounce);
+    ctx.fillText('🌟 리리탐험대 🌟', w / 2, titleY + bounce);
 
     ctx.font = '14px sans-serif';
     ctx.fillStyle = '#C8E6C9';
-    ctx.fillText('탐험하며 배우는 신기한 세계!', w / 2, titleY + bounce + 30);
+    ctx.fillText('리아와 리사의 신나는 탐험!', w / 2, titleY + bounce + 30);
     ctx.restore();
 
-    // Character preview
+    // Character preview — Ria & Lisa together
     const previewY = h * 0.16;
     const charBob = Math.sin(this.phase * 3) * 3;
     if (this.spriteCache) {
-      this.spriteCache.draw(ctx, 'ria-idle', w / 2 - 20, previewY + charBob, 1);
-      this.spriteCache.draw(ctx, 'bori-idle', w / 2 + 22, previewY - charBob + 4, 0.6);
+      this.spriteCache.draw(ctx, 'ria-idle', w / 2 - 28, previewY + charBob, 1);
+      this.spriteCache.draw(ctx, 'lisa-idle', w / 2 + 12, previewY - charBob + 2, 0.9);
+      this.spriteCache.draw(ctx, 'bori-idle', w / 2 + 40, previewY + charBob + 4, 0.55);
     }
 
     // Stage buttons

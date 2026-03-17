@@ -33,10 +33,11 @@ export class GameScene {
     this.camX = 0;
     this.camY = 0;
 
-    // Player (always Ria for now)
+    // Players — Ria (main) & Lisa (buddy)
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
+    this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - start with default (리아→익돌이)
+    // Companions - start with default (익돌이)
     this.companions = [new Companion('ikdol', this.player, 0, 1)];
 
     // Companion NPCs discoverable on the map
@@ -261,6 +262,17 @@ export class GameScene {
     // Player
     this.player.update(dt, this.mapWidth, this.mapHeight);
 
+    // Lisa follows Ria (offset to the side)
+    const lisaOffX = this.player.facingRight ? -28 : 28;
+    const lisaTargetX = this.player.x + lisaOffX;
+    const lisaTargetY = this.player.y + 18;
+    const ldx = lisaTargetX - this.lisa.x;
+    const ldy = lisaTargetY - this.lisa.y;
+    if (ldx * ldx + ldy * ldy > 20 * 20) {
+      this.lisa.moveTo(lisaTargetX, lisaTargetY);
+    }
+    this.lisa.update(dt, this.mapWidth, this.mapHeight);
+
     // Companions
     this._updateCompanions(dt);
 
@@ -330,7 +342,10 @@ export class GameScene {
       comp.draw(ctx, this.spriteCache);
     }
 
-    // Player
+    // Lisa (behind Ria)
+    this.lisa.draw(ctx, this.spriteCache);
+
+    // Player (Ria)
     this.player.draw(ctx, this.spriteCache);
 
     ctx.restore(); // end camera
@@ -540,6 +555,11 @@ export class GameScene {
       this.player.y = save.playerY;
       this.player.targetX = save.playerX;
       this.player.targetY = save.playerY;
+      // Lisa next to Ria
+      this.lisa.x = save.playerX + 30;
+      this.lisa.y = save.playerY + 20;
+      this.lisa.targetX = this.lisa.x;
+      this.lisa.targetY = this.lisa.y;
     }
     // Restore completed words
     this.completedWords = save.completedWords || [];

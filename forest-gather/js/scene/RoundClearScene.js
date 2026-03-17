@@ -132,7 +132,7 @@ export class RoundClearScene {
     if (this.phase > 1.5) {
       ctx.font = '18px sans-serif';
       ctx.fillStyle = '#A5D6A7';
-      ctx.fillText('대단해요! 백과사전 박사가 되고 있어요!', w / 2, h * 0.46);
+      ctx.fillText('대단해요! 최고의 탐험대예요!', w / 2, h * 0.46);
 
       // Show discovered emojis in a grid
       const items = this.stats.items || [];
