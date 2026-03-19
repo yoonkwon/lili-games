@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lili-games-v21';
+const CACHE_NAME = 'lili-games-v22';
 
 // Use relative paths for GitHub Pages compatibility
 const ASSETS = [
@@ -55,6 +55,26 @@ const ASSETS = [
   './mermaid-baby/assets/baby-mermaid-happy.svg',
   './mermaid-baby/assets/baby-mermaid-sad.svg',
   './mermaid-baby/assets/baby-mermaid-angry.svg',
+  './our-mom-baby/',
+  './our-mom-baby/index.html',
+  './our-mom-baby/js/main.js',
+  './our-mom-baby/js/config.js',
+  './our-mom-baby/js/draw-mom.js',
+  './our-mom-baby/js/scene/TitleScene.js',
+  './our-mom-baby/js/scene/GameScene.js',
+  './our-mom-baby/js/scene/BornScene.js',
+  './our-mom-baby/assets/mom.png',
+  './our-mom-baby/assets/baby-ria.png',
+  './our-mom-baby/assets/baby-ria-happy.png',
+  './our-mom-baby/assets/baby-ria-sad.png',
+  './our-mom-baby/assets/baby-ria-angry.png',
+  './our-mom-baby/assets/baby-lisa.png',
+  './our-mom-baby/assets/baby-lisa-happy.png',
+  './our-mom-baby/assets/baby-lisa-sad.png',
+  './our-mom-baby/assets/baby-lisa-angry.png',
+  './our-mom-baby/assets/fairy-lisa.png',
+  './our-mom-baby/assets/child-ria.png',
+  './our-mom-baby/assets/virus.png',
   './chicken-egg/',
   './chicken-egg/index.html',
   './chicken-egg/js/main.js',

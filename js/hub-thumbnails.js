@@ -330,6 +330,29 @@ function mermaidExtras(ctx, w, h) {
   ctx.fillText('🫧', w * 0.5, h * 0.3); ctx.fillText('✨', w * 0.82, h * 0.45);
 }
 
+function ourMomBg(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#2a1a3a'); g.addColorStop(0.5, '#5a3a5a'); g.addColorStop(1, '#FFB6C1');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  // Hearts
+  ctx.font = '12px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+  ctx.globalAlpha = 0.3;
+  ctx.fillText('💕', 50, 50); ctx.fillText('💗', 320, 40);
+  ctx.fillText('🌸', 150, 80); ctx.fillText('✨', 270, 90);
+  ctx.globalAlpha = 1;
+  // Belly circle
+  ctx.strokeStyle = 'rgba(255,105,180,0.3)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(w * 0.65, h * 0.48, 50, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,105,180,0.08)';
+  ctx.beginPath(); ctx.arc(w * 0.65, h * 0.48, 50, 0, Math.PI * 2); ctx.fill();
+}
+function ourMomExtras(ctx, w, h) {
+  ctx.font = '14px "Segoe UI Emoji", "Apple Color Emoji", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('💕', w * 0.5, h * 0.35); ctx.fillText('🫧', w * 0.82, h * 0.45);
+  ctx.font = '18px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+  ctx.fillText('🦠', 50, h * 0.88); ctx.fillText('🍓', w * 0.78, h * 0.85);
+}
+
 // ── Main init ──
 export function initThumbnails() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -364,6 +387,8 @@ export function initThumbnails() {
     'snow-white-baby/assets/snow-white-mom.svg', 'snow-white-baby/assets/baby-snow-white-happy.svg', snowWhiteExtras);
   renderBabyGame('thumb-mermaid', mermaidBg,
     'mermaid-baby/assets/mermaid-mom.svg', 'mermaid-baby/assets/baby-mermaid-happy.svg', mermaidExtras);
+  renderBabyGame('thumb-our-mom', ourMomBg,
+    'our-mom-baby/assets/mom.png', 'our-mom-baby/assets/baby-ria-happy.png', ourMomExtras);
 }
 
 function setupCanvas(canvas, dpr) {
