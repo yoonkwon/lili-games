@@ -1,7 +1,10 @@
 /**
  * Main gameplay - Our Mom Baby game
- * "Nutrient Bubble" mechanic: bubbles float around carrying food
- * Tap the right bubble to feed the baby!
+ * ACTION CATCH mechanic: drag mom left/right to catch falling food, dodge viruses!
+ * - Any food = small growth, wanted food = big growth (x3)
+ * - Viruses = damage, must dodge
+ * - Ria mode: fairy Lisa drops bonus items (offensive support)
+ * - Lisa mode: child Ria blocks viruses (defensive support)
  */
 import { FOODS, VIRUS, GROWTH_STAGES, GAME } from '../config.js';
 import { ParticleSystem } from '../../../shared/ParticleSystem.js';
@@ -27,12 +30,19 @@ export class GameScene {
     this.wantTimer = 0;
     this._pickNewWant();
 
-    // === Bubble system ===
-    this.bubbles = [];
-    this.bubbleSpawnTimer = 0.5;
-    this.virusTimer = GAME.virusInterval;
+    // === Mom position (player-controlled) ===
+    this.momX = w / 2;
+    this.momTargetX = w / 2;
+    this.momW = 70;  // catch hitbox width
+    this.momY = h * 0.78; // fixed Y, updated on resize
 
-    // Fever state (virus penalty)
+    // === Falling items ===
+    this.items = [];
+    this.spawnTimer = 0.5;
+    this.virusTimer = GAME.virusInterval;
+    this.difficulty = 1; // increases over time
+
+    // Fever state
     this.fever = false;
     this.feverTimer = 0;
     this.feverAlpha = 0;
@@ -43,35 +53,60 @@ export class GameScene {
     this.emotionTimer = 0;
     this.babyShake = 0;
 
-    // Mom
-    this.momPhase = 0;
-
-    // Helper character
+    // Helper state
     this.helperPhase = 0;
-    this.helperX = w * 0.2;
-    this.helperY = mode === 'ria' ? h * 0.08 : h * 0.78;
-    this.helperMsg = '';
-    this.helperMsgTimer = 0;
+    // Ria mode: fairy Lisa position & bonus drop
+    this.fairyX = w * 0.5;
+    this.fairyBonusTimer = 8;
+    // Lisa mode: child Ria position & block
+    this.riaX = w * 0.5;
+    this.riaBlockCooldown = 0;
 
     // Effects
     this.particles = new ParticleSystem();
     this.message = new Message();
 
-    // Ambient hearts
+    // Ambient
     this.ambientItems = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
       this.ambientItems.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        speed: 10 + Math.random() * 20,
-        size: 8 + Math.random() * 10,
+        x: Math.random() * w, y: Math.random() * h,
+        speed: 8 + Math.random() * 15, size: 8 + Math.random() * 10,
         wobble: Math.random() * Math.PI * 2,
         emoji: ['💕', '✨', '🌸', '💗'][Math.floor(Math.random() * 4)],
       });
     }
 
-    const babyName = mode === 'ria' ? '리아' : '리사';
-    this.message.show(`버블을 터치! ${babyName}가 원하는 음식을 골라줘요! 💕`, 3);
+    // Pointer tracking (for drag)
+    this._pointerDown = false;
+    this._setupInput();
+
+    const name = mode === 'ria' ? '리아' : '리사';
+    this.message.show(`엄마를 움직여 음식을 잡아요! 세균 조심! 💕`, 3);
+  }
+
+  _setupInput() {
+    // We attach to document to track dragging even outside canvas
+    this._onPointerDown = (e) => {
+      this._pointerDown = true;
+      this.momTargetX = e.clientX;
+    };
+    this._onPointerMove = (e) => {
+      if (this._pointerDown) {
+        this.momTargetX = e.clientX;
+      }
+    };
+    this._onPointerUp = () => { this._pointerDown = false; };
+
+    document.addEventListener('pointerdown', this._onPointerDown);
+    document.addEventListener('pointermove', this._onPointerMove);
+    document.addEventListener('pointerup', this._onPointerUp);
+  }
+
+  destroy() {
+    document.removeEventListener('pointerdown', this._onPointerDown);
+    document.removeEventListener('pointermove', this._onPointerMove);
+    document.removeEventListener('pointerup', this._onPointerUp);
   }
 
   _pickNewWant() {
@@ -79,73 +114,92 @@ export class GameScene {
     this.wantTimer = GAME.wantChangeInterval;
   }
 
-  _spawnBubble() {
-    if (this.bubbles.filter(b => !b.collected).length >= GAME.maxBubbles) return;
-    const food = this._pickBubbleFood();
-    const size = 45 + Math.random() * 15;
-    const x = size + Math.random() * (this.w - size * 2);
-    const y = this.h * 0.58 + Math.random() * (this.h * 0.32);
-
-    this.bubbles.push({
-      food, x, y, size,
-      vx: (Math.random() - 0.5) * 40,
-      vy: (Math.random() - 0.5) * 30,
-      phase: Math.random() * Math.PI * 2,
-      collected: false,
-      collectPhase: 0,
-      correct: false,
-      isVirus: false,
+  _spawnFood() {
+    const food = Math.random() < GAME.wantedFoodChance ? this.wantedFood
+      : FOODS[Math.floor(Math.random() * FOODS.length)];
+    const size = 36 + Math.random() * 12;
+    this.items.push({
+      type: 'food', food, x: size + Math.random() * (this.w - size * 2),
+      y: -size, size,
+      vy: 80 + Math.random() * 40 + this.difficulty * 10,
+      vx: (Math.random() - 0.5) * 30,
+      wobblePhase: Math.random() * Math.PI * 2,
+      collected: false, collectPhase: 0,
     });
   }
 
   _spawnVirus() {
     const size = VIRUS.size;
-    const side = Math.random() < 0.5 ? -size : this.w + size;
-    const y = this.h * 0.6 + Math.random() * (this.h * 0.25);
-    this.bubbles.push({
-      food: { type: 'virus', emoji: VIRUS.emoji, name: VIRUS.name, color: '#00AA00' },
-      x: side, y, size,
-      vx: side < 0 ? VIRUS.speed : -VIRUS.speed,
-      vy: (Math.random() - 0.5) * 20,
-      phase: Math.random() * Math.PI * 2,
-      collected: false,
-      collectPhase: 0,
-      correct: false,
-      isVirus: true,
+    this.items.push({
+      type: 'virus', food: null,
+      x: size + Math.random() * (this.w - size * 2),
+      y: -size, size,
+      vy: 60 + Math.random() * 30 + this.difficulty * 8,
+      vx: (Math.random() - 0.5) * 50,
+      wobblePhase: Math.random() * Math.PI * 2,
+      collected: false, collectPhase: 0,
     });
   }
 
-  _pickBubbleFood() {
-    if (Math.random() < GAME.wantedFoodChance) return this.wantedFood;
-    return FOODS[Math.floor(Math.random() * FOODS.length)];
+  _spawnBonus() {
+    // Fairy Lisa drops a bonus heart/vitamin
+    const bonusTypes = [
+      { emoji: '💊', name: '비타민', growth: 15 },
+      { emoji: '💕', name: '사랑', growth: 12 },
+      { emoji: '⭐', name: '별', growth: 10 },
+    ];
+    const bonus = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+    this.items.push({
+      type: 'bonus', food: bonus,
+      x: this.fairyX, y: 60, size: 40,
+      vy: 70 + Math.random() * 20,
+      vx: (Math.random() - 0.5) * 20,
+      wobblePhase: Math.random() * Math.PI * 2,
+      collected: false, collectPhase: 0,
+    });
   }
 
   handleTap(x, y) {
-    if (this.fever) return;
-    for (let i = this.bubbles.length - 1; i >= 0; i--) {
-      const b = this.bubbles[i];
-      if (b.collected) continue;
-      const hitSize = b.size * 1.2;
-      if (x >= b.x - hitSize && x <= b.x + hitSize &&
-          y >= b.y - hitSize && y <= b.y + hitSize) {
-        if (b.isVirus) {
-          this._tapVirus(b);
-        } else {
-          this._feedBaby(b);
-        }
-        return;
-      }
-    }
+    // Tap also sets mom target (for quick repositioning)
+    this.momTargetX = x;
   }
 
-  _feedBaby(bubble) {
-    this.totalFed++;
-    const correct = bubble.food.type === this.wantedFood.type;
-    bubble.collected = true;
-    bubble.collectPhase = 0;
-    bubble.correct = correct;
+  _catchItem(item) {
+    item.collected = true;
+    item.collectPhase = 0;
 
-    if (correct) {
+    if (item.type === 'virus') {
+      // HIT by virus!
+      this.growth = Math.max(0, this.growth + GAME.virusPenalty);
+      this.dislike = Math.min(GAME.maxDislike, this.dislike + GAME.virusDislike);
+      this.combo = 0;
+      this.babyEmotion = 'angry';
+      this.emotionTimer = 2.0;
+      this.babyShake = 0.8;
+      this.particles.addFloatingText(item.x, this.momY - 40, '세균! 🦠', '#00AA00', 28);
+      this.particles.createParticles(item.x, this.momY, '#00AA00', 12);
+      this.message.show('🦠 세균에 닿았어요! 조심! 🤒', 2);
+      if (this.dislike >= GAME.maxDislike) this._triggerFever();
+      return;
+    }
+
+    if (item.type === 'bonus') {
+      // Bonus item!
+      const g = item.food.growth;
+      this.growth = Math.min(GAME.maxGrowth, this.growth + g);
+      this.combo++;
+      this.babyEmotion = 'happy';
+      this.emotionTimer = 1.5;
+      this.particles.addFloatingText(item.x, this.momY - 40, `+${g} ${item.food.emoji}`, '#FFD700', 30);
+      this.particles.createStars(item.x, this.momY - 20, 8);
+      this.message.show(`${item.food.name}! 대박 보너스! ✨`, 2);
+      return;
+    }
+
+    // Food item
+    this.totalFed++;
+    const isWanted = item.food.type === this.wantedFood.type;
+    if (isWanted) {
       this.combo++;
       this.correctFed++;
       const bonus = GAME.growthPerCorrect + this.combo * GAME.comboBonus;
@@ -153,41 +207,18 @@ export class GameScene {
       this.dislike = Math.max(0, this.dislike - 10);
       this.babyEmotion = 'happy';
       this.emotionTimer = 1.5;
-      this.particles.createParticles(bubble.x, bubble.y - 20, '#FF69B4', 12);
+      this.particles.createParticles(item.x, this.momY - 20, '#FF69B4', 10);
       this.particles.createStars(this.w / 2, this.h * 0.35, 5);
-      this.particles.addFloatingText(bubble.x, bubble.y - 40, `+${bonus} 💕`, '#FF69B4', 28);
-      if (this.combo >= 3) {
-        this.message.show(`${this.combo} 콤보! 아기가 아주 좋아해요! ✨`);
-      }
-      this._showHelperMsg('맛있겠다~!');
+      this.particles.addFloatingText(item.x, this.momY - 40, `+${bonus} 💕`, '#FF69B4', 28);
+      if (this.combo >= 3) this.message.show(`${this.combo} 콤보! 아기가 좋아해요! ✨`);
       this._pickNewWant();
     } else {
-      this.combo = 0;
-      this.growth = Math.max(0, this.growth + GAME.growthPerWrong);
-      this.dislike = Math.min(GAME.maxDislike, this.dislike + GAME.dislikePerWrong);
-      this.babyEmotion = 'sad';
-      this.emotionTimer = 1.2;
-      this.babyShake = 0.5;
-      this.particles.addFloatingText(bubble.x, bubble.y - 40, '싫어요! 😣', '#FFA726', 24);
-      if (this.dislike >= GAME.maxDislike) this._triggerFever();
+      // Any food = small growth (no penalty!)
+      const smallGrowth = 2;
+      this.growth = Math.min(GAME.maxGrowth, this.growth + smallGrowth);
+      this.particles.addFloatingText(item.x, this.momY - 40, `+${smallGrowth}`, '#AAAAFF', 22);
+      // Don't reset combo for wrong food, just don't increase it
     }
-  }
-
-  _tapVirus(virus) {
-    virus.collected = true;
-    virus.collectPhase = 0;
-    virus.correct = false;
-    this.growth = Math.max(0, this.growth + GAME.virusPenalty);
-    this.dislike = Math.min(GAME.maxDislike, this.dislike + GAME.virusDislike);
-    this.combo = 0;
-    this.babyEmotion = 'angry';
-    this.emotionTimer = 2.0;
-    this.babyShake = 0.8;
-    this.particles.addFloatingText(virus.x, virus.y - 40, '세균이다! 🦠', '#00AA00', 30);
-    this.particles.createParticles(virus.x, virus.y, '#00AA00', 15);
-    this.message.show('🦠 세균을 만졌어요! 엄마가 아파요! 🤒', 3);
-    this._showHelperMsg('조심해!');
-    if (this.dislike >= GAME.maxDislike) this._triggerFever();
   }
 
   _triggerFever() {
@@ -200,21 +231,19 @@ export class GameScene {
     this.message.show('🤒 엄마가 열이 나요! 쉬어야 해요! 🤒', 3);
   }
 
-  _showHelperMsg(msg) {
-    this.helperMsg = msg;
-    this.helperMsgTimer = 2;
-  }
-
   update(dt, w, h) {
     this.w = w;
     this.h = h;
+    this.momY = h * 0.78;
     this.babyPhase += dt;
-    this.momPhase += dt;
     this.helperPhase += dt;
+
+    // Difficulty ramp
+    this.difficulty = 1 + (this.growth / GAME.maxGrowth) * 3;
 
     if (this.growth >= GAME.maxGrowth) return 'born';
 
-    // Fever state
+    // Fever
     if (this.fever) {
       this.feverTimer -= dt;
       this.feverAlpha = Math.min(1, this.feverAlpha + dt * 3);
@@ -230,12 +259,8 @@ export class GameScene {
     if (!this.fever) {
       this.wantTimer -= dt;
       if (this.wantTimer <= 0) {
-        this.dislike = Math.min(GAME.maxDislike, this.dislike + 8);
-        this.babyEmotion = 'sad';
-        this.emotionTimer = 0.8;
         this._pickNewWant();
       }
-      this.dislike = Math.max(0, this.dislike - GAME.dislikeDecay * dt);
     }
 
     // Emotion
@@ -245,60 +270,101 @@ export class GameScene {
     }
     if (this.babyShake > 0) this.babyShake = Math.max(0, this.babyShake - dt * 2);
 
-    // Helper message
-    if (this.helperMsgTimer > 0) this.helperMsgTimer -= dt;
+    // === Mom movement (smooth follow) ===
+    const momSpeed = 12;
+    this.momX += (this.momTargetX - this.momX) * Math.min(1, dt * momSpeed);
+    this.momX = Math.max(this.momW / 2, Math.min(w - this.momW / 2, this.momX));
 
-    // Helper position
-    if (this.mode === 'ria') {
-      // Fairy Lisa floats in sky
-      this.helperX = w * 0.18 + Math.sin(this.helperPhase * 0.8) * 30;
-      this.helperY = h * 0.08 + Math.sin(this.helperPhase * 1.2) * 10;
-    } else {
-      // Child Ria walks on bottom
-      this.helperX = w * 0.15 + Math.sin(this.helperPhase * 0.5) * (w * 0.2);
-      this.helperY = h * 0.88;
-    }
-
-    // === Bubble system ===
+    // === Falling items ===
     if (!this.fever) {
-      this.bubbleSpawnTimer -= dt;
-      if (this.bubbleSpawnTimer <= 0 && this.bubbles.filter(b => !b.collected).length < GAME.maxBubbles) {
-        this._spawnBubble();
-        this.bubbleSpawnTimer = GAME.bubbleSpawnInterval;
-      }
-      if (this.bubbles.filter(b => !b.collected && !b.isVirus).length < GAME.minBubbles) {
-        this._spawnBubble();
+      // Spawn food
+      this.spawnTimer -= dt;
+      const spawnRate = Math.max(0.6, GAME.bubbleSpawnInterval - this.difficulty * 0.15);
+      if (this.spawnTimer <= 0) {
+        this._spawnFood();
+        this.spawnTimer = spawnRate;
       }
 
+      // Spawn virus
       this.virusTimer -= dt;
+      const virusRate = Math.max(6, GAME.virusInterval - this.difficulty * 2);
       if (this.virusTimer <= 0) {
         this._spawnVirus();
-        this.virusTimer = GAME.virusInterval;
+        this.virusTimer = virusRate;
       }
 
-      for (const b of this.bubbles) {
-        b.phase += dt * 2;
-        if (b.collected) {
-          b.collectPhase += dt * 3;
-        } else {
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          // Bounce off walls
-          const margin = b.size * 0.5;
-          if (b.x < margin) { b.x = margin; b.vx = Math.abs(b.vx); }
-          if (b.x > w - margin) { b.x = w - margin; b.vx = -Math.abs(b.vx); }
-          if (b.y < h * 0.55) { b.y = h * 0.55; b.vy = Math.abs(b.vy); }
-          if (b.y > h - margin) { b.y = h - margin; b.vy = -Math.abs(b.vy); }
-          // Gentle drift
-          b.vx += (Math.random() - 0.5) * 20 * dt;
-          b.vy += (Math.random() - 0.5) * 15 * dt;
-          // Speed limit
-          const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-          const maxSpeed = b.isVirus ? 60 : 35;
-          if (speed > maxSpeed) { b.vx = (b.vx / speed) * maxSpeed; b.vy = (b.vy / speed) * maxSpeed; }
+      // Fairy Lisa bonus drop (ria mode only)
+      if (this.mode === 'ria') {
+        this.fairyBonusTimer -= dt;
+        if (this.fairyBonusTimer <= 0) {
+          this._spawnBonus();
+          this.fairyBonusTimer = 7 + Math.random() * 5;
         }
       }
-      this.bubbles = this.bubbles.filter(b => !b.collected || b.collectPhase < 1.2);
+    }
+
+    // Update items
+    for (const item of this.items) {
+      if (item.collected) {
+        item.collectPhase += dt * 4;
+        continue;
+      }
+
+      item.wobblePhase += dt * 3;
+      item.y += item.vy * dt;
+      item.x += item.vx * dt + Math.sin(item.wobblePhase) * 15 * dt;
+
+      // Bounce off walls
+      if (item.x < item.size / 2) { item.x = item.size / 2; item.vx = Math.abs(item.vx); }
+      if (item.x > w - item.size / 2) { item.x = w - item.size / 2; item.vx = -Math.abs(item.vx); }
+
+      // Check collision with mom
+      const catchY = this.momY;
+      const catchH = 50; // vertical catch zone
+      if (item.y >= catchY - catchH && item.y <= catchY + 20) {
+        if (Math.abs(item.x - this.momX) < (this.momW / 2 + item.size / 3)) {
+          // Lisa mode: Ria blocks viruses
+          if (item.type === 'virus' && this.mode === 'lisa' && this.riaBlockCooldown <= 0) {
+            if (Math.abs(item.x - this.riaX) < 50) {
+              // Ria blocks it!
+              item.collected = true;
+              item.collectPhase = 0;
+              this.riaBlockCooldown = 4; // cooldown
+              this.particles.addFloatingText(this.riaX, this.momY - 50, '리아가 막았어! 🛡️', '#4CAF50', 22);
+              this.particles.createParticles(this.riaX, this.momY - 20, '#4CAF50', 8);
+              continue;
+            }
+          }
+          this._catchItem(item);
+          continue;
+        }
+      }
+
+      // Fell off screen
+      if (item.y > h + 50) {
+        item.collected = true;
+        item.collectPhase = 10; // instant remove
+        // Missed wanted food = slight dislike increase
+        if (item.type === 'food' && item.food.type === this.wantedFood.type) {
+          this.dislike = Math.min(GAME.maxDislike, this.dislike + 5);
+        }
+      }
+    }
+
+    // Remove done items
+    this.items = this.items.filter(i => !i.collected || i.collectPhase < 1.5);
+
+    // Helper positions
+    if (this.mode === 'ria') {
+      // Fairy Lisa follows loosely above
+      this.fairyX += (this.momX - this.fairyX) * dt * 1.5;
+      this.fairyX += Math.sin(this.helperPhase * 1.5) * 20 * dt;
+    } else {
+      // Child Ria patrols near mom
+      this.riaX += (this.momX - this.riaX) * dt * 2;
+      this.riaX += Math.sin(this.helperPhase * 0.8) * 40 * dt;
+      this.riaX = Math.max(30, Math.min(w - 30, this.riaX));
+      if (this.riaBlockCooldown > 0) this.riaBlockCooldown -= dt;
     }
 
     // Ambient
@@ -315,21 +381,21 @@ export class GameScene {
 
   draw(ctx, w, h) {
     this._drawBackground(ctx, w, h);
-    this._drawHelper(ctx, w, h);
-    this._drawMom(ctx, w, h);
     this._drawBelly(ctx, w, h);
     this._drawBabyInBelly(ctx, w, h);
     this._drawWantBubble(ctx, w, h);
+    this._drawFallingItems(ctx, w, h);
+    this._drawMomPlayer(ctx, w, h);
+    this._drawHelper(ctx, w, h);
     this._drawGrowthBar(ctx, w, h);
     this._drawDislikeBar(ctx, w, h);
-    this._drawBubbles(ctx, w, h);
     this.particles.draw(ctx);
     if (this.combo >= 2) {
       ctx.save();
       ctx.font = 'Bold 20px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#FFD700';
-      ctx.fillText(`💕 ${this.combo} 콤보!`, w / 2, h * 0.52);
+      ctx.fillText(`💕 ${this.combo} 콤보!`, w / 2, h * 0.48);
       ctx.restore();
     }
     this.message.draw(ctx, w, h);
@@ -340,7 +406,7 @@ export class GameScene {
     const grad = ctx.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, '#2a1a3a');
     grad.addColorStop(0.3, '#3a2a4a');
-    grad.addColorStop(0.6, '#5a3a5a');
+    grad.addColorStop(0.5, '#5a3a5a');
     grad.addColorStop(1, '#FFB6C1');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
@@ -353,267 +419,219 @@ export class GameScene {
       ctx.fillText(s.emoji, s.x, s.y);
       ctx.restore();
     }
+
+    // Ground line
+    ctx.fillStyle = 'rgba(255,182,193,0.15)';
+    ctx.fillRect(0, this.momY + 35, w, h - this.momY - 35);
+  }
+
+  _drawMomPlayer(ctx, w, h) {
+    const bob = Math.sin(this.babyPhase * 3) * 2;
+    drawMom(ctx, this.momX, this.momY - 45 + bob, 0.8);
+
+    // Catch zone indicator
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#FF69B4';
+    ctx.beginPath();
+    ctx.ellipse(this.momX, this.momY + 10, this.momW / 2 + 5, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   _drawHelper(ctx, w, h) {
     ctx.save();
     if (this.mode === 'ria') {
-      // Fairy Lisa in the sky
-      ctx.globalAlpha = 0.7 + Math.sin(this.helperPhase * 2) * 0.2;
-      drawFairyLisa(ctx, this.helperX, this.helperY, 70);
+      // Fairy Lisa in sky
+      const fy = 45 + Math.sin(this.helperPhase * 1.5) * 8;
+      ctx.globalAlpha = 0.8;
+      drawFairyLisa(ctx, this.fairyX, fy, 55);
       ctx.globalAlpha = 1;
-      ctx.font = '11px sans-serif';
+      ctx.font = '10px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#FFB6C1';
-      ctx.fillText('요정 리사', this.helperX, this.helperY + 42);
+      ctx.fillText('요정 리사 ✨', this.fairyX, fy + 34);
     } else {
-      // Child Ria on bottom
-      drawChildRia(ctx, this.helperX, this.helperY, 65);
-      ctx.font = '11px sans-serif';
+      // Child Ria near mom
+      const ry = this.momY + 5;
+      drawChildRia(ctx, this.riaX, ry, 50);
+      ctx.font = '10px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#A5D6A7';
-      ctx.fillText('언니 리아', this.helperX, this.helperY + 40);
+      ctx.fillText('언니 리아 🛡️', this.riaX, ry + 32);
+      // Shield indicator
+      if (this.riaBlockCooldown <= 0) {
+        ctx.globalAlpha = 0.4 + Math.sin(this.helperPhase * 3) * 0.2;
+        ctx.strokeStyle = '#4CAF50';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.riaX, ry - 10, 28, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
-
-    // Helper speech bubble
-    if (this.helperMsgTimer > 0) {
-      const alpha = Math.min(1, this.helperMsgTimer);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      const tw = ctx.measureText(this.helperMsg).width + 16;
-      const bx = this.helperX - tw / 2;
-      const by = this.helperY - 55;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, tw, 24, 12);
-      ctx.fill();
-      ctx.font = 'Bold 13px sans-serif';
-      ctx.fillStyle = '#333';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.helperMsg, this.helperX, by + 16);
-    }
-    ctx.restore();
-  }
-
-  _drawMom(ctx, w, h) {
-    const momX = w / 2;
-    const momY = h * 0.12;
-    const bob = Math.sin(this.momPhase * 1.2) * 3;
-    drawMom(ctx, momX, momY + bob, 1.0);
-    ctx.save();
-    ctx.font = 'Bold 14px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#FFB6C1';
-    ctx.fillText('우리 엄마', momX, momY + bob + 65);
     ctx.restore();
   }
 
   _drawBelly(ctx, w, h) {
     const cx = w / 2;
-    const cy = h * 0.35;
+    const cy = h * 0.28;
     const growthRatio = this.growth / GAME.maxGrowth;
-    const baseRadius = 55 + growthRatio * 35;
+    const baseRadius = 40 + growthRatio * 25;
     ctx.save();
 
     const glowGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius * 1.3);
-    glowGrad.addColorStop(0, 'rgba(255, 105, 180, 0.1)');
-    glowGrad.addColorStop(0.7, 'rgba(255, 105, 180, 0.05)');
-    glowGrad.addColorStop(1, 'rgba(255, 105, 180, 0)');
+    glowGrad.addColorStop(0, 'rgba(255,105,180,0.1)');
+    glowGrad.addColorStop(1, 'rgba(255,105,180,0)');
     ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, baseRadius * 1.3, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, baseRadius * 1.3, 0, Math.PI * 2); ctx.fill();
 
-    const bellyGrad = ctx.createRadialGradient(cx, cy - 10, 0, cx, cy, baseRadius);
-    bellyGrad.addColorStop(0, 'rgba(255, 182, 193, 0.25)');
-    bellyGrad.addColorStop(0.7, 'rgba(255, 105, 180, 0.15)');
-    bellyGrad.addColorStop(1, 'rgba(219, 68, 129, 0.1)');
+    const bellyGrad = ctx.createRadialGradient(cx, cy - 5, 0, cx, cy, baseRadius);
+    bellyGrad.addColorStop(0, 'rgba(255,182,193,0.25)');
+    bellyGrad.addColorStop(1, 'rgba(219,68,129,0.1)');
     ctx.fillStyle = bellyGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 105, 180, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,105,180,0.3)';
+    ctx.lineWidth = 1.5; ctx.stroke();
 
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 + this.babyPhase * 0.5;
-      const sx = cx + Math.cos(angle) * (baseRadius + 8);
-      const sy = cy + Math.sin(angle) * (baseRadius + 8);
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 + this.babyPhase * 0.5;
       ctx.globalAlpha = 0.3 + Math.sin(this.babyPhase * 3 + i) * 0.2;
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('✦', sx, sy);
+      ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('✦', cx + Math.cos(angle) * (baseRadius + 6), cy + Math.sin(angle) * (baseRadius + 6));
     }
     ctx.restore();
   }
 
   _drawBabyInBelly(ctx, w, h) {
-    const cx = w / 2;
-    const cy = h * 0.35;
+    const cx = w / 2, cy = h * 0.28;
     const growthRatio = this.growth / GAME.maxGrowth;
     let stage = GROWTH_STAGES[0];
     for (const s of GROWTH_STAGES) { if (growthRatio >= s.threshold) stage = s; }
 
-    const babySize = 20 + growthRatio * 35;
-    const bob = Math.sin(this.babyPhase * 2) * 4;
-    const shakeX = this.babyShake > 0 ? Math.sin(this.babyPhase * 30) * 5 * this.babyShake : 0;
+    const babySize = 16 + growthRatio * 25;
+    const bob = Math.sin(this.babyPhase * 2) * 3;
+    const shakeX = this.babyShake > 0 ? Math.sin(this.babyPhase * 30) * 4 * this.babyShake : 0;
 
     drawBaby(ctx, cx + shakeX, cy + bob, babySize, this.babyEmotion, this.babyPhase, growthRatio, this.mode);
 
     ctx.save();
-    ctx.font = '13px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+    ctx.font = '11px "Segoe UI","Apple SD Gothic Neo",sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFB6C1';
-    ctx.fillText(`${stage.name} 단계 - ${stage.desc}`, cx, cy + babySize + 20);
+    ctx.fillText(`${stage.name} - ${stage.desc}`, cx, cy + babySize + 15);
     ctx.restore();
   }
 
   _drawWantBubble(ctx, w, h) {
     if (this.fever) return;
-    const cx = w / 2 + 50;
-    const cy = h * 0.22;
+    const cx = w / 2 + 45, cy = h * 0.14;
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.roundRect(cx - 30, cy - 24, 60, 48, 14); ctx.fill();
     ctx.beginPath();
-    ctx.roundRect(cx - 35, cy - 28, 70, 56, 16);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx - 15, cy + 26);
-    ctx.lineTo(cx - 25, cy + 40);
-    ctx.lineTo(cx - 5, cy + 28);
-    ctx.fill();
+    ctx.moveTo(cx - 12, cy + 22); ctx.lineTo(cx - 20, cy + 34); ctx.lineTo(cx - 4, cy + 24); ctx.fill();
 
     const pulse = 1 + Math.sin(this.babyPhase * 4) * 0.08;
-    ctx.translate(cx, cy);
-    ctx.scale(pulse, pulse);
-    ctx.font = '32px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.translate(cx, cy); ctx.scale(pulse, pulse);
+    ctx.font = '28px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(this.wantedFood.emoji, 0, 0);
-    ctx.restore();
-
-    const urgency = 1 - (this.wantTimer / GAME.wantChangeInterval);
-    ctx.save();
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'center';
-    if (urgency > 0.7) { ctx.fillStyle = '#FF4444'; ctx.fillText('빨리!', cx, cy + 48); }
-    else if (urgency > 0.4) { ctx.fillStyle = '#FFA726'; ctx.fillText('기다려...', cx, cy + 48); }
     ctx.restore();
   }
 
   _drawGrowthBar(ctx, w, h) {
-    const barX = 16, barY = this.safeTop + 16, barW = w - 32, barH = 22;
+    const barX = 16, barY = this.safeTop + 12, barW = w - 32, barH = 18;
     const ratio = this.growth / GAME.maxGrowth;
     ctx.save();
-    ctx.font = 'Bold 13px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#FFB6C1';
-    ctx.fillText(`💕 성장 ${Math.floor(ratio * 100)}%`, barX, barY - 4);
+    ctx.font = 'Bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#FFB6C1';
+    ctx.fillText(`💕 ${Math.floor(ratio * 100)}%`, barX, barY - 3);
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 11); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 9); ctx.fill();
     if (ratio > 0) {
       const grad = ctx.createLinearGradient(barX, 0, barX + barW * ratio, 0);
-      grad.addColorStop(0, '#FF69B4');
-      grad.addColorStop(1, '#E91E63');
+      grad.addColorStop(0, '#FF69B4'); grad.addColorStop(1, '#E91E63');
       ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.roundRect(barX, barY, barW * ratio, barH, 11); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.fillRect(barX + 4, barY + 2, barW * ratio - 8, barH * 0.35);
+      ctx.beginPath(); ctx.roundRect(barX, barY, barW * ratio, barH, 9); ctx.fill();
     }
     ctx.restore();
   }
 
   _drawDislikeBar(ctx, w, h) {
-    const barX = 16, barY = this.safeTop + 48, barW = w * 0.4, barH = 14;
+    const barX = 16, barY = this.safeTop + 38, barW = w * 0.35, barH = 10;
     const ratio = this.dislike / GAME.maxDislike;
+    if (ratio <= 0) return;
     ctx.save();
-    ctx.font = '11px sans-serif';
-    ctx.textAlign = 'left';
+    ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
     ctx.fillStyle = ratio > 0.6 ? '#FF4444' : '#FFB6C1';
-    ctx.fillText('🤒 싫음', barX, barY - 3);
+    ctx.fillText('🤒', barX, barY - 2);
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.fill();
-    if (ratio > 0) {
-      const grad = ctx.createLinearGradient(barX, 0, barX + barW * ratio, 0);
-      grad.addColorStop(0, '#FF6B6B');
-      grad.addColorStop(1, ratio > 0.7 ? '#CC0000' : '#FF4444');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.roundRect(barX, barY, barW * ratio, barH, 7); ctx.fill();
-    }
-    if (ratio > 0.7) {
-      const flash = Math.sin(this.babyPhase * 6) * 0.3;
-      ctx.fillStyle = `rgba(255,0,0,${0.1 + flash})`;
-      ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 7); ctx.fill();
-    }
+    ctx.beginPath(); ctx.roundRect(barX + 16, barY, barW, barH, 5); ctx.fill();
+    const grad = ctx.createLinearGradient(barX + 16, 0, barX + 16 + barW * ratio, 0);
+    grad.addColorStop(0, '#FF6B6B'); grad.addColorStop(1, '#CC0000');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.roundRect(barX + 16, barY, barW * ratio, barH, 5); ctx.fill();
     ctx.restore();
   }
 
-  _drawBubbles(ctx, w, h) {
-    ctx.save();
-    ctx.font = 'Bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText('🫧 버블을 터치해서 음식을 주세요!', w / 2, h * 0.55);
-    ctx.restore();
-
-    for (const b of this.bubbles) {
+  _drawFallingItems(ctx, w, h) {
+    for (const item of this.items) {
+      if (item.collected && item.collectPhase > 1) continue;
       ctx.save();
-      const wobble = Math.sin(b.phase) * 3;
 
-      if (b.collected) {
-        const t = b.collectPhase;
+      if (item.collected) {
+        const t = item.collectPhase;
         ctx.globalAlpha = Math.max(0, 1 - t);
-        if (b.correct) {
-          ctx.translate(b.x, b.y - t * 80 + wobble);
-          ctx.scale(1 + t * 0.3, 1 + t * 0.3);
+        if (item.type === 'virus') {
+          const shake = Math.sin(t * 25) * 6 * (1 - t);
+          ctx.translate(item.x + shake, item.y);
         } else {
-          const shake = Math.sin(t * 20) * 8 * (1 - t);
-          ctx.translate(b.x + shake, b.y + wobble);
+          ctx.translate(item.x, item.y - t * 60);
+          ctx.scale(1 + t * 0.4, 1 + t * 0.4);
         }
       } else {
-        ctx.translate(b.x, b.y + wobble);
+        ctx.translate(item.x, item.y);
       }
 
-      // Bubble background
-      const bubbleScale = 1 + Math.sin(b.phase * 1.5) * 0.05;
-      ctx.scale(bubbleScale, bubbleScale);
+      const wobble = Math.sin(item.wobblePhase) * 0.05;
+      ctx.rotate(wobble);
 
-      if (b.isVirus) {
-        // Virus: greenish bubble
-        ctx.fillStyle = 'rgba(0, 100, 0, 0.3)';
-        ctx.beginPath(); ctx.arc(0, 0, b.size * 0.55, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 180, 0, 0.6)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        // Virus sprite
-        drawVirus(ctx, 0, 0, b.size * 0.7);
-        // Warning glow
-        if (!b.collected) {
-          const warnWidth = 1.5 + Math.sin(b.phase * 2) * 1.5;
+      if (item.type === 'virus') {
+        drawVirus(ctx, 0, 0, item.size);
+        // Glow
+        if (!item.collected) {
+          ctx.globalAlpha = 0.3 + Math.sin(item.wobblePhase * 2) * 0.2;
           ctx.strokeStyle = '#00CC00';
-          ctx.lineWidth = warnWidth;
-          ctx.beginPath(); ctx.arc(0, 0, b.size * 0.65, 0, Math.PI * 2); ctx.stroke();
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0, 0, item.size * 0.55, 0, Math.PI * 2); ctx.stroke();
         }
+      } else if (item.type === 'bonus') {
+        // Golden sparkly item
+        ctx.fillStyle = 'rgba(255,215,0,0.3)';
+        ctx.beginPath(); ctx.arc(0, 0, item.size * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.6)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.font = `${item.size * 0.6}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(item.food.emoji, 0, 0);
       } else {
-        // Food bubble: pink/translucent
-        const bubGrad = ctx.createRadialGradient(-b.size * 0.15, -b.size * 0.15, 0, 0, 0, b.size * 0.55);
-        bubGrad.addColorStop(0, 'rgba(255, 220, 240, 0.6)');
-        bubGrad.addColorStop(0.7, 'rgba(255, 182, 193, 0.3)');
-        bubGrad.addColorStop(1, 'rgba(255, 105, 180, 0.15)');
+        // Food in bubble
+        const bubGrad = ctx.createRadialGradient(-item.size * 0.1, -item.size * 0.1, 0, 0, 0, item.size * 0.5);
+        bubGrad.addColorStop(0, 'rgba(255,220,240,0.5)');
+        bubGrad.addColorStop(1, 'rgba(255,105,180,0.1)');
         ctx.fillStyle = bubGrad;
-        ctx.beginPath(); ctx.arc(0, 0, b.size * 0.55, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 182, 193, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        // Shine highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath(); ctx.arc(-b.size * 0.18, -b.size * 0.2, b.size * 0.12, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, item.size * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,182,193,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath(); ctx.arc(-item.size * 0.15, -item.size * 0.15, item.size * 0.1, 0, Math.PI * 2); ctx.fill();
         // Food emoji
-        const foodSize = Math.max(18, b.size * 0.5);
-        ctx.font = `${foodSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(b.food.emoji, 0, 0);
+        ctx.font = `${Math.max(16, item.size * 0.5)}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(item.food.emoji, 0, 0);
+        // Wanted food glow
+        if (item.food.type === this.wantedFood.type) {
+          ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0, 0, item.size * 0.55, 0, Math.PI * 2); ctx.stroke();
+        }
       }
       ctx.restore();
     }
@@ -621,39 +639,29 @@ export class GameScene {
 
   _drawFeverOverlay(ctx, w, h) {
     ctx.save();
-    ctx.fillStyle = `rgba(180, 0, 0, ${this.feverAlpha * 0.4})`;
+    ctx.fillStyle = `rgba(180,0,0,${this.feverAlpha * 0.4})`;
     ctx.fillRect(0, 0, w, h);
-
     const edgeGrad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.7);
     edgeGrad.addColorStop(0, 'rgba(255,100,100,0)');
     edgeGrad.addColorStop(1, `rgba(180,0,0,${this.feverAlpha * 0.5})`);
-    ctx.fillStyle = edgeGrad;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = edgeGrad; ctx.fillRect(0, 0, w, h);
 
-    // Thermometer and virus emojis
     ctx.globalAlpha = this.feverAlpha;
-    const feverEmojis = ['🤒', '🦠', '💊', '🌡️'];
-    for (let i = 0; i < 10; i++) {
-      const angle = (i / 10) * Math.PI * 2 + this.babyPhase * 0.4;
-      const r = 80 + Math.sin(i * 1.7) * 30;
-      ctx.font = '22px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(feverEmojis[i % feverEmojis.length], w / 2 + Math.cos(angle) * r, h / 2 + Math.sin(angle) * r);
+    const emojis = ['🤒', '🦠', '💊', '🌡️'];
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + this.babyPhase * 0.4;
+      const r = 70 + Math.sin(i * 1.7) * 25;
+      ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(emojis[i % emojis.length], w / 2 + Math.cos(angle) * r, h / 2 + Math.sin(angle) * r);
     }
-
     if (this.fever) {
       ctx.globalAlpha = 1;
-      ctx.font = 'Bold 32px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#FFF';
-      ctx.shadowColor = '#FF0000';
-      ctx.shadowBlur = 20;
+      ctx.font = 'Bold 30px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFF'; ctx.shadowColor = '#FF0000'; ctx.shadowBlur = 20;
       ctx.fillText(`🤒 ${Math.ceil(this.feverTimer)}초 🤒`, w / 2, h / 2);
       ctx.shadowBlur = 0;
-      ctx.font = '18px sans-serif';
-      ctx.fillStyle = '#FFB6C1';
-      ctx.fillText('엄마가 열이 나요! 쉬는 중...', w / 2, h / 2 + 35);
+      ctx.font = '16px sans-serif'; ctx.fillStyle = '#FFB6C1';
+      ctx.fillText('엄마가 열이 나요! 쉬는 중...', w / 2, h / 2 + 30);
     }
     ctx.restore();
   }

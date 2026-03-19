@@ -44,7 +44,10 @@ new LoadingScreen(engine.canvas, engine.ctx, {
       } else if (scene === 'born') {
         const result = engine.currentScene.handleTap(x, y);
         if (result === 'restart') {
-          engine.transitionTo(() => engine.switchTo('title', new TitleScene()));
+          engine.transitionTo(() => {
+            if (engine.currentScene && engine.currentScene.destroy) engine.currentScene.destroy();
+            engine.switchTo('title', new TitleScene());
+          });
         } else if (result === 'home') {
           showHomeConfirm();
         }
@@ -55,6 +58,7 @@ new LoadingScreen(engine.canvas, engine.ctx, {
       if (result === 'born') {
         getSave().clear();
         const stats = engine.currentScene.getStats();
+        if (engine.currentScene.destroy) engine.currentScene.destroy();
         engine.transitionTo(() => engine.switchTo('born', new BornScene(engine.width, engine.height, stats)));
       }
     });
