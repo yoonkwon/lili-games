@@ -11,6 +11,12 @@ import { ParticleSystem } from '../../../shared/ParticleSystem.js';
 import { Message } from '../../../shared/ui/Message.js';
 import { drawMom, drawBaby, drawFairyLisa, drawChildRia, drawVirus } from '../draw-mom.js';
 
+const BONUS_TYPES = [
+  { emoji: '💊', name: '비타민', growth: 15 },
+  { emoji: '💕', name: '사랑', growth: 12 },
+  { emoji: '⭐', name: '별', growth: 10 },
+];
+
 export class GameScene {
   constructor(w, h, safeTop, mode) {
     this.w = w;
@@ -52,6 +58,10 @@ export class GameScene {
     this.babyEmotion = 'neutral';
     this.emotionTimer = 0;
     this.babyShake = 0;
+
+    // Cached per-frame derived values
+    this.growthRatio = 0;
+    this.currentStage = GROWTH_STAGES[0];
 
     // Helper state
     this.helperPhase = 0;
@@ -114,49 +124,31 @@ export class GameScene {
     this.wantTimer = GAME.wantChangeInterval;
   }
 
+  _spawnItem(type, food, size, baseVy, vyRange, vxRange, x) {
+    this.items.push({
+      type, food,
+      x: x ?? (size + Math.random() * (this.w - size * 2)),
+      y: -size, size,
+      vy: baseVy + Math.random() * vyRange + this.difficulty * (type === 'virus' ? 8 : 10),
+      vx: (Math.random() - 0.5) * vxRange,
+      wobblePhase: Math.random() * Math.PI * 2,
+      collected: false, collectPhase: 0,
+    });
+  }
+
   _spawnFood() {
     const food = Math.random() < GAME.wantedFoodChance ? this.wantedFood
       : FOODS[Math.floor(Math.random() * FOODS.length)];
-    const size = 36 + Math.random() * 12;
-    this.items.push({
-      type: 'food', food, x: size + Math.random() * (this.w - size * 2),
-      y: -size, size,
-      vy: 80 + Math.random() * 40 + this.difficulty * 10,
-      vx: (Math.random() - 0.5) * 30,
-      wobblePhase: Math.random() * Math.PI * 2,
-      collected: false, collectPhase: 0,
-    });
+    this._spawnItem('food', food, 36 + Math.random() * 12, 80, 40, 30);
   }
 
   _spawnVirus() {
-    const size = VIRUS.size;
-    this.items.push({
-      type: 'virus', food: null,
-      x: size + Math.random() * (this.w - size * 2),
-      y: -size, size,
-      vy: 60 + Math.random() * 30 + this.difficulty * 8,
-      vx: (Math.random() - 0.5) * 50,
-      wobblePhase: Math.random() * Math.PI * 2,
-      collected: false, collectPhase: 0,
-    });
+    this._spawnItem('virus', null, VIRUS.size, 60, 30, 50);
   }
 
   _spawnBonus() {
-    // Fairy Lisa drops a bonus heart/vitamin
-    const bonusTypes = [
-      { emoji: '💊', name: '비타민', growth: 15 },
-      { emoji: '💕', name: '사랑', growth: 12 },
-      { emoji: '⭐', name: '별', growth: 10 },
-    ];
-    const bonus = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
-    this.items.push({
-      type: 'bonus', food: bonus,
-      x: this.fairyX, y: 60, size: 40,
-      vy: 70 + Math.random() * 20,
-      vx: (Math.random() - 0.5) * 20,
-      wobblePhase: Math.random() * Math.PI * 2,
-      collected: false, collectPhase: 0,
-    });
+    const bonus = BONUS_TYPES[Math.floor(Math.random() * BONUS_TYPES.length)];
+    this._spawnItem('bonus', bonus, 40, 70, 20, 20, this.fairyX);
   }
 
   handleTap(x, y) {
@@ -214,9 +206,8 @@ export class GameScene {
       this._pickNewWant();
     } else {
       // Any food = small growth (no penalty!)
-      const smallGrowth = 2;
-      this.growth = Math.min(GAME.maxGrowth, this.growth + smallGrowth);
-      this.particles.addFloatingText(item.x, this.momY - 40, `+${smallGrowth}`, '#AAAAFF', 22);
+      this.growth = Math.min(GAME.maxGrowth, this.growth + GAME.growthPerAny);
+      this.particles.addFloatingText(item.x, this.momY - 40, `+${GAME.growthPerAny}`, '#AAAAFF', 22);
       // Don't reset combo for wrong food, just don't increase it
     }
   }
@@ -238,8 +229,12 @@ export class GameScene {
     this.babyPhase += dt;
     this.helperPhase += dt;
 
-    // Difficulty ramp
-    this.difficulty = 1 + (this.growth / GAME.maxGrowth) * 3;
+    // Derived state (cached for draw methods)
+    this.growthRatio = this.growth / GAME.maxGrowth;
+    this.difficulty = 1 + this.growthRatio * 3;
+    let stage = GROWTH_STAGES[0];
+    for (const s of GROWTH_STAGES) { if (this.growthRatio >= s.threshold) stage = s; }
+    this.currentStage = stage;
 
     if (this.growth >= GAME.maxGrowth) return 'born';
 
@@ -475,8 +470,7 @@ export class GameScene {
   _drawBelly(ctx, w, h) {
     const cx = w / 2;
     const cy = h * 0.28;
-    const growthRatio = this.growth / GAME.maxGrowth;
-    const baseRadius = 40 + growthRatio * 25;
+    const baseRadius = 40 + this.growthRatio * 25;
     ctx.save();
 
     const glowGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius * 1.3);
@@ -504,21 +498,17 @@ export class GameScene {
 
   _drawBabyInBelly(ctx, w, h) {
     const cx = w / 2, cy = h * 0.28;
-    const growthRatio = this.growth / GAME.maxGrowth;
-    let stage = GROWTH_STAGES[0];
-    for (const s of GROWTH_STAGES) { if (growthRatio >= s.threshold) stage = s; }
-
-    const babySize = 16 + growthRatio * 25;
+    const babySize = 16 + this.growthRatio * 25;
     const bob = Math.sin(this.babyPhase * 2) * 3;
     const shakeX = this.babyShake > 0 ? Math.sin(this.babyPhase * 30) * 4 * this.babyShake : 0;
 
-    drawBaby(ctx, cx + shakeX, cy + bob, babySize, this.babyEmotion, this.babyPhase, growthRatio, this.mode);
+    drawBaby(ctx, cx + shakeX, cy + bob, babySize, this.babyEmotion, this.babyPhase, this.growthRatio, this.mode);
 
     ctx.save();
     ctx.font = '11px "Segoe UI","Apple SD Gothic Neo",sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFB6C1';
-    ctx.fillText(`${stage.name} - ${stage.desc}`, cx, cy + babySize + 15);
+    ctx.fillText(`${this.currentStage.name} - ${this.currentStage.desc}`, cx, cy + babySize + 15);
     ctx.restore();
   }
 
@@ -540,7 +530,7 @@ export class GameScene {
 
   _drawGrowthBar(ctx, w, h) {
     const barX = 16, barY = this.safeTop + 12, barW = w - 32, barH = 18;
-    const ratio = this.growth / GAME.maxGrowth;
+    const ratio = this.growthRatio;
     ctx.save();
     ctx.font = 'Bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#FFB6C1';
     ctx.fillText(`💕 ${Math.floor(ratio * 100)}%`, barX, barY - 3);

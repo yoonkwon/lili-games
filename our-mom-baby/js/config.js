@@ -55,4 +55,5 @@ export const GAME = {
   virusPenalty: -15,
   virusDislike: 40,
   wantedFoodChance: 0.5,
+  growthPerAny: 2,          // small growth for any food (not wanted)
 };
