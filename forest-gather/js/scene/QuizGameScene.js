@@ -163,10 +163,17 @@ export class QuizGameScene {
       return null;
     }
 
-    // Clue popup - tap to dismiss
+    // Clue popup - only dismiss via confirm button
     if (this.state === 'cluePopup') {
-      this.popup = null;
-      this.state = 'exploring';
+      if (this.popupAnim < 0.8) return null;
+      const btnW = 140, btnH = 42;
+      const btnX = this.screenW / 2 - btnW / 2;
+      const cardH = 220;
+      const btnY = this.screenH * 0.4 + cardH / 2 - btnH - 12;
+      if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+        this.popup = null;
+        this.state = 'exploring';
+      }
       return null;
     }
 
@@ -663,7 +670,7 @@ export class QuizGameScene {
     ctx.scale(scale, scale);
 
     const cardW = Math.min(300, w * 0.8);
-    const cardH = 200;
+    const cardH = 220;
 
     ctx.fillStyle = '#FFF';
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
@@ -694,11 +701,20 @@ export class QuizGameScene {
     ctx.fillStyle = '#333';
     drawWrappedText(ctx, `"${this.popup.desc}"`, 0, -cardH / 2 + 140, cardW - 40, 22);
 
-    // Tap hint
-    ctx.globalAlpha = 0.4 + Math.sin(this.gameTime * 3) * 0.3;
-    ctx.font = '13px sans-serif';
-    ctx.fillStyle = '#999';
-    ctx.fillText('터치하면 계속 탐험!', 0, cardH / 2 - 16);
+    // Confirm button (only when animation is done)
+    if (anim >= 0.8) {
+      const btnW = 140, btnH = 42;
+      const btnGrad = ctx.createLinearGradient(0, cardH / 2 - btnH - 12, 0, cardH / 2 - 12);
+      btnGrad.addColorStop(0, '#4CAF50');
+      btnGrad.addColorStop(1, '#388E3C');
+      ctx.fillStyle = btnGrad;
+      ctx.beginPath();
+      ctx.roundRect(-btnW / 2, cardH / 2 - btnH - 12, btnW, btnH, 14);
+      ctx.fill();
+      ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.fillStyle = '#FFF';
+      ctx.fillText('확인 ✨', 0, cardH / 2 - btnH / 2 - 12);
+    }
 
     ctx.restore();
   }

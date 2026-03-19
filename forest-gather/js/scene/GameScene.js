@@ -129,13 +129,20 @@ export class GameScene {
   // terrain is generated in constructor via generateTerrain()
 
   handleTap(x, y) {
-    // If popup is showing, tap to dismiss
+    // If popup is showing, only dismiss via confirm button
     if (this.state === 'popup') {
-      this.popup = null;
-      this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
-      if (this.state === 'complete') return 'stageClear';
-      // Check word missions after dismissing popup
-      this._checkWordMissions();
+      if (this.popupAnim < 0.8) return null; // wait for animation
+      // Check confirm button hit
+      const btnW = 140, btnH = 42;
+      const btnX = this.screenW / 2 - btnW / 2;
+      const cardH = 280;
+      const btnY = this.screenH * 0.4 + cardH / 2 - btnH - 12;
+      if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+        this.popup = null;
+        this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
+        if (this.state === 'complete') return 'stageClear';
+        this._checkWordMissions();
+      }
       return null;
     }
 
@@ -465,7 +472,7 @@ export class GameScene {
     ctx.scale(scale, scale);
 
     const cardW = Math.min(320, w * 0.85);
-    const cardH = 260;
+    const cardH = 280;
 
     // Card background
     ctx.fillStyle = '#FFF';
@@ -501,11 +508,20 @@ export class GameScene {
     ctx.fillStyle = '#666';
     this._drawWrappedText(ctx, this.popup.desc, 0, -cardH / 2 + 190, cardW - 40, 20);
 
-    // "Tap to continue"
-    ctx.globalAlpha = 0.4 + Math.sin(this.gameTime * 3) * 0.3;
-    ctx.font = '13px sans-serif';
-    ctx.fillStyle = '#999';
-    ctx.fillText('터치하면 계속 탐험!', 0, cardH / 2 - 16);
+    // Confirm button (only when animation is done)
+    if (anim >= 0.8) {
+      const btnW = 140, btnH = 42;
+      const btnGrad = ctx.createLinearGradient(0, cardH / 2 - btnH - 12, 0, cardH / 2 - 12);
+      btnGrad.addColorStop(0, '#4CAF50');
+      btnGrad.addColorStop(1, '#388E3C');
+      ctx.fillStyle = btnGrad;
+      ctx.beginPath();
+      ctx.roundRect(-btnW / 2, cardH / 2 - btnH - 12, btnW, btnH, 14);
+      ctx.fill();
+      ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.fillStyle = '#FFF';
+      ctx.fillText('확인 ✨', 0, cardH / 2 - btnH / 2 - 12);
+    }
 
     ctx.restore();
   }
