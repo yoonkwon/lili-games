@@ -100,7 +100,10 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, vil
   function drawVillain(ctx, x, y, size, fallbackEmoji) {
     const img = assets.villain;
     if (img) {
-      ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+      const aspect = img.width / img.height;
+      const dw = aspect >= 1 ? size : size * aspect;
+      const dh = aspect >= 1 ? size / aspect : size;
+      ctx.drawImage(img, x - dw / 2, y - dh / 2, dw, dh);
     } else if (fallbackEmoji) {
       ctx.font = `${size}px sans-serif`;
       ctx.textAlign = 'center';

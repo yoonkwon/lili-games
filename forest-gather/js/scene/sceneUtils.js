@@ -280,7 +280,17 @@ export function drawSpriteOrEmoji(ctx, spriteCache, sprite, emoji, x, y, size) {
   if (sprite && spriteCache) {
     const s = spriteCache.get(sprite);
     if (s && (s.width || s instanceof HTMLCanvasElement)) {
-      ctx.drawImage(s, x - size / 2, y - size / 2, size, size);
+      // Preserve aspect ratio: fit within size × size box
+      const aspect = s.width / s.height;
+      let drawW, drawH;
+      if (aspect >= 1) {
+        drawW = size;
+        drawH = size / aspect;
+      } else {
+        drawH = size;
+        drawW = size * aspect;
+      }
+      ctx.drawImage(s, x - drawW / 2, y - drawH / 2, drawW, drawH);
       return;
     }
   }

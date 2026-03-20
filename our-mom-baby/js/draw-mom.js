@@ -74,22 +74,30 @@ export function drawBaby(ctx, x, y, size, emotion, phase, growthRatio, mode) {
   ctx.restore();
 }
 
+/** Draw image preserving aspect ratio within size box */
+function drawFitted(ctx, img, x, y, size) {
+  const aspect = img.width / img.height;
+  const dw = aspect >= 1 ? size : size * aspect;
+  const dh = aspect >= 1 ? size / aspect : size;
+  ctx.drawImage(img, x - dw / 2, y - dh / 2, dw, dh);
+}
+
 export function drawFairyLisa(ctx, x, y, size) {
   const img = assets.fairyLisa;
   if (!img) return;
-  ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+  drawFitted(ctx, img, x, y, size);
 }
 
 export function drawChildRia(ctx, x, y, size) {
   const img = assets.childRia;
   if (!img) return;
-  ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+  drawFitted(ctx, img, x, y, size);
 }
 
 export function drawVirus(ctx, x, y, size) {
   const img = assets.virus;
   if (img) {
-    ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+    drawFitted(ctx, img, x, y, size);
   } else {
     ctx.font = `${size}px sans-serif`;
     ctx.textAlign = 'center';
