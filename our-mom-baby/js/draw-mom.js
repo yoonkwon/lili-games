@@ -37,8 +37,11 @@ export const assetsReady = (async () => {
 export function drawMom(ctx, x, y, scale = 1) {
   const img = assets.mom;
   if (!img) return;
-  const drawW = 100 * scale;
-  const drawH = 150 * scale;
+  // Use image aspect ratio, scaled to ~150px height base
+  const baseH = 150 * scale;
+  const aspect = img.width / img.height;
+  const drawH = baseH;
+  const drawW = baseH * aspect;
   ctx.save();
   ctx.drawImage(img, x - drawW / 2, y - drawH * 0.35, drawW, drawH);
   ctx.restore();
@@ -55,12 +58,12 @@ export function drawBaby(ctx, x, y, size, emotion, phase, growthRatio, mode) {
 
   const drawSize = size * 2;
   ctx.save();
-  ctx.drawImage(img, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+  drawFitted(ctx, img, x, y, drawSize);
 
   if (growthRatio > 0.5 && assets[prefix]) {
     ctx.globalAlpha = (growthRatio - 0.5) * 0.4;
     const extra = drawSize * 0.15 * (growthRatio - 0.5);
-    ctx.drawImage(assets[prefix], x - (drawSize + extra) / 2, y - (drawSize + extra) / 2, drawSize + extra, drawSize + extra);
+    drawFitted(ctx, assets[prefix], x, y, drawSize + extra);
     ctx.globalAlpha = 1;
   }
 

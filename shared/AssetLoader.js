@@ -54,13 +54,22 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, vil
     entries.forEach(([key], i) => { assets[key] = results[i]; });
   })();
 
+  /** Draw image preserving aspect ratio within size box */
+  function _drawFitted(ctx, img, x, y, size) {
+    const aspect = img.width / img.height;
+    const dw = aspect >= 1 ? size : size * aspect;
+    const dh = aspect >= 1 ? size / aspect : size;
+    ctx.drawImage(img, x - dw / 2, y - dh / 2, dw, dh);
+  }
+
   function drawMom(ctx, x, y, scale = 1) {
     const img = assets.mom;
     if (!img) return;
-    const drawW = 100 * scale;
-    const drawH = 150 * scale;
+    const baseH = 150 * scale;
+    const aspect = img.width / img.height;
+    const drawW = baseH * aspect;
     ctx.save();
-    ctx.drawImage(img, x - drawW / 2, y - drawH * 0.35, drawW, drawH);
+    ctx.drawImage(img, x - drawW / 2, y - baseH * 0.35, drawW, baseH);
     ctx.restore();
   }
 
@@ -75,13 +84,13 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, vil
 
     const drawSize = size * 2;
     ctx.save();
-    ctx.drawImage(img, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+    _drawFitted(ctx, img, x, y, drawSize);
 
     // Growth overlay for later stages
     if (growthRatio > 0.5 && assets.baby) {
       ctx.globalAlpha = (growthRatio - 0.5) * 0.4;
       const extra = drawSize * 0.15 * (growthRatio - 0.5);
-      ctx.drawImage(img, x - (drawSize + extra) / 2, y - (drawSize + extra) / 2, drawSize + extra, drawSize + extra);
+      _drawFitted(ctx, assets.baby, x, y, drawSize + extra);
       ctx.globalAlpha = 1;
     }
 
@@ -100,10 +109,7 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, vil
   function drawVillain(ctx, x, y, size, fallbackEmoji) {
     const img = assets.villain;
     if (img) {
-      const aspect = img.width / img.height;
-      const dw = aspect >= 1 ? size : size * aspect;
-      const dh = aspect >= 1 ? size / aspect : size;
-      ctx.drawImage(img, x - dw / 2, y - dh / 2, dw, dh);
+      _drawFitted(ctx, img, x, y, size);
     } else if (fallbackEmoji) {
       ctx.font = `${size}px sans-serif`;
       ctx.textAlign = 'center';
