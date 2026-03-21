@@ -247,6 +247,13 @@ function renderForest(ctx, w, h) {
 }
 
 // ── Baby games: load SVG assets ──
+function drawFitted(ctx, img, cx, cy, maxSize) {
+  const aspect = img.width / img.height;
+  const dw = aspect >= 1 ? maxSize : maxSize * aspect;
+  const dh = aspect >= 1 ? maxSize / aspect : maxSize;
+  ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+}
+
 async function renderBabyGame(canvasId, bgFn, momSvg, babySvg, extraFn) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -254,8 +261,8 @@ async function renderBabyGame(canvasId, bgFn, momSvg, babySvg, extraFn) {
   const w = canvas.width, h = canvas.height;
   bgFn(ctx, w, h);
   const [mom, baby] = await Promise.all([loadImg(momSvg), loadImg(babySvg)]);
-  if (mom) ctx.drawImage(mom, w * 0.16, h * 0.1, 90, 135);
-  if (baby) ctx.drawImage(baby, w * 0.52, h * 0.25, 80, 80);
+  if (mom) drawFitted(ctx, mom, w * 0.28, h * 0.45, 135);
+  if (baby) drawFitted(ctx, baby, w * 0.65, h * 0.5, 80);
   if (extraFn) extraFn(ctx, w, h);
 }
 
