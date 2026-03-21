@@ -1,0 +1,13 @@
+{
+  "name": "백설공주 아기 키우기",
+  "short_name": "백설공주아기",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a2a1a",
+  "theme_color": "#90EE90",
+  "icons": [
+    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
