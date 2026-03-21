@@ -176,6 +176,8 @@ export class QuizGameScene {
       const cardH = 220;
       const btnY = this.screenH * 0.4 + cardH / 2 - btnH - 12;
       if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+        // Now reveal the clue text in the panel
+        this.unlockedClueTexts.push({ emoji: this.popup.emoji, text: this.popup.desc });
         this.popup = null;
         this.state = 'exploring';
       }
@@ -259,9 +261,8 @@ export class QuizGameScene {
       if (clueIdx < this.totalClues) {
         this.cluesUnlocked++;
         const clue = this.roundData.clues[clueIdx];
-        this.unlockedClueTexts.push({ emoji: clue.emoji, text: clue.text });
 
-        // Show clue unlock animation
+        // Show clue unlock animation (text added to panel only after popup dismiss)
         this.pendingClue = {
           emoji: clue.emoji,
           desc: clue.text,
@@ -569,13 +570,14 @@ export class QuizGameScene {
   }
 
   _drawCluesPanel(ctx, w, h) {
-    if (this.unlockedClueTexts.length === 0) return;
+    if (this.cluesUnlocked === 0) return;
 
     const panelX = 10;
     const panelY = this.safeTop + 62;
     const panelW = Math.min(220, w * 0.4);
     const lineH = 22;
-    const panelH = 10 + this.unlockedClueTexts.length * lineH + 10;
+    const rows = this.cluesUnlocked;
+    const panelH = 10 + rows * lineH + 10;
 
     ctx.save();
     ctx.globalAlpha = 0.7;
@@ -589,10 +591,17 @@ export class QuizGameScene {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    for (let i = 0; i < this.unlockedClueTexts.length; i++) {
-      const clue = this.unlockedClueTexts[i];
-      ctx.fillStyle = '#FFD700';
-      ctx.fillText(`${clue.emoji} ${clue.text}`, panelX + 10, panelY + 15 + i * lineH);
+    for (let i = 0; i < rows; i++) {
+      if (i < this.unlockedClueTexts.length) {
+        // Revealed clue (popup was dismissed)
+        const clue = this.unlockedClueTexts[i];
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(`${clue.emoji} ${clue.text}`, panelX + 10, panelY + 15 + i * lineH);
+      } else {
+        // Unlocked but popup not yet dismissed
+        ctx.fillStyle = '#888';
+        ctx.fillText(`🔒 ???`, panelX + 10, panelY + 15 + i * lineH);
+      }
     }
     ctx.restore();
   }
