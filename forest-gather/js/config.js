@@ -182,7 +182,7 @@ export const QUIZ_MIN_CLUES = 3;
 export const HIDE_STYLES = ['bush', 'rock', 'tree', 'flower', 'sparkle', 'plain'];
 
 // Number of collection items needed to unlock one clue
-export const ITEMS_PER_CLUE = 5;
+export const ITEMS_PER_CLUE = 3;
 
 // Companion definitions
 export const COMPANIONS = {

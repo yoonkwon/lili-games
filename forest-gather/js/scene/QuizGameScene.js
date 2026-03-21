@@ -62,7 +62,7 @@ export class QuizGameScene {
     // Stage 1: Collection items
     this.collectItems = [];
     this.collectedCount = 0;
-    this.totalCollectItems = 25; // items to place on map
+    this.totalCollectItems = this.totalClues * ITEMS_PER_CLUE; // items to place on map
 
     // Stage 2: Clue unlock tracking
     this.cluesUnlocked = 0;
@@ -651,7 +651,7 @@ export class QuizGameScene {
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#FFF';
-    ctx.fillText(`${ITEMS_PER_CLUE}개 아이템을 모아 단서가 열렸어요!`, 0, 75);
+    ctx.fillText(`아이템 ${ITEMS_PER_CLUE}개를 모아 단서가 열렸어요!`, 0, 75);
 
     if (anim > 0.8) {
       ctx.globalAlpha = 0.5 + Math.sin(this.gameTime * 3) * 0.3;
