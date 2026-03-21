@@ -65,11 +65,11 @@ export class QuizGameScene {
     this.totalCollectItems = 0; // set in _placeCollectItems
 
     // Stage 2: Clue reveal tracking
-    // Each clue has revealCount (how many chars revealed) out of total chars
     this.totalClues = this.roundData.clues.length;
     this.clueReveal = []; // { emoji, text, revealed: number, total: number }
     this.cluesFullyRevealed = 0;
-    this.unlockedClueTexts = [];
+    this.hasAnyRevealed = false;
+    this._cluePanelCache = null; // cached panel lines for draw
 
     // Stage 3: Quiz
     this.selectedChoice = -1;
@@ -83,8 +83,6 @@ export class QuizGameScene {
     // UI state
     // exploring, guessing, correct, wrong, roundComplete, allComplete
     this.state = 'exploring';
-    this.popup = null;
-    this.popupAnim = 0;
     this.guessAnim = 0;
     this.resultTimer = 0;
 
@@ -105,9 +103,10 @@ export class QuizGameScene {
     this.collectItems = [];
     this.collectedCount = 0;
     this.cluesFullyRevealed = 0;
-    this.unlockedClueTexts = [];
+    this.hasAnyRevealed = false;
+    this._cluePanelCache = null;
 
-    // Build clue reveal state: 3 items per clue, each reveals ~1/3 of text
+    // Build clue reveal state: ITEMS_PER items per clue, each reveals a portion of text
     const ITEMS_PER = 3;
     this.clueReveal = this.roundData.clues.map(clue => ({
       emoji: clue.emoji,
@@ -238,14 +237,16 @@ export class QuizGameScene {
     const ci = item.clueIndex;
     if (ci != null && ci < this.clueReveal.length) {
       const cr = this.clueReveal[ci];
-      const charsPerItem = Math.ceil(cr.total / 3);
+      const itemsPerClue = Math.round(this.totalCollectItems / this.totalClues);
+      const charsPerItem = Math.ceil(cr.total / itemsPerClue);
       const prevRevealed = cr.revealed;
       cr.revealed = Math.min(cr.total, cr.revealed + charsPerItem);
+      this.hasAnyRevealed = true;
+      this._cluePanelCache = null; // invalidate cache
 
       if (cr.revealed >= cr.total && prevRevealed < cr.total) {
         // Fully revealed!
         this.cluesFullyRevealed++;
-        this.unlockedClueTexts.push({ emoji: cr.emoji, text: cr.text });
         this.particles.addFloatingText(sx, sy - 25, `단서 ${ci + 1} 완성!`, '#FFD700');
         this.particles.createStars(this.screenW / 2, this.screenH * 0.15, 10);
         this.message.show(`🔑 단서 완성! "${cr.text}"`, 2.5);
@@ -381,7 +382,6 @@ export class QuizGameScene {
     // Camera
     updateCamera(this, dt);
 
-    if (this.popup) this.popupAnim = Math.min(1, this.popupAnim + dt * 4);
     if (this.state === 'guessing') this.guessAnim = Math.min(1, this.guessAnim + dt * 4);
 
     this.collectionTray.update(dt);
@@ -524,7 +524,8 @@ export class QuizGameScene {
 
     // Clue unlock markers on the bar
     for (let i = 1; i <= this.totalClues; i++) {
-      const markerX = barX + ((i + 1) * 3 / this.totalCollectItems) * barW;
+      const itemsPerClue = Math.round(this.totalCollectItems / this.totalClues);
+      const markerX = barX + (i * itemsPerClue / this.totalCollectItems) * barW;
       ctx.fillStyle = i <= this.cluesFullyRevealed ? '#FFD700' : 'rgba(255,255,255,0.4)';
       ctx.beginPath();
       ctx.arc(markerX, barY + barH / 2, 4, 0, Math.PI * 2);
@@ -539,20 +540,12 @@ export class QuizGameScene {
     }
   }
 
-  _drawCluesPanel(ctx, w, h) {
-    if (!this.clueReveal || this.clueReveal.every(c => c.revealed === 0)) return;
-
-    const panelX = 10;
-    const panelY = this.safeTop + 62;
+  _buildCluePanelCache(ctx, w) {
     const maxPanelW = Math.min(w - 24, w * 0.75);
     const padding = 10;
-    const lineH = 20;
     const font = '13px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
-
-    ctx.save();
     ctx.font = font;
 
-    // Build display text for each clue with partial reveal
     const allLines = [];
     for (const cr of this.clueReveal) {
       if (cr.revealed === 0) continue;
@@ -562,9 +555,6 @@ export class QuizGameScene {
       allLines.push({ lines: wrapped, complete: cr.revealed >= cr.total });
     }
 
-    if (allLines.length === 0) { ctx.restore(); return; }
-
-    // Calculate panel size
     let totalLines = 0;
     let widest = 0;
     for (const entry of allLines) {
@@ -573,24 +563,44 @@ export class QuizGameScene {
         widest = Math.max(widest, ctx.measureText(line).width);
       }
     }
-    const panelW = Math.min(maxPanelW, widest + padding * 2 + 4);
-    const panelH = padding + totalLines * lineH + padding;
 
-    // Background
+    this._cluePanelCache = {
+      allLines, totalLines,
+      panelW: Math.min(maxPanelW, widest + padding * 2 + 4),
+      screenW: w,
+    };
+  }
+
+  _drawCluesPanel(ctx, w, h) {
+    if (!this.hasAnyRevealed) return;
+
+    // Rebuild cache if invalidated or screen width changed
+    if (!this._cluePanelCache || this._cluePanelCache.screenW !== w) {
+      this._buildCluePanelCache(ctx, w);
+    }
+    const cache = this._cluePanelCache;
+    if (!cache || cache.allLines.length === 0) return;
+
+    const panelX = 10;
+    const panelY = this.safeTop + 62;
+    const padding = 10;
+    const lineH = 20;
+    const panelH = padding + cache.totalLines * lineH + padding;
+
+    ctx.save();
     ctx.globalAlpha = 0.7;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
-    ctx.roundRect(panelX, panelY, panelW, panelH, 10);
+    ctx.roundRect(panelX, panelY, cache.panelW, panelH, 10);
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // Draw lines
-    ctx.font = font;
+    ctx.font = '13px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     let curY = panelY + padding + lineH / 2;
 
-    for (const entry of allLines) {
+    for (const entry of cache.allLines) {
       ctx.fillStyle = entry.complete ? '#FFD700' : '#AAA';
       for (const line of entry.lines) {
         ctx.fillText(line, panelX + padding, curY);
