@@ -288,9 +288,9 @@ export function initThumbnails() {
 
   // Baby games (async SVG loading)
   renderBabyGame('thumb-elsa', elsaBg,
-    'elsa-baby/assets/elsa-mom.svg', 'elsa-baby/assets/baby-elsa-happy.svg', elsaExtras);
+    'elsa-baby/assets/elsa-mom.png', 'elsa-baby/assets/baby-elsa-happy.png', elsaExtras);
   renderBabyGame('thumb-snow-white', snowWhiteBg,
-    'snow-white-baby/assets/snow-white-mom.svg', 'snow-white-baby/assets/baby-snow-white-happy.svg', snowWhiteExtras);
+    'snow-white-baby/assets/snow-white-mom.png', 'snow-white-baby/assets/baby-snow-white-happy.png', snowWhiteExtras);
   renderBabyGame('thumb-mermaid', mermaidBg,
     'mermaid-baby/assets/mermaid-mom.svg', 'mermaid-baby/assets/baby-mermaid-happy.svg', mermaidExtras);
   renderBabyGame('thumb-our-mom', ourMomBg,
