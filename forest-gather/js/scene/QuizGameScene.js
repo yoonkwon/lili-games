@@ -47,11 +47,16 @@ export class QuizGameScene {
     // Hint companion (simple follower for speech bubbles)
     this.hintTimer = COMPANION_HINT_INTERVAL * 0.4;
 
-    // Quiz state
+    // Quiz state — shuffle rounds each session
+    this.shuffledRounds = [...this.stageConfig.rounds];
+    for (let i = this.shuffledRounds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.shuffledRounds[i], this.shuffledRounds[j]] = [this.shuffledRounds[j], this.shuffledRounds[i]];
+    }
     this.currentRound = 0;
-    this.totalRounds = this.stageConfig.rounds.length;
+    this.totalRounds = this.shuffledRounds.length;
     this.solvedRounds = 0;
-    this.roundData = this.stageConfig.rounds[0];
+    this.roundData = this.shuffledRounds[0];
 
     // 3-stage state
     // Stage 1: Collection items
@@ -311,7 +316,7 @@ export class QuizGameScene {
       this.state = 'allComplete';
       return;
     }
-    this.roundData = this.stageConfig.rounds[this.currentRound];
+    this.roundData = this.shuffledRounds[this.currentRound];
     this.totalClues = this.roundData.clues.length;
     // Reset players
     this.player.x = this.mapWidth / 2;
@@ -888,7 +893,7 @@ export class QuizGameScene {
       this.currentRound = savedRound;
     }
     if (this.currentRound < this.totalRounds) {
-      this.roundData = this.stageConfig.rounds[this.currentRound];
+      this.roundData = this.shuffledRounds[this.currentRound];
       this.totalClues = this.roundData.clues.length;
       this._placeCollectItems();
     }
