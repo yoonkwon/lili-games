@@ -1,10 +1,10 @@
 /**
  * Quiz exploration scene - 3-stage gameplay:
  *   1. Collection: gather items scattered on the map (20-25 items)
- *   2. Clue unlock: every ITEMS_PER_CLUE items unlocks a clue
+ *   2. Clue unlock: each collected item IS a clue
  *   3. Quiz: with enough clues, guess the answer!
  */
-import { QUIZ_STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, QUIZ_MIN_CLUES, COMPANION_HINT_INTERVAL, HIDE_STYLES, ITEMS_PER_CLUE, TERRAIN_PRESETS, COLLECT_ITEMS_POOL } from '../config.js';
+import { QUIZ_STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, QUIZ_MIN_CLUES, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS } from '../config.js';
 import { Character } from '../entity/Character.js';
 import { Item } from '../entity/Item.js';
 import { Companion } from '../entity/Companion.js';
@@ -59,14 +59,16 @@ export class QuizGameScene {
     this.roundData = this.shuffledRounds[0];
 
     // 3-stage state
-    // Stage 1: Collection items
+    // Stage 1: Collection — each item reveals more letters of a clue
     this.collectItems = [];
     this.collectedCount = 0;
-    this.totalCollectItems = this.totalClues * ITEMS_PER_CLUE; // items to place on map
+    this.totalCollectItems = 0; // set in _placeCollectItems
 
-    // Stage 2: Clue unlock tracking
-    this.cluesUnlocked = 0;
+    // Stage 2: Clue reveal tracking
+    // Each clue has revealCount (how many chars revealed) out of total chars
     this.totalClues = this.roundData.clues.length;
+    this.clueReveal = []; // { emoji, text, revealed: number, total: number }
+    this.cluesFullyRevealed = 0;
     this.unlockedClueTexts = [];
 
     // Stage 3: Quiz
@@ -79,14 +81,12 @@ export class QuizGameScene {
     this._placeCollectItems();
 
     // UI state
-    // exploring, clueUnlock, cluePopup, guessing, correct, wrong, roundComplete, allComplete
+    // exploring, guessing, correct, wrong, roundComplete, allComplete
     this.state = 'exploring';
     this.popup = null;
     this.popupAnim = 0;
     this.guessAnim = 0;
     this.resultTimer = 0;
-    this.clueUnlockAnim = 0;
-    this.pendingClue = null; // clue waiting to show after unlock animation
 
     // Effects
     this.particles = new ParticleSystem();
@@ -104,45 +104,52 @@ export class QuizGameScene {
   _placeCollectItems() {
     this.collectItems = [];
     this.collectedCount = 0;
-    this.cluesUnlocked = 0;
+    this.cluesFullyRevealed = 0;
     this.unlockedClueTexts = [];
 
-    const poolKey = this.stageConfig.collectPool || 'forest';
-    const pool = COLLECT_ITEMS_POOL[poolKey] || COLLECT_ITEMS_POOL.forest;
+    // Build clue reveal state: 3 items per clue, each reveals ~1/3 of text
+    const ITEMS_PER = 3;
+    this.clueReveal = this.roundData.clues.map(clue => ({
+      emoji: clue.emoji,
+      text: clue.text,
+      revealed: 0,
+      total: clue.text.replace(/\s/g, '').length, // count non-space chars
+    }));
+
+    this.totalCollectItems = this.totalClues * ITEMS_PER;
+
     const margin = 120;
     const usableW = this.mapWidth - margin * 2;
     const usableH = this.mapHeight - margin * 2;
     const positions = [];
 
-    // Determine how many collect items we need: enough to unlock all clues
-    this.totalCollectItems = this.totalClues * ITEMS_PER_CLUE;
+    // Place ITEMS_PER items per clue, each with clue's emoji
+    for (let ci = 0; ci < this.totalClues; ci++) {
+      const clue = this.roundData.clues[ci];
+      for (let j = 0; j < ITEMS_PER; j++) {
+        let x, y, attempts = 0;
+        do {
+          x = margin + Math.random() * usableW;
+          y = margin + Math.random() * usableH;
+          attempts++;
+        } while (attempts < 50 && positions.some(p => {
+          const dx = p.x - x;
+          const dy = p.y - y;
+          return dx * dx + dy * dy < 100 * 100;
+        }));
+        positions.push({ x, y });
 
-    // Shuffle pool and repeat if needed
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < this.totalCollectItems; i++) {
-      let x, y, attempts = 0;
-      do {
-        x = margin + Math.random() * usableW;
-        y = margin + Math.random() * usableH;
-        attempts++;
-      } while (attempts < 50 && positions.some(p => {
-        const dx = p.x - x;
-        const dy = p.y - y;
-        return dx * dx + dy * dy < 120 * 120;
-      }));
-      positions.push({ x, y });
-
-      const itemData = shuffled[i % shuffled.length];
-      const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
-      const itemDef = {
-        id: `collect_${i}`,
-        emoji: itemData.emoji,
-        name: itemData.name,
-        desc: `${itemData.name}을(를) 찾았어요!`,
-        size: 28,
-      };
-      this.collectItems.push(new Item(x, y, itemDef, hideStyle));
+        const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
+        const itemDef = {
+          id: `clue_${ci}_${j}`,
+          emoji: clue.emoji,
+          name: `단서 ${ci + 1}`,
+          desc: `단서 조각을 찾았어요!`,
+          size: 38,
+          clueIndex: ci,
+        };
+        this.collectItems.push(new Item(x, y, itemDef, hideStyle));
+      }
     }
 
     // Place 1-2 CompanionNPCs on the map
@@ -157,33 +164,6 @@ export class QuizGameScene {
   }
 
   handleTap(x, y) {
-    // Clue unlock animation - tap to show the clue
-    if (this.state === 'clueUnlock') {
-      if (this.clueUnlockAnim > 0.8 && this.pendingClue) {
-        this.popup = this.pendingClue;
-        this.popupAnim = 0;
-        this.state = 'cluePopup';
-        this.pendingClue = null;
-      }
-      return null;
-    }
-
-    // Clue popup - only dismiss via confirm button
-    if (this.state === 'cluePopup') {
-      if (this.popupAnim < 0.8) return null;
-      const btnW = 140, btnH = 42;
-      const btnX = this.screenW / 2 - btnW / 2;
-      const cardH = 220;
-      const btnY = this.screenH * 0.4 + cardH / 2 - btnH - 12;
-      if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
-        // Now reveal the clue text in the panel
-        this.unlockedClueTexts.push({ emoji: this.popup.emoji, text: this.popup.desc });
-        this.popup = null;
-        this.state = 'exploring';
-      }
-      return null;
-    }
-
     // Correct answer celebration
     if (this.state === 'correct') {
       if (this.resultTimer > 1.5) {
@@ -213,7 +193,7 @@ export class QuizGameScene {
     if (this.state !== 'exploring') return null;
 
     // Check "맞춰보기" button
-    if (this.cluesUnlocked >= QUIZ_MIN_CLUES) {
+    if (this.cluesFullyRevealed >= QUIZ_MIN_CLUES) {
       const btnW = 160;
       const btnH = 50;
       const btnX = this.screenW / 2 - btnW / 2;
@@ -253,24 +233,24 @@ export class QuizGameScene {
     const sx = this._toScreenX(item.x);
     const sy = this._toScreenY(item.y);
     this.particles.createStars(sx, sy, 8);
-    this.particles.addFloatingText(sx, sy - 25, `${item.name}! (${this.collectedCount}/${this.totalCollectItems})`, '#4CAF50');
 
-    // Check if we unlock a new clue
-    if (this.collectedCount % ITEMS_PER_CLUE === 0) {
-      const clueIdx = this.cluesUnlocked;
-      if (clueIdx < this.totalClues) {
-        this.cluesUnlocked++;
-        const clue = this.roundData.clues[clueIdx];
+    // Reveal more letters of the associated clue
+    const ci = item.clueIndex;
+    if (ci != null && ci < this.clueReveal.length) {
+      const cr = this.clueReveal[ci];
+      const charsPerItem = Math.ceil(cr.total / 3);
+      const prevRevealed = cr.revealed;
+      cr.revealed = Math.min(cr.total, cr.revealed + charsPerItem);
 
-        // Show clue unlock animation (text added to panel only after popup dismiss)
-        this.pendingClue = {
-          emoji: clue.emoji,
-          desc: clue.text,
-          clueNumber: this.cluesUnlocked,
-        };
-        this.clueUnlockAnim = 0;
-        this.state = 'clueUnlock';
-        this.particles.createStars(this.screenW / 2, this.screenH / 2, 15);
+      if (cr.revealed >= cr.total && prevRevealed < cr.total) {
+        // Fully revealed!
+        this.cluesFullyRevealed++;
+        this.unlockedClueTexts.push({ emoji: cr.emoji, text: cr.text });
+        this.particles.addFloatingText(sx, sy - 25, `단서 ${ci + 1} 완성!`, '#FFD700');
+        this.particles.createStars(this.screenW / 2, this.screenH * 0.15, 10);
+        this.message.show(`🔑 단서 완성! "${cr.text}"`, 2.5);
+      } else {
+        this.particles.addFloatingText(sx, sy - 25, `단서 조각! (${this.collectedCount}/${this.totalCollectItems})`, '#4CAF50');
       }
     }
   }
@@ -355,19 +335,18 @@ export class QuizGameScene {
         const dx = nearest.x - this.player.x;
         const dy = nearest.y - this.player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const nextClueIn = ITEMS_PER_CLUE - (this.collectedCount % ITEMS_PER_CLUE);
-
         if (dist > DISCOVER_RADIUS * 2) {
           const dir = getDirectionHint(this.player.x, this.player.y, nearest.x, nearest.y);
-          if (nextClueIn <= 2) {
-            lead.setSpeech(`${dir}에 아이템이! 단서까지 ${nextClueIn}개!`, 4);
+          const remaining = this.totalCollectItems - this.collectedCount;
+          if (remaining <= 3) {
+            lead.setSpeech(`${dir}에 단서 조각이! 조금만 더!`, 4);
           } else {
-            lead.setSpeech(`${dir}에 아이템이 있는 것 같아!`, 4);
+            lead.setSpeech(`${dir}에 단서 조각이 있는 것 같아!`, 4);
           }
         } else {
           lead.setSpeech('가까이에 아이템이!', 3);
         }
-      } else if (this.cluesUnlocked >= QUIZ_MIN_CLUES) {
+      } else if (this.cluesFullyRevealed >= QUIZ_MIN_CLUES) {
         lead.setSpeech('단서가 충분해! 맞춰보기!', 4);
       }
     }
@@ -385,9 +364,6 @@ export class QuizGameScene {
 
     if (this.state === 'correct' || this.state === 'wrong') {
       this.resultTimer += dt;
-    }
-    if (this.state === 'clueUnlock') {
-      this.clueUnlockAnim = Math.min(1, this.clueUnlockAnim + dt * 2.5);
     }
 
     this.player.update(dt, this.mapWidth, this.mapHeight);
@@ -470,7 +446,7 @@ export class QuizGameScene {
     this._drawCollectProgress(ctx, w, h);
 
     // "맞춰보기" button
-    if (this.state === 'exploring' && this.cluesUnlocked >= QUIZ_MIN_CLUES) {
+    if (this.state === 'exploring' && this.cluesFullyRevealed >= QUIZ_MIN_CLUES) {
       this._drawGuessButton(ctx, w, h);
     }
 
@@ -487,12 +463,6 @@ export class QuizGameScene {
     }
 
     // Overlays
-    if (this.state === 'clueUnlock') {
-      this._drawClueUnlockOverlay(ctx, w, h);
-    }
-    if (this.state === 'cluePopup' && this.popup) {
-      this._drawCluePopup(ctx, w, h);
-    }
     if (this.state === 'guessing') {
       this._drawGuessOverlay(ctx, w, h);
     }
@@ -520,7 +490,7 @@ export class QuizGameScene {
     ctx.textAlign = 'right';
     ctx.font = 'Bold 14px sans-serif';
     ctx.fillStyle = '#FFD700';
-    ctx.fillText(`🔑 단서 ${this.cluesUnlocked}/${this.totalClues}`, w - 16, centerY);
+    ctx.fillText(`🔑 단서 ${this.cluesFullyRevealed}/${this.totalClues}`, w - 16, centerY);
 
     // Collection count below
     ctx.font = '13px sans-serif';
@@ -554,12 +524,12 @@ export class QuizGameScene {
 
     // Clue unlock markers on the bar
     for (let i = 1; i <= this.totalClues; i++) {
-      const markerX = barX + (i * ITEMS_PER_CLUE / this.totalCollectItems) * barW;
-      ctx.fillStyle = i <= this.cluesUnlocked ? '#FFD700' : 'rgba(255,255,255,0.4)';
+      const markerX = barX + ((i + 1) * 3 / this.totalCollectItems) * barW;
+      ctx.fillStyle = i <= this.cluesFullyRevealed ? '#FFD700' : 'rgba(255,255,255,0.4)';
       ctx.beginPath();
       ctx.arc(markerX, barY + barH / 2, 4, 0, Math.PI * 2);
       ctx.fill();
-      if (i <= this.cluesUnlocked) {
+      if (i <= this.cluesFullyRevealed) {
         ctx.font = '6px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -570,7 +540,7 @@ export class QuizGameScene {
   }
 
   _drawCluesPanel(ctx, w, h) {
-    if (this.cluesUnlocked === 0) return;
+    if (!this.clueReveal || this.clueReveal.every(c => c.revealed === 0)) return;
 
     const panelX = 10;
     const panelY = this.safeTop + 62;
@@ -582,20 +552,19 @@ export class QuizGameScene {
     ctx.save();
     ctx.font = font;
 
-    // Pre-calculate wrapped lines for each clue
+    // Build display text for each clue with partial reveal
     const allLines = [];
-    for (let i = 0; i < this.cluesUnlocked; i++) {
-      if (i < this.unlockedClueTexts.length) {
-        const clue = this.unlockedClueTexts[i];
-        const fullText = `${clue.emoji} ${clue.text}`;
-        const wrapped = this._wrapText(ctx, fullText, maxPanelW - padding * 2);
-        allLines.push({ lines: wrapped, revealed: true });
-      } else {
-        allLines.push({ lines: ['🔒 ???'], revealed: false });
-      }
+    for (const cr of this.clueReveal) {
+      if (cr.revealed === 0) continue;
+      const displayText = this._partialReveal(cr.text, cr.revealed, cr.total);
+      const fullText = `${cr.emoji} ${displayText}`;
+      const wrapped = this._wrapText(ctx, fullText, maxPanelW - padding * 2);
+      allLines.push({ lines: wrapped, complete: cr.revealed >= cr.total });
     }
 
-    // Calculate panel size from content
+    if (allLines.length === 0) { ctx.restore(); return; }
+
+    // Calculate panel size
     let totalLines = 0;
     let widest = 0;
     for (const entry of allLines) {
@@ -622,13 +591,31 @@ export class QuizGameScene {
     let curY = panelY + padding + lineH / 2;
 
     for (const entry of allLines) {
-      ctx.fillStyle = entry.revealed ? '#FFD700' : '#888';
+      ctx.fillStyle = entry.complete ? '#FFD700' : '#AAA';
       for (const line of entry.lines) {
         ctx.fillText(line, panelX + padding, curY);
         curY += lineH;
       }
     }
     ctx.restore();
+  }
+
+  /** Partially reveal text: show first N non-space chars, rest as ○ */
+  _partialReveal(text, revealed, total) {
+    let count = 0;
+    let result = '';
+    for (const ch of text) {
+      if (ch === ' ') {
+        result += ' ';
+      } else if (count < revealed) {
+        result += ch;
+        count++;
+      } else {
+        result += '○';
+        count++;
+      }
+    }
+    return result;
   }
 
   _wrapText(ctx, text, maxWidth) {
@@ -678,103 +665,6 @@ export class QuizGameScene {
     ctx.restore();
   }
 
-  _drawClueUnlockOverlay(ctx, w, h) {
-    const anim = this.clueUnlockAnim;
-    const scale = 0.3 + anim * 0.7;
-
-    ctx.save();
-    ctx.fillStyle = `rgba(0,0,0,${anim * 0.5})`;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.translate(w / 2, h * 0.4);
-    ctx.scale(scale, scale);
-
-    // Glowing key icon
-    ctx.font = '80px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🔑', 0, -30);
-
-    // Text
-    ctx.font = 'Bold 28px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-    ctx.fillStyle = '#FFD700';
-    ctx.fillText(`단서 ${this.cluesUnlocked}/${this.totalClues} 해제!`, 0, 40);
-
-    ctx.font = '16px sans-serif';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText(`아이템 ${ITEMS_PER_CLUE}개를 모아 단서가 열렸어요!`, 0, 75);
-
-    if (anim > 0.8) {
-      ctx.globalAlpha = 0.5 + Math.sin(this.gameTime * 3) * 0.3;
-      ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#CCC';
-      ctx.fillText('터치해서 단서를 확인!', 0, 110);
-    }
-
-    ctx.restore();
-  }
-
-  _drawCluePopup(ctx, w, h) {
-    const anim = this.popupAnim;
-    const scale = 0.5 + anim * 0.5 + Math.sin(anim * Math.PI) * 0.1;
-
-    ctx.save();
-    ctx.fillStyle = `rgba(0,0,0,${anim * 0.5})`;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.translate(w / 2, h * 0.4);
-    ctx.scale(scale, scale);
-
-    const cardW = Math.min(300, w * 0.8);
-    const cardH = 220;
-
-    ctx.fillStyle = '#FFF';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 20;
-    ctx.beginPath();
-    ctx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 20);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Header
-    ctx.fillStyle = '#4CAF50';
-    ctx.beginPath();
-    ctx.roundRect(-cardW / 2, -cardH / 2, cardW, 44, [20, 20, 0, 0]);
-    ctx.fill();
-
-    ctx.font = 'Bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText(`🔑 단서 ${this.popup.clueNumber}/${this.totalClues}`, 0, -cardH / 2 + 22);
-
-    // Clue emoji
-    ctx.font = '50px sans-serif';
-    ctx.fillText(this.popup.emoji, 0, -cardH / 2 + 90);
-
-    // Clue text
-    ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-    ctx.fillStyle = '#333';
-    drawWrappedText(ctx, `"${this.popup.desc}"`, 0, -cardH / 2 + 140, cardW - 40, 22);
-
-    // Confirm button (only when animation is done)
-    if (anim >= 0.8) {
-      const btnW = 140, btnH = 42;
-      const btnGrad = ctx.createLinearGradient(0, cardH / 2 - btnH - 12, 0, cardH / 2 - 12);
-      btnGrad.addColorStop(0, '#4CAF50');
-      btnGrad.addColorStop(1, '#388E3C');
-      ctx.fillStyle = btnGrad;
-      ctx.beginPath();
-      ctx.roundRect(-btnW / 2, cardH / 2 - btnH - 12, btnW, btnH, 14);
-      ctx.fill();
-      ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-      ctx.fillStyle = '#FFF';
-      ctx.fillText('확인 ✨', 0, cardH / 2 - btnH / 2 - 12);
-    }
-
-    ctx.restore();
-  }
-
   _drawGuessOverlay(ctx, w, h) {
     const anim = this.guessAnim;
 
@@ -795,9 +685,13 @@ export class QuizGameScene {
     ctx.font = '14px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
     ctx.fillStyle = '#CCC';
     const clueY = h * 0.28;
-    for (let i = 0; i < this.unlockedClueTexts.length; i++) {
-      const c = this.unlockedClueTexts[i];
-      ctx.fillText(`${c.emoji} ${c.text}`, w / 2, clueY + i * 20);
+    let clueLineIdx = 0;
+    for (const cr of this.clueReveal) {
+      if (cr.revealed === 0) continue;
+      const display = cr.revealed >= cr.total ? cr.text : this._partialReveal(cr.text, cr.revealed, cr.total);
+      ctx.fillStyle = cr.revealed >= cr.total ? '#FFD700' : '#AAA';
+      ctx.fillText(`${cr.emoji} ${display}`, w / 2, clueY + clueLineIdx * 20);
+      clueLineIdx++;
     }
 
     // Choice buttons
@@ -932,7 +826,7 @@ export class QuizGameScene {
       currentRound: this.currentRound,
       solvedRounds: this.solvedRounds,
       collectedCount: this.collectedCount,
-      cluesUnlocked: this.cluesUnlocked,
+      cluesUnlocked: this.cluesFullyRevealed,
       savedAt: Date.now(),
     };
   }
