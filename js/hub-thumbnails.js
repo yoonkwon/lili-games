@@ -90,121 +90,6 @@ function drawNest(ctx, x, y) {
   }
 }
 
-// ── Forest Gather (Ria & Lisa) ──
-function drawRia(ctx, x, y, scale) {
-  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-  const headY = -20, bodyY = 0;
-  const skin = '#FDDCB5', hair = '#3E2723', body = '#4CAF50', dark = '#2E7D32';
-  // Hair back
-  ctx.fillStyle = hair;
-  ctx.beginPath(); ctx.arc(0, headY - 1, 17, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(-14, headY + 6, 5, 10, -0.1, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(14, headY + 6, 5, 10, 0.1, 0, Math.PI * 2); ctx.fill();
-  // Body
-  ctx.fillStyle = body;
-  ctx.beginPath(); ctx.moveTo(-11, bodyY - 6); ctx.quadraticCurveTo(-14, bodyY + 12, -12, bodyY + 16);
-  ctx.lineTo(12, bodyY + 16); ctx.quadraticCurveTo(14, bodyY + 12, 11, bodyY - 6); ctx.closePath(); ctx.fill();
-  // Head
-  ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.arc(0, headY, 15, 0, Math.PI * 2); ctx.fill();
-  // Hair front
-  ctx.fillStyle = hair;
-  ctx.beginPath(); ctx.arc(0, headY - 1, 16, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
-  // Eyes
-  ctx.fillStyle = '#2E4A1E';
-  ctx.beginPath(); ctx.arc(-6, headY + 3.5, 2, 0, Math.PI * 2); ctx.arc(6, headY + 3.5, 2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath(); ctx.arc(-4.5, headY + 1.5, 1.5, 0, Math.PI * 2); ctx.arc(7.5, headY + 1.5, 1.5, 0, Math.PI * 2); ctx.fill();
-  // Blush
-  ctx.fillStyle = 'rgba(255,140,140,0.35)';
-  ctx.beginPath(); ctx.ellipse(-9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-  // Mouth
-  ctx.strokeStyle = '#E57373'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.arc(0, headY + 8, 3, 0.3, Math.PI - 0.3); ctx.stroke();
-  // Legs
-  ctx.fillStyle = skin; ctx.fillRect(-6, bodyY + 14, 5, 8); ctx.fillRect(1, bodyY + 14, 5, 8);
-  ctx.fillStyle = dark;
-  ctx.beginPath(); ctx.ellipse(-4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-
-function drawLisa(ctx, x, y, scale) {
-  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-  const headY = -20, bodyY = 0;
-  const skin = '#FDDCB5', hair = '#5D4037', body = '#FF69B4', dark = '#E91E63';
-  // Hair back + pigtails
-  ctx.fillStyle = hair;
-  ctx.beginPath(); ctx.arc(0, headY, 17, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(-17, headY + 4, 6, 12, -0.2, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(17, headY + 4, 6, 12, 0.2, 0, Math.PI * 2); ctx.fill();
-  // Hair ties
-  ctx.fillStyle = '#FF4081';
-  ctx.beginPath(); ctx.arc(-17, headY - 5, 3, 0, Math.PI * 2); ctx.arc(17, headY - 5, 3, 0, Math.PI * 2); ctx.fill();
-  // Body
-  ctx.fillStyle = body;
-  ctx.beginPath(); ctx.moveTo(-11, bodyY - 6); ctx.quadraticCurveTo(-14, bodyY + 12, -12, bodyY + 16);
-  ctx.lineTo(12, bodyY + 16); ctx.quadraticCurveTo(14, bodyY + 12, 11, bodyY - 6); ctx.closePath(); ctx.fill();
-  // Head
-  ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.arc(0, headY, 15, 0, Math.PI * 2); ctx.fill();
-  // Hair front
-  ctx.fillStyle = hair;
-  ctx.beginPath(); ctx.arc(0, headY, 16, Math.PI * 1.1, Math.PI * 1.9); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-12, headY - 8); ctx.quadraticCurveTo(-6, headY - 2, 0, headY - 6);
-  ctx.quadraticCurveTo(6, headY - 2, 12, headY - 8);
-  ctx.lineTo(15, headY - 12); ctx.arc(0, headY, 16, -0.4, Math.PI + 0.4, true); ctx.closePath(); ctx.fill();
-  // Eyes
-  ctx.fillStyle = '#6B4226';
-  ctx.beginPath(); ctx.arc(-6, headY + 3.5, 2, 0, Math.PI * 2); ctx.arc(6, headY + 3.5, 2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath(); ctx.arc(-4.5, headY + 1.5, 1.5, 0, Math.PI * 2); ctx.arc(7.5, headY + 1.5, 1.5, 0, Math.PI * 2); ctx.fill();
-  // Blush
-  ctx.fillStyle = 'rgba(255,140,140,0.35)';
-  ctx.beginPath(); ctx.ellipse(-9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(9, headY + 6, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-  // Mouth
-  ctx.strokeStyle = '#E57373'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.arc(0, headY + 8, 3, 0.3, Math.PI - 0.3); ctx.stroke();
-  // Legs
-  ctx.fillStyle = skin; ctx.fillRect(-6, bodyY + 14, 5, 8); ctx.fillRect(1, bodyY + 14, 5, 8);
-  ctx.fillStyle = dark;
-  ctx.beginPath(); ctx.ellipse(-4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(4, bodyY + 23, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-
-function drawBori(ctx, x, y, scale) {
-  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-  // Body
-  ctx.fillStyle = '#2a2a2a';
-  ctx.beginPath(); ctx.ellipse(-2, 4, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
-  // Head
-  ctx.beginPath(); ctx.arc(10, -6, 9, 0, Math.PI * 2); ctx.fill();
-  // Ears
-  ctx.fillStyle = '#1a1a1a';
-  ctx.beginPath(); ctx.arc(4, -12, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(16, -12, 4, 0, Math.PI * 2); ctx.fill();
-  // Eyes
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath(); ctx.arc(8, -7, 2, 0, Math.PI * 2); ctx.arc(13, -7, 2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#1a1a1a';
-  ctx.beginPath(); ctx.arc(8.5, -7, 1.2, 0, Math.PI * 2); ctx.arc(13.5, -7, 1.2, 0, Math.PI * 2); ctx.fill();
-  // Tongue
-  ctx.fillStyle = '#4a3a6a';
-  ctx.beginPath(); ctx.ellipse(10, 0, 2, 3, 0, 0, Math.PI); ctx.fill();
-  // Nose
-  ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.ellipse(10, -2, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill();
-  // Legs
-  ctx.fillStyle = '#2a2a2a';
-  ctx.fillRect(-8, 10, 4, 6); ctx.fillRect(-2, 10, 4, 6);
-  ctx.fillRect(4, 10, 4, 6); ctx.fillRect(10, 10, 4, 6);
-  ctx.restore();
-}
-
 function renderForest(ctx, w, h) {
   // Sky
   ctx.fillStyle = '#87CEEB';
@@ -360,6 +245,28 @@ function ourMomExtras(ctx, w, h) {
   ctx.fillText('🦠', 50, h * 0.88); ctx.fillText('🍓', w * 0.78, h * 0.85);
 }
 
+async function renderForestGather(canvasId, dpr) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = setupCanvas(canvas, dpr);
+  const w = canvas.width / dpr, h = canvas.height / dpr;
+  renderForest(ctx, w, h);
+
+  const [ria, lisa] = await Promise.all([
+    loadImg('our-mom-baby/assets/child-ria.png'),
+    loadImg('our-mom-baby/assets/fairy-lisa.png'),
+  ]);
+  if (ria) drawFitted(ctx, ria, w * 0.4, h * 0.6, 80);
+  if (lisa) drawFitted(ctx, lisa, w * 0.62, h * 0.55, 65);
+
+  // Sparkles
+  ctx.font = '16px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✨', w * 0.2, h * 0.45);
+  ctx.fillText('⭐', w * 0.82, h * 0.5);
+  ctx.fillText('🌟', w * 0.5, h * 0.35);
+}
+
 // ── Main init ──
 export function initThumbnails() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -376,16 +283,8 @@ export function initThumbnails() {
     ctx.fillText('✨', w * 0.7, h * 0.55); ctx.fillText('⭐', w * 0.85, h * 0.5);
   }
 
-  // Forest Gather
-  const forestCanvas = document.getElementById('thumb-forest');
-  if (forestCanvas) {
-    const ctx = setupCanvas(forestCanvas, dpr);
-    const w = forestCanvas.width / dpr, h = forestCanvas.height / dpr;
-    renderForest(ctx, w, h);
-    drawRia(ctx, w * 0.43, h * 0.62, 1.4);
-    drawLisa(ctx, w * 0.57, h * 0.66, 1.2);
-    drawBori(ctx, w * 0.3, h * 0.8, 1);
-  }
+  // Forest Gather (async — load PNG assets)
+  renderForestGather('thumb-forest', dpr);
 
   // Baby games (async SVG loading)
   renderBabyGame('thumb-elsa', elsaBg,
