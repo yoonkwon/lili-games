@@ -574,12 +574,40 @@ export class QuizGameScene {
 
     const panelX = 10;
     const panelY = this.safeTop + 62;
-    const panelW = Math.min(220, w * 0.4);
-    const lineH = 22;
-    const rows = this.cluesUnlocked;
-    const panelH = 10 + rows * lineH + 10;
+    const maxPanelW = Math.min(w - 24, w * 0.75);
+    const padding = 10;
+    const lineH = 20;
+    const font = '13px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
 
     ctx.save();
+    ctx.font = font;
+
+    // Pre-calculate wrapped lines for each clue
+    const allLines = [];
+    for (let i = 0; i < this.cluesUnlocked; i++) {
+      if (i < this.unlockedClueTexts.length) {
+        const clue = this.unlockedClueTexts[i];
+        const fullText = `${clue.emoji} ${clue.text}`;
+        const wrapped = this._wrapText(ctx, fullText, maxPanelW - padding * 2);
+        allLines.push({ lines: wrapped, revealed: true });
+      } else {
+        allLines.push({ lines: ['🔒 ???'], revealed: false });
+      }
+    }
+
+    // Calculate panel size from content
+    let totalLines = 0;
+    let widest = 0;
+    for (const entry of allLines) {
+      totalLines += entry.lines.length;
+      for (const line of entry.lines) {
+        widest = Math.max(widest, ctx.measureText(line).width);
+      }
+    }
+    const panelW = Math.min(maxPanelW, widest + padding * 2 + 4);
+    const panelH = padding + totalLines * lineH + padding;
+
+    // Background
     ctx.globalAlpha = 0.7;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
@@ -587,23 +615,37 @@ export class QuizGameScene {
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    ctx.font = '13px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
+    // Draw lines
+    ctx.font = font;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
+    let curY = panelY + padding + lineH / 2;
 
-    for (let i = 0; i < rows; i++) {
-      if (i < this.unlockedClueTexts.length) {
-        // Revealed clue (popup was dismissed)
-        const clue = this.unlockedClueTexts[i];
-        ctx.fillStyle = '#FFD700';
-        ctx.fillText(`${clue.emoji} ${clue.text}`, panelX + 10, panelY + 15 + i * lineH);
-      } else {
-        // Unlocked but popup not yet dismissed
-        ctx.fillStyle = '#888';
-        ctx.fillText(`🔒 ???`, panelX + 10, panelY + 15 + i * lineH);
+    for (const entry of allLines) {
+      ctx.fillStyle = entry.revealed ? '#FFD700' : '#888';
+      for (const line of entry.lines) {
+        ctx.fillText(line, panelX + padding, curY);
+        curY += lineH;
       }
     }
     ctx.restore();
+  }
+
+  _wrapText(ctx, text, maxWidth) {
+    const chars = text.split('');
+    const lines = [];
+    let line = '';
+    for (const ch of chars) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
   }
 
   _drawGuessButton(ctx, w, h) {
