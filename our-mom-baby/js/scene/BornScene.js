@@ -2,6 +2,7 @@
  * Born scene - baby is born! Happy ending
  */
 import { drawMom, drawBaby } from '../draw-mom.js';
+import { iGa } from '../../../shared/korean.js';
 
 const STORAGE_KEY = 'our-mom-born-count';
 function getBornCount() { try { return parseInt(localStorage.getItem(STORAGE_KEY)) || 0; } catch { return 0; } }
@@ -91,7 +92,7 @@ export class BornScene {
       ctx.shadowColor = '#FF69B4'; ctx.shadowBlur = 15;
       ctx.fillStyle = '#FFF';
       const babyName = this.mode === 'ria' ? '리아' : '리사';
-      ctx.fillText(`🎉 ${babyName}가 태어났어요! 🎉`, w / 2, h * 0.48);
+      ctx.fillText(`🎉 ${babyName}${iGa(babyName)} 태어났어요! 🎉`, w / 2, h * 0.48);
       ctx.shadowBlur = 0;
       ctx.font = '20px sans-serif';
       ctx.fillStyle = '#FFB6C1';

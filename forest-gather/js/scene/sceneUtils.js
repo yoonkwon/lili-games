@@ -2,7 +2,7 @@
  * Shared utilities for exploration scenes (GameScene, QuizGameScene)
  */
 import { Companion } from '../entity/Companion.js';
-import { iGa } from '../util/korean.js';
+import { iGa } from '../../../shared/korean.js';
 
 /** Draw wrapped text (character-by-character for CJK) */
 export function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {

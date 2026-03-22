@@ -3,7 +3,7 @@
  * Zelda/Animal Crossing style: free roam, discover items, fill encyclopedia
  */
 import { STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS, WORD_MISSIONS, COMPANION_QUESTS, COMPANION_DIALOGUE } from '../config.js';
-import { pp } from '../util/korean.js';
+import { pp } from '../../../shared/korean.js';
 import { Character } from '../entity/Character.js';
 import { Item } from '../entity/Item.js';
 import { Companion } from '../entity/Companion.js';

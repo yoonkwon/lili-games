@@ -11,6 +11,7 @@ import { ParticleSystem } from '../particles.js';
 import { audio as Audio } from '../AudioManager.js';
 import { DIFFICULTIES } from '../Difficulty.js';
 import { AchievementManager } from '../Achievement.js';
+import { eulReul, iGa } from '../../../shared/korean.js';
 
 const GOLDEN_EGG_VALUE = 3;
 
@@ -278,7 +279,7 @@ export class GameScene {
                     const scareResult = pred.scare();
                     if (scareResult === 'scared') {
                         this.predatorsScared++;
-                        this.message.show(`🐣 병아리가 ${pred.info.name}을 쫓아냈어! 💪`);
+                        this.message.show(`🐣 병아리가 ${pred.info.name}${eulReul(pred.info.name)} 쫓아냈어! 💪`);
                         Audio.play('cheer');
                         Audio.play('scared');
                         this.particles.createParticles(pred.x, pred.y, '#FFD700', 10);
@@ -365,7 +366,7 @@ export class GameScene {
                     } else {
                         // Nothing to steal/capture - predator attacks mother: HP -3
                         this._takeDamage(3, this.nest.x, this.nest.y - 50);
-                        this.message.show(`${pred.info.emoji} ${pred.info.name}가 공격했어!`);
+                        this.message.show(`${pred.info.emoji} ${pred.info.name}${iGa(pred.info.name)} 공격했어!`);
                         Audio.play('steal');
                     }
                 }
@@ -388,7 +389,7 @@ export class GameScene {
                         const scareResult = pred.scare();
                         if (scareResult === 'scared') {
                             this.predatorsScared++;
-                            this.message.show(`🐕 ${dog.info.name}가 ${pred.info.name}을 쫓아냈어!`);
+                            this.message.show(`🐕 ${dog.info.name}${iGa(dog.info.name)} ${pred.info.name}${eulReul(pred.info.name)} 쫓아냈어!`);
                             Audio.play('cheer');
                             Audio.play('scared');
                             this.particles.createParticles(pred.x, pred.y, '#FFD700', 12);
@@ -1092,7 +1093,7 @@ export class GameScene {
                 const result = this.predators[i].scare();
                 if (result === 'scared') {
                     this.predatorsScared++;
-                    this.message.show(`${this.predators[i].info.name}을 쫓아냈어! 👏`);
+                    this.message.show(`${this.predators[i].info.name}${eulReul(this.predators[i].info.name)} 쫓아냈어! 👏`);
                     Audio.play('cheer');
                     Audio.play('scared');
                     this.particles.createParticles(this.predators[i].x, this.predators[i].y, '#FFD700', 10);
