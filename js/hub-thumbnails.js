@@ -292,7 +292,7 @@ export function initThumbnails() {
   renderBabyGame('thumb-snow-white', snowWhiteBg,
     'snow-white-baby/assets/snow-white-mom.png', 'snow-white-baby/assets/baby-snow-white-happy.png', snowWhiteExtras);
   renderBabyGame('thumb-mermaid', mermaidBg,
-    'mermaid-baby/assets/mermaid-mom.svg', 'mermaid-baby/assets/baby-mermaid-happy.svg', mermaidExtras);
+    'mermaid-baby/assets/mermaid-mom.png', 'mermaid-baby/assets/baby-mermaid-happy.png', mermaidExtras);
   renderBabyGame('thumb-our-mom', ourMomBg,
     'our-mom-baby/assets/mom.png', 'our-mom-baby/assets/baby-ria-happy.png', ourMomExtras);
 }
