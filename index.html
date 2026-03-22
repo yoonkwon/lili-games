@@ -222,12 +222,21 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+                // Check for updates on page load and every 30 seconds
+                reg.update();
+                setInterval(() => reg.update(), 30000);
+
                 reg.addEventListener('updatefound', () => {
                     const newSW = reg.installing;
                     newSW.addEventListener('statechange', () => {
                         if (newSW.state === 'activated') location.reload();
                     });
                 });
+            });
+
+            // Listen for SW-triggered reload
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                location.reload();
             });
         }
     </script>
