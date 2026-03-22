@@ -222,19 +222,10 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
-                // Check for updates on page load and every 30 seconds
+                // Check for SW update on page load
                 reg.update();
-                setInterval(() => reg.update(), 30000);
-
-                reg.addEventListener('updatefound', () => {
-                    const newSW = reg.installing;
-                    newSW.addEventListener('statechange', () => {
-                        if (newSW.state === 'activated') location.reload();
-                    });
-                });
             });
-
-            // Listen for SW-triggered reload
+            // SW가 교체되면 자동 리로드 (새 코드 즉시 적용)
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 location.reload();
             });

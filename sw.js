@@ -1,27 +1,23 @@
-const CACHE_NAME = 'lili-games-v26';
+const CACHE_NAME = 'lili-games-cache';
 
-// Install: activate immediately (don't wait for old tabs to close)
-self.addEventListener('install', () => {
+// Install: activate immediately, wipe ALL existing caches for clean slate
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => caches.delete(k)))
+    )
+  );
   self.skipWaiting();
 });
 
-// Activate: clean old caches + take control + reload all tabs
+// Activate: take control of all clients immediately
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-     .then(() => {
-       // Force reload all open tabs to pick up new code
-       return self.clients.matchAll({ type: 'window' }).then((clients) => {
-         clients.forEach((client) => client.navigate(client.url));
-       });
-     })
-  );
+  e.waitUntil(self.clients.claim());
 });
 
-// Fetch: network-first, cache as fallback for offline
-// Always tries network first so updates are immediate when online
+// Fetch: network-first with cache fallback
+// - Online: always fetch from network, update cache with latest response
+// - Offline: serve from cache
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
