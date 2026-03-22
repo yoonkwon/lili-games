@@ -1053,3 +1053,108 @@ export const WORD_MISSIONS = {
     { word: 'BIG', emoji: '🐘', letters: ['B','I','G'], display: ['B','I','G'], funFact: 'Elephants are the biggest land animals! 코끼리는 육지에서 가장 큰 동물이에요!' },
   ],
 };
+
+// ── Companion quests per stage ──
+export const COMPANION_QUESTS = {
+  hangul: [
+    { target: ['g', 'n', 'd'], desc: 'ㄱ, ㄴ, ㄷ을 순서대로 찾아보자!', reward: '자음 3형제 완성!' },
+    { target: ['v_a', 'v_eo', 'v_o'], desc: '모음 ㅏ, ㅓ, ㅗ를 찾아보자!', reward: '모음 친구들 발견!' },
+    { targetCount: 5, desc: '아무거나 5개를 빨리 찾아보자!', reward: '탐험 달인!' },
+    { target: ['s', 'j', 'ch'], desc: 'ㅅ, ㅈ, ㅊ을 찾아볼까?', reward: '치찰음 마스터!' },
+    { targetCount: 10, desc: '절반을 모아보자! 할 수 있어!', reward: '반쪽 영웅!' },
+  ],
+  english: [
+    { target: ['A', 'B', 'C'], desc: 'A, B, C를 먼저 찾아보자!', reward: 'ABC 완성!' },
+    { target: ['X', 'Y', 'Z'], desc: '마지막 글자 X, Y, Z를 찾아볼까?', reward: '알파벳 끝판왕!' },
+    { targetCount: 5, desc: '5개를 빨리 모아보자!', reward: '스피드 헌터!' },
+    { target: ['D', 'O', 'G'], desc: 'D, O, G를 찾으면 무슨 단어일까?', reward: 'DOG 완성! 🐕' },
+    { targetCount: 13, desc: '절반을 모아보자!', reward: '하프타임!' },
+  ],
+  numbers: [
+    { target: ['1', '2', '3'], desc: '1, 2, 3을 순서대로 찾아보자!', reward: '하나 둘 셋!' },
+    { target: ['0'], desc: '특별한 숫자 0을 찾아볼까?', reward: '제로 발견!' },
+    { targetCount: 6, desc: '절반을 모아보자!', reward: '숫자 반쪽!' },
+  ],
+  dinosaurs: [
+    { targetCount: 3, desc: '공룡 3마리를 찾아보자!', reward: '공룡 사냥꾼!' },
+    { targetCount: 6, desc: '절반의 공룡을 찾아보자!', reward: '공룡 박사!' },
+    { targetCount: 10, desc: '거의 다 찾았어! 10마리!', reward: '공룡 마스터!' },
+  ],
+  animals: [
+    { targetCount: 3, desc: '동물 3마리를 찾아보자!', reward: '동물 친구!' },
+    { targetCount: 7, desc: '절반의 동물을 찾아보자!', reward: '동물 탐험가!' },
+    { targetCount: 12, desc: '거의 다! 12마리!', reward: '동물 박사!' },
+  ],
+};
+
+// ── Companion personality dialogue ──
+export const COMPANION_DIALOGUE = {
+  bori: {
+    personality: '호기심 많은 강아지',
+    onDiscover: [
+      '킁킁! 이거 찾았다!',
+      '와! 대단해!',
+      '보리가 냄새 맡았는데 역시!',
+      '킁킁! 또 하나!',
+      '우와~ 신기하다!',
+    ],
+    onQuestStart: '킁킁! 같이 찾아보자!',
+    onQuestComplete: '멍멍! 해냈다! 대단해!',
+    idle: [
+      '킁킁... 어디 숨었지?',
+      '꼬리가 흔들흔들!',
+      '같이 가자!',
+    ],
+  },
+  jopssal: {
+    personality: '빠르고 신나는 여우',
+    onDiscover: [
+      '빨리빨리! 찾았어!',
+      '우와 또 하나!',
+      '좁쌀이가 제일 빠르지!',
+      '신난다~!',
+      '달려달려!',
+    ],
+    onQuestStart: '출발! 빨리 찾자!',
+    onQuestComplete: '야호! 다 찾았다!',
+    idle: [
+      '빨리 가자!',
+      '두리번두리번~',
+      '어서어서!',
+    ],
+  },
+  ikdol: {
+    personality: '차분하고 지혜로운 독수리',
+    onDiscover: [
+      '잘 찾았구나!',
+      '역시 대단해!',
+      '위에서 다 보여~',
+      '훌륭해!',
+      '하나 더 발견!',
+    ],
+    onQuestStart: '천천히 잘 살펴보자!',
+    onQuestComplete: '해냈구나! 정말 잘했어!',
+    idle: [
+      '하늘에서 보면 잘 보여~',
+      '차분하게 찾아보자',
+      '잘하고 있어!',
+    ],
+  },
+  gosun: {
+    personality: '느긋하고 따뜻한 고양이',
+    onDiscover: [
+      '냥~ 찾았다!',
+      '잘하고 있어~',
+      '천천히 해도 괜찮아!',
+      '고순이도 기뻐!',
+      '반짝반짝!',
+    ],
+    onQuestStart: '느긋하게 찾아보자~',
+    onQuestComplete: '냥! 다 했다~ 대단해!',
+    idle: [
+      '냥~ 기분 좋다',
+      '천천히 가도 돼~',
+      '같이 있으니 좋다~',
+    ],
+  },
+};

@@ -2,7 +2,8 @@
  * Main exploration scene - educational encyclopedia adventure
  * Zelda/Animal Crossing style: free roam, discover items, fill encyclopedia
  */
-import { STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS, WORD_MISSIONS } from '../config.js';
+import { STAGES, PLAYER, MAP_WIDTH, MAP_HEIGHT, DISCOVER_RADIUS, COMPANION_HINT_INTERVAL, HIDE_STYLES, TERRAIN_PRESETS, WORD_MISSIONS, COMPANION_QUESTS, COMPANION_DIALOGUE } from '../config.js';
+import { pp } from '../util/korean.js';
 import { Character } from '../entity/Character.js';
 import { Item } from '../entity/Item.js';
 import { Companion } from '../entity/Companion.js';
@@ -76,6 +77,12 @@ export class GameScene {
     // Word builder
     this.wordBuilder = new WordBuilder();
     this.completedWords = [];
+
+    // Companion quest system
+    const stageQuests = COMPANION_QUESTS[this.stageConfig.id] || [];
+    this.companionQuests = stageQuests.map(q => ({ ...q, completed: false }));
+    this.currentQuestIndex = 0;
+    this.questAnnouncedAt = -1; // gameTime when quest was announced
     this.wordMissions = WORD_MISSIONS[this.stageConfig.id] || [];
     this.wordReadyMission = null; // mission ready to start
 
@@ -205,6 +212,12 @@ export class GameScene {
     this.particles.createParticles(sx, sy, '#FFD700', 15);
     this.particles.addFloatingText(sx, sy - 30, '새로운 발견!', '#FFD700');
 
+    // Companion reaction dialogue
+    this._companionReact(item);
+
+    // Check companion quest progress
+    this._checkCompanionQuest();
+
     // Show popup
     this.popup = item;
     this.popupAnim = 0;
@@ -283,6 +296,13 @@ export class GameScene {
       item.update(dt);
     }
 
+    // Announce companion quest after 2 seconds
+    if (this.questAnnouncedAt < 0 && this.gameTime > 2 &&
+        this.currentQuestIndex < this.companionQuests.length &&
+        this.state === 'exploring') {
+      this._announceQuest();
+    }
+
     // Camera follow player
     updateCamera(this, dt);
 
@@ -352,6 +372,9 @@ export class GameScene {
 
     // HUD (screen coords)
     this._drawHUD(ctx, w, h);
+
+    // Current quest indicator
+    this._drawQuestIndicator(ctx, w, h);
 
     // Mini-map
     if (this.showMiniMap) {
@@ -589,5 +612,101 @@ export class GameScene {
       total: this.totalItems,
       items: this.items.map(i => i.emoji),
     };
+  }
+
+  // ── Companion quest & dialogue system ──
+
+  _companionReact(item) {
+    const lead = this.companions[0];
+    if (!lead) return;
+    const dialogueSet = COMPANION_DIALOGUE[lead.type];
+    if (!dialogueSet) return;
+
+    // Pick a random discovery line
+    const lines = dialogueSet.onDiscover;
+    const line = lines[Math.floor(Math.random() * lines.length)];
+
+    // Add item-specific context: "name + desc snippet"
+    const itemName = item.name.split(' ')[0]; // first word (e.g., "기역" from "기역 (ㄱ)")
+    const contextLine = `${pp(itemName, '을를')} 찾았어! ${line}`;
+    lead.setSpeech(contextLine, 3.5);
+  }
+
+  _checkCompanionQuest() {
+    if (this.currentQuestIndex >= this.companionQuests.length) return;
+    const quest = this.companionQuests[this.currentQuestIndex];
+    if (quest.completed) return;
+
+    // Announce quest if not yet announced
+    if (this.questAnnouncedAt < 0) {
+      this._announceQuest();
+      return;
+    }
+
+    // Check completion
+    let done = false;
+    if (quest.target) {
+      // Target specific item IDs
+      const discoveredIds = new Set(this.items.filter(i => i.discovered).map(i => i.id));
+      done = quest.target.every(t => discoveredIds.has(t));
+    } else if (quest.targetCount) {
+      done = this.discoveredCount >= quest.targetCount;
+    }
+
+    if (done) {
+      quest.completed = true;
+      const lead = this.companions[0];
+      const dialogueSet = lead ? COMPANION_DIALOGUE[lead.type] : null;
+      const completeLine = dialogueSet ? dialogueSet.onQuestComplete : '해냈다!';
+
+      this.message.show(`⭐ ${quest.reward}`, 3);
+      this.particles.createStars(this.screenW / 2, this.screenH * 0.3, 15);
+      if (lead) lead.setSpeech(completeLine, 4);
+
+      // Move to next quest
+      this.currentQuestIndex++;
+      this.questAnnouncedAt = -1;
+    }
+  }
+
+  _drawQuestIndicator(ctx, w, h) {
+    if (this.currentQuestIndex >= this.companionQuests.length) return;
+    const quest = this.companionQuests[this.currentQuestIndex];
+    if (!quest || this.questAnnouncedAt < 0) return;
+
+    const lead = this.companions[0];
+    const emoji = lead ? (COMPANION_DIALOGUE[lead.type]?.personality?.charAt(0) || '⭐') : '⭐';
+
+    ctx.save();
+    const panelY = this.safeTop + 42;
+    const font = '12px "Apple SD Gothic Neo", "Segoe UI", sans-serif';
+    ctx.font = font;
+    const text = `⭐ ${quest.desc}`;
+    const tw = Math.min(ctx.measureText(text).width + 20, w * 0.7);
+
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.roundRect(w / 2 - tw / 2, panelY, tw, 22, 8);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(text, w / 2, panelY + 11);
+    ctx.restore();
+  }
+
+  _announceQuest() {
+    const quest = this.companionQuests[this.currentQuestIndex];
+    if (!quest) return;
+    const lead = this.companions[0];
+    const dialogueSet = lead ? COMPANION_DIALOGUE[lead.type] : null;
+    const startLine = dialogueSet ? dialogueSet.onQuestStart : '찾아보자!';
+
+    if (lead) lead.setSpeech(`${startLine}\n${quest.desc}`, 5);
+    this.questAnnouncedAt = this.gameTime;
   }
 }
