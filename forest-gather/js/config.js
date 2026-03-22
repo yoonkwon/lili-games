@@ -1157,4 +1157,38 @@ export const COMPANION_DIALOGUE = {
       '같이 있으니 좋다~',
     ],
   },
+  azzi_white: {
+    personality: '활발한 쌍둥이 토끼',
+    onDiscover: [
+      '깡충! 찾았다!',
+      '토끼처럼 빠르지?',
+      '우리가 도와줄게!',
+      '깡충깡충!',
+      '여기 있었구나!',
+    ],
+    onQuestStart: '깡충! 같이 뛰어다니자!',
+    onQuestComplete: '깡충깡충! 해냈다!',
+    idle: [
+      '깡충깡충~',
+      '당근 어디 없나?',
+      '같이 놀자!',
+    ],
+  },
+  azzi_blue: {
+    personality: '차분한 쌍둥이 토끼',
+    onDiscover: [
+      '찾았어~',
+      '잘했어!',
+      '쌍둥이 힘이야!',
+      '여기 보자~',
+      '하나 더!',
+    ],
+    onQuestStart: '천천히 찾아보자~',
+    onQuestComplete: '둘이 힘을 합쳐서 해냈어!',
+    idle: [
+      '코 벌름벌름~',
+      '형아를 따라가자~',
+      '같이 있으면 든든해!',
+    ],
+  },
 };

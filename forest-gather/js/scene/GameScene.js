@@ -122,9 +122,9 @@ export class GameScene {
 
   _placeCompanionNPCs() {
     const margin = 200;
-    const npcTypes = ['bori', 'jopssal', 'gosun'];
+    const npcTypes = ['bori', 'jopssal', 'gosun', 'azzi_white'];
     const npcs = [];
-    const count = 1 + Math.floor(Math.random() * 2);
+    const count = 2 + Math.floor(Math.random() * 2); // 2-3 NPCs
     for (let i = 0; i < count && i < npcTypes.length; i++) {
       const nx = margin + Math.random() * (this.mapWidth - margin * 2);
       const ny = margin + Math.random() * (this.mapHeight - margin * 2);

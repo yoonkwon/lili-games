@@ -153,8 +153,8 @@ export class QuizGameScene {
 
     // Place 1-2 CompanionNPCs on the map
     this.companionNPCs = [];
-    const npcTypes = ['bori', 'jopssal', 'gosun'];
-    const npcCount = 1 + Math.floor(Math.random() * 2); // 1-2
+    const npcTypes = ['bori', 'jopssal', 'gosun', 'azzi_white'];
+    const npcCount = 2 + Math.floor(Math.random() * 2); // 2-3
     for (let i = 0; i < npcCount && i < npcTypes.length; i++) {
       const nx = margin + Math.random() * usableW;
       const ny = margin + Math.random() * usableH;

@@ -51,10 +51,26 @@ export class SpriteCache {
   }
 
   _renderCharacters() {
-    // Ria - 6yo girl, green outfit
-    this._renderGirl('ria', '#4CAF50', '#2E7D32', '#3E2723', 'bob');
-    // Lisa - 4yo girl, pink outfit, pigtails
-    this._renderGirl('lisa', '#FF69B4', '#E91E63', '#5D4037', 'pigtails');
+    // Ria & Lisa — load PNG assets, keep procedural as fallback
+    this._loadCharacterPNG('ria', '../our-mom-baby/assets/child-ria.png', '#4CAF50', '#2E7D32', '#3E2723', 'bob');
+    this._loadCharacterPNG('lisa', '../our-mom-baby/assets/fairy-lisa.png', '#FF69B4', '#E91E63', '#5D4037', 'pigtails');
+  }
+
+  _loadCharacterPNG(name, pngPath, bodyColor, bodyDark, hairColor, hairStyle) {
+    // Render procedural fallback first
+    this._renderGirl(name, bodyColor, bodyDark, hairColor, hairStyle);
+    // Then try to load PNG asset, resized to sprite dimensions
+    const img = new Image();
+    img.onload = () => {
+      // Resize to ~48x64 sprite size while preserving aspect ratio
+      const targetH = 64;
+      const aspect = img.width / img.height;
+      const targetW = Math.round(targetH * aspect);
+      const [c, cctx] = this._mk(targetW, targetH);
+      cctx.drawImage(img, 0, 0, targetW, targetH);
+      this.cache.set(`${name}-idle`, c);
+    };
+    img.src = pngPath;
   }
 
   _renderGirl(name, bodyColor, bodyDark, hairColor, hairStyle) {
