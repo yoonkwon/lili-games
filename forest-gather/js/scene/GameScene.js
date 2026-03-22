@@ -123,6 +123,11 @@ export class GameScene {
   _placeCompanionNPCs() {
     const margin = 200;
     const npcTypes = ['bori', 'jopssal', 'gosun', 'azzi_white'];
+    // Shuffle so different companions appear each session
+    for (let i = npcTypes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [npcTypes[i], npcTypes[j]] = [npcTypes[j], npcTypes[i]];
+    }
     const npcs = [];
     const count = 2 + Math.floor(Math.random() * 2); // 2-3 NPCs
     for (let i = 0; i < count && i < npcTypes.length; i++) {
