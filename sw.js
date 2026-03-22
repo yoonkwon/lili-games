@@ -1,13 +1,12 @@
 const CACHE_NAME = 'lili-games-cache';
 
-// Install: activate immediately, wipe ALL existing caches for clean slate
+// Install: wipe existing caches then activate immediately
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 // Activate: take control of all clients immediately
