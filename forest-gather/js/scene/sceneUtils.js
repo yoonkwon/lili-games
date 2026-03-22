@@ -2,6 +2,7 @@
  * Shared utilities for exploration scenes (GameScene, QuizGameScene)
  */
 import { Companion } from '../entity/Companion.js';
+import { iGa } from '../util/korean.js';
 
 /** Draw wrapped text (character-by-character for CJK) */
 export function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -191,7 +192,7 @@ export function updateCompanions(scene, dt, items) {
       for (let i = 0; i < scene.companions.length; i++) {
         scene.companions[i].assignAngle(i, scene.companions.length);
       }
-      scene.message.show(`🎉 ${npc.name}이(가) 합류했어요!`, 3);
+      scene.message.show(`🎉 ${npc.name}${iGa(npc.name)} 합류했어요!`, 3);
       const sx = (npc.x - scene.camX) * scene.gameScale;
       const sy = (npc.y - scene.camY) * scene.gameScale;
       scene.particles.createStars(sx, sy, 12);
