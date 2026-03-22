@@ -355,9 +355,9 @@ export class GameScene {
     // Rich terrain features
     drawTerrain(ctx, this.terrain, this.gameTime, this.camX, this.camY, this.viewW, this.viewH);
 
-    // Items
+    // Discovered items (behind characters)
     for (const item of this.items) {
-      item.draw(ctx, this.spriteCache);
+      if (item.discovered) item.draw(ctx, this.spriteCache);
     }
 
     // CompanionNPCs
@@ -368,6 +368,11 @@ export class GameScene {
     // Active companions
     for (const comp of this.companions) {
       comp.draw(ctx, this.spriteCache);
+    }
+
+    // Undiscovered items (drawn ON TOP of companions so they're never hidden)
+    for (const item of this.items) {
+      if (!item.discovered) item.draw(ctx, this.spriteCache);
     }
 
     // Lisa (behind Ria)

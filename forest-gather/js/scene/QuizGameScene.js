@@ -424,9 +424,9 @@ export class QuizGameScene {
     // Rich terrain features
     drawTerrain(ctx, this.terrain, this.gameTime, this.camX, this.camY, this.viewW, this.viewH);
 
-    // Collection items
+    // Discovered items (behind characters)
     for (const item of this.collectItems) {
-      item.draw(ctx, this.spriteCache);
+      if (item.discovered) item.draw(ctx, this.spriteCache);
     }
 
     // CompanionNPCs (discoverable on map)
@@ -444,6 +444,11 @@ export class QuizGameScene {
 
     // Player (Ria)
     this.player.draw(ctx, this.spriteCache);
+
+    // Undiscovered items (on top of characters)
+    for (const item of this.collectItems) {
+      if (!item.discovered) item.draw(ctx, this.spriteCache);
+    }
 
     ctx.restore();
     ctx.restore();

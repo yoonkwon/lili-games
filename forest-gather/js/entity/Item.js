@@ -113,7 +113,7 @@ export class Item {
       return;
     }
 
-    ctx.globalAlpha = Math.min(1, this.visibility);
+    ctx.globalAlpha = Math.min(1, Math.max(0.5, this.visibility));
 
     // Tap-ready glow ring
     if (this.tapReady) {
