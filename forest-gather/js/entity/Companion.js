@@ -138,8 +138,10 @@ export class Companion {
 
     let tx, ty;
     if (this.seekingItem && !this.seekingItem.discovered) {
-      tx = this.seekingItem.x;
-      ty = this.seekingItem.y;
+      // Stand beside the item, not on top of it
+      const offsetX = (this.sectorAngle > 0 ? 1 : -1) * 35;
+      tx = this.seekingItem.x + offsetX;
+      ty = this.seekingItem.y + 15;
     } else {
       this.seekingItem = null;
       if (!this.wanderTarget || this.wanderTimer <= 0) {
