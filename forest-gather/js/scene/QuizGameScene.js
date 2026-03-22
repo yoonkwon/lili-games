@@ -38,8 +38,12 @@ export class QuizGameScene {
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - start with default (익돌이)
-    this.companions = [new Companion('ikdol', this.player, 0, 1)];
+    // Companions - 익돌이(리아) + 아찌 쌍둥이(리사)
+    this.companions = [
+      new Companion('ikdol', this.player, 0, 3),
+      new Companion('azzi_white', this.lisa, 1, 3),
+      new Companion('azzi_blue', this.lisa, 2, 3),
+    ];
 
     // Companion NPCs discoverable on the map
     this.companionNPCs = [];
@@ -153,7 +157,7 @@ export class QuizGameScene {
 
     // Place 1-2 CompanionNPCs on the map
     this.companionNPCs = [];
-    const npcTypes = ['bori', 'jopssal', 'gosun', 'azzi_white'];
+    const npcTypes = ['bori', 'jopssal', 'gosun'];
     for (let i = npcTypes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [npcTypes[i], npcTypes[j]] = [npcTypes[j], npcTypes[i]];
@@ -314,8 +318,12 @@ export class QuizGameScene {
     this.lisa.targetX = this.lisa.x;
     this.lisa.targetY = this.lisa.y;
     this._placeCollectItems();
-    // Reset companions to default (prevent duplication across rounds)
-    this.companions = [new Companion('ikdol', this.player, 0, 1)];
+    // Reset companions (익돌이 + 아찌 쌍둥이)
+    this.companions = [
+      new Companion('ikdol', this.player, 0, 3),
+      new Companion('azzi_white', this.lisa, 1, 3),
+      new Companion('azzi_blue', this.lisa, 2, 3),
+    ];
     // Reset collection tray for new round
     this.collectionTray = new CollectionTray(this.spriteCache);
     // Regenerate terrain for variety

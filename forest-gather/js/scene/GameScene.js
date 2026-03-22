@@ -38,8 +38,12 @@ export class GameScene {
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - start with default (익돌이)
-    this.companions = [new Companion('ikdol', this.player, 0, 1)];
+    // Companions - 익돌이(리아) + 아찌 쌍둥이(리사)
+    this.companions = [
+      new Companion('ikdol', this.player, 0, 3),
+      new Companion('azzi_white', this.lisa, 1, 3),
+      new Companion('azzi_blue', this.lisa, 2, 3),
+    ];
 
     // Companion NPCs discoverable on the map
     this.companionNPCs = this._placeCompanionNPCs();
@@ -122,7 +126,7 @@ export class GameScene {
 
   _placeCompanionNPCs() {
     const margin = 200;
-    const npcTypes = ['bori', 'jopssal', 'gosun', 'azzi_white'];
+    const npcTypes = ['bori', 'jopssal', 'gosun'];
     // Shuffle so different companions appear each session
     for (let i = npcTypes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
