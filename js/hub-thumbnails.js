@@ -139,13 +139,14 @@ function drawFitted(ctx, img, cx, cy, maxSize) {
   ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
 }
 
-async function renderBabyGame(canvasId, bgFn, momSvg, babySvg, extraFn) {
+async function renderBabyGame(canvasId, bgFn, momSrc, babySrc, extraFn) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const ctx = setupCanvas(canvas, dpr);
+  const w = canvas.width / dpr, h = canvas.height / dpr;
   bgFn(ctx, w, h);
-  const [mom, baby] = await Promise.all([loadImg(momSvg), loadImg(babySvg)]);
+  const [mom, baby] = await Promise.all([loadImg(momSrc), loadImg(babySrc)]);
   if (mom) drawFitted(ctx, mom, w * 0.28, h * 0.45, 135);
   if (baby) drawFitted(ctx, baby, w * 0.65, h * 0.5, 80);
   if (extraFn) extraFn(ctx, w, h);
