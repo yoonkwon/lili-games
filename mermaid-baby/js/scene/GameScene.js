@@ -242,7 +242,14 @@ export class GameScene {
 
     this.particles.addFloatingText(crow.x, crow.y - 40, '먹물이다! 🖤', '#1A1A2E', 30);
     this.particles.createParticles(crow.x, crow.y, '#1A1A2E', 15);
-    this.message.show('☠️ 독해초예요! 바다마녀를 조심하세요! ☠️', 3);
+    const healthTips = [
+      '🐙 바닷물을 마시면 안 돼요! 소금물이라 배탈나요!',
+      '🐙 물놀이할 때는 어른과 함께해야 안전해요!',
+      '🐙 바다에서 모르는 생물은 만지면 안 돼요!',
+      '🐙 수영 전에 준비운동을 꼭 해야 해요!',
+      '🐙 햇볕이 강할 때는 선크림을 발라요!',
+    ];
+    this.message.show(healthTips[Math.floor(Math.random() * healthTips.length)], 4);
 
     if (this.dislike >= GAME.maxDislike) {
       this._triggerWhirlpoolCurse();
@@ -307,13 +314,17 @@ export class GameScene {
       this.babyShake = Math.max(0, this.babyShake - dt * 2);
     }
 
+    // Difficulty ramp
+    const difficulty = 1 + (this.growth / GAME.maxGrowth) * 2;
+
     // === Fish system update ===
     if (!this.cursed) {
-      // Spawn fish
+      // Spawn fish (faster as difficulty rises)
       this.animalSpawnTimer -= dt;
+      const spawnRate = Math.max(0.8, GAME.animalSpawnInterval / difficulty);
       if (this.animalSpawnTimer <= 0 && this.animals.filter(a => !a.collected).length < GAME.maxAnimals) {
         this._spawnAnimal();
-        this.animalSpawnTimer = GAME.animalSpawnInterval;
+        this.animalSpawnTimer = spawnRate;
       }
 
       // Ensure minimum fish
@@ -322,11 +333,12 @@ export class GameScene {
         this._spawnAnimal();
       }
 
-      // Sea witch timer
+      // Sea witch timer (more frequent)
       this.crowTimer -= dt;
+      const witchRate = Math.max(6, GAME.crowInterval / difficulty);
       if (this.crowTimer <= 0) {
         this._spawnCrow();
-        this.crowTimer = GAME.crowInterval;
+        this.crowTimer = witchRate;
       }
 
       // Update fish

@@ -108,7 +108,7 @@ export class GameScene {
       vy: 0,
       targetX: targetX,
       targetY: targetY,
-      speed: animal.speed,
+      speed: animal.speed * (1 + (this.growth / GAME.maxGrowth)),
       size: animal.size,
       collected: false,
       collectPhase: 0,
@@ -117,7 +117,7 @@ export class GameScene {
       bouncePhase: Math.random() * Math.PI * 2,
       arrived: false,
       lifetime: 0,
-      stayTimer: 8,          // how long to stay at target before leaving
+      stayTimer: Math.max(4, 8 - (this.growth / GAME.maxGrowth) * 4), // stays shorter as difficulty rises
     });
   }
 
@@ -257,7 +257,14 @@ export class GameScene {
 
     this.particles.addFloatingText(crow.x, crow.y - 40, '독사과! ☠️', '#800080', 30);
     this.particles.createParticles(crow.x, crow.y, '#800080', 15);
-    this.message.show('☠️ 독사과예요! 마녀를 조심하세요! ☠️', 3);
+    const healthTips = [
+      '☠️ 모르는 열매는 먹으면 안 돼요! 어른에게 물어보자!',
+      '☠️ 음식을 먹기 전에 깨끗이 씻어야 해요!',
+      '☠️ 상한 음식은 냄새를 맡아보면 알 수 있어요!',
+      '☠️ 약은 어른이 줄 때만 먹어야 해요!',
+      '☠️ 배가 아프면 참지 말고 어른에게 말해요!',
+    ];
+    this.message.show(healthTips[Math.floor(Math.random() * healthTips.length)], 4);
 
     if (this.dislike >= GAME.maxDislike) {
       this._triggerMirrorCurse();
@@ -322,13 +329,17 @@ export class GameScene {
       this.babyShake = Math.max(0, this.babyShake - dt * 2);
     }
 
+    // Difficulty ramp
+    const difficulty = 1 + (this.growth / GAME.maxGrowth) * 2;
+
     // === Animal system update ===
     if (!this.cursed) {
-      // Spawn animals
+      // Spawn animals (faster as difficulty rises)
       this.animalSpawnTimer -= dt;
+      const spawnRate = Math.max(0.8, GAME.animalSpawnInterval / difficulty);
       if (this.animalSpawnTimer <= 0 && this.animals.filter(a => !a.collected).length < GAME.maxAnimals) {
         this._spawnAnimal();
-        this.animalSpawnTimer = GAME.animalSpawnInterval;
+        this.animalSpawnTimer = spawnRate;
       }
 
       // Ensure minimum animals
@@ -337,11 +348,12 @@ export class GameScene {
         this._spawnAnimal();
       }
 
-      // Crow timer
+      // Crow timer (more frequent)
       this.crowTimer -= dt;
+      const crowRate = Math.max(6, GAME.crowInterval / difficulty);
       if (this.crowTimer <= 0) {
         this._spawnCrow();
-        this.crowTimer = GAME.crowInterval;
+        this.crowTimer = crowRate;
       }
 
       // Update animals

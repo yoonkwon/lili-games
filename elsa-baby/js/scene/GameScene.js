@@ -80,7 +80,8 @@ export class GameScene {
     const food = this._pickSnowflakeFood();
     const size = 45 + Math.random() * 15;
     const x = size + Math.random() * (this.w - size * 2);
-    const fallSpeed = 30 + Math.random() * 25; // pixels per second
+    const diff = 1 + (this.growth / GAME.maxGrowth) * 2;
+    const fallSpeed = (30 + Math.random() * 25) * diff; // speeds up as baby grows
 
     this.snowflakeItems.push({
       food: food,
@@ -229,7 +230,14 @@ export class GameScene {
 
     this.particles.addFloatingText(troll.x, troll.y - 40, '트롤이다! ⛄', '#6A0DAD', 30);
     this.particles.createParticles(troll.x, troll.y, '#6A0DAD', 15);
-    this.message.show('⛄ 트롤의 장난! 조심하세요! ⛄', 3);
+    const healthTips = [
+      '⛄ 추울 때 옷을 따뜻하게 입어야 감기에 안 걸려요!',
+      '⛄ 밖에서 놀고 오면 꼭 손을 씻어야 해요!',
+      '⛄ 찬 것을 너무 많이 먹으면 배가 아플 수 있어요!',
+      '⛄ 아기는 따뜻한 음식이 좋아요! 찬 음식은 조심!',
+      '⛄ 재채기할 때는 팔꿈치로 가려요!',
+    ];
+    this.message.show(healthTips[Math.floor(Math.random() * healthTips.length)], 4);
 
     if (this.dislike >= GAME.maxDislike) {
       this._triggerIceMagic();
@@ -296,13 +304,17 @@ export class GameScene {
       this.babyShake = Math.max(0, this.babyShake - dt * 2);
     }
 
+    // Difficulty ramp: speeds up as baby grows
+    const difficulty = 1 + (this.growth / GAME.maxGrowth) * 2; // 1.0 → 3.0
+
     // === Snowflake system update ===
     if (!this.frozen) {
-      // Spawn snowflakes
+      // Spawn snowflakes (faster spawn as difficulty rises)
       this.snowflakeSpawnTimer -= dt;
+      const spawnRate = Math.max(0.6, GAME.snowflakeSpawnInterval / difficulty);
       if (this.snowflakeSpawnTimer <= 0 && this.snowflakeItems.filter(s => !s.collected).length < GAME.maxSnowflakes) {
         this._spawnSnowflake();
-        this.snowflakeSpawnTimer = GAME.snowflakeSpawnInterval;
+        this.snowflakeSpawnTimer = spawnRate;
       }
 
       // Ensure minimum
@@ -311,11 +323,12 @@ export class GameScene {
         this._spawnSnowflake();
       }
 
-      // Troll timer
+      // Troll timer (more frequent as difficulty rises)
       this.trollTimer -= dt;
+      const trollRate = Math.max(6, GAME.trollInterval / difficulty);
       if (this.trollTimer <= 0) {
         this._spawnTroll();
-        this.trollTimer = GAME.trollInterval;
+        this.trollTimer = trollRate;
       }
 
       // Update snowflakes
