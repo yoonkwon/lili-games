@@ -39,7 +39,7 @@ export class QuizGameScene {
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
     // Single detective companion (rotates each round)
-    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun'];
+    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun', 'azzi_white', 'azzi_blue'];
     this.companions = [new Companion(this.companionTypes[0], this.player, 0, 1)];
     this.companionNPCs = [];
 
