@@ -39,8 +39,8 @@ export class QuizGameScene {
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
     // Single detective companion (rotates each round)
-    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun', 'azzi_white', 'azzi_blue'];
-    this.companions = [new Companion(this.companionTypes[0], this.player, 0, 1)];
+    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun', 'azzi'];
+    this.companions = this._createRoundCompanion(0);
     this.companionNPCs = [];
 
     // Hint timer for companion
@@ -308,9 +308,8 @@ export class QuizGameScene {
     this.lisa.targetX = this.lisa.x;
     this.lisa.targetY = this.lisa.y;
     this._placeCollectItems();
-    // Rotate companion for this round
-    const compType = this.companionTypes[this.currentRound % this.companionTypes.length];
-    this.companions = [new Companion(compType, this.player, 0, 1)];
+    // Rotate companion for this round (azzi = twin pair)
+    this.companions = this._createRoundCompanion(this.currentRound);
     // Reset collection tray for new round
     this.collectionTray = new CollectionTray(this.spriteCache);
     // Regenerate terrain for variety
@@ -319,6 +318,18 @@ export class QuizGameScene {
     this.state = 'exploring';
     const compName = this.companions[0].config?.name || '탐정';
     this.message.show(`🔍 사건 ${this.currentRound + 1}/${this.totalRounds}\n${compName}와 함께 수사 시작!`, 3);
+  }
+
+  _createRoundCompanion(roundIndex) {
+    const compType = this.companionTypes[roundIndex % this.companionTypes.length];
+    if (compType === 'azzi') {
+      // Azzi twins come as a pair
+      return [
+        new Companion('azzi_white', this.player, 0, 2),
+        new Companion('azzi_blue', this.player, 1, 2),
+      ];
+    }
+    return [new Companion(compType, this.player, 0, 1)];
   }
 
   _updateCompanions(dt) {
