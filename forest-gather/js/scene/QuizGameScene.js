@@ -38,8 +38,12 @@ export class QuizGameScene {
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Single detective companion (rotates each round)
+    // Single detective companion (shuffled order, rotates each round)
     this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun', 'azzi'];
+    for (let i = this.companionTypes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.companionTypes[i], this.companionTypes[j]] = [this.companionTypes[j], this.companionTypes[i]];
+    }
     this.companions = this._createRoundCompanion(0);
     this.companionNPCs = [];
 
