@@ -38,17 +38,12 @@ export class QuizGameScene {
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - 익돌이(리아) + 아찌 쌍둥이(리사)
-    this.companions = [
-      new Companion('ikdol', this.player, 0, 3),
-      new Companion('azzi_white', this.lisa, 1, 3),
-      new Companion('azzi_blue', this.lisa, 2, 3),
-    ];
-
-    // Companion NPCs discoverable on the map
+    // Single detective companion (rotates each round)
+    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun'];
+    this.companions = [new Companion(this.companionTypes[0], this.player, 0, 1)];
     this.companionNPCs = [];
 
-    // Hint companion (simple follower for speech bubbles)
+    // Hint timer for companion
     this.hintTimer = COMPANION_HINT_INTERVAL * 0.4;
 
     // Quiz state — shuffle rounds each session
@@ -100,7 +95,7 @@ export class QuizGameScene {
     this.terrain = generateTerrain(terrainPreset, this.mapWidth, this.mapHeight);
 
     // Show intro
-    this.message.show(`${this.stageConfig.emoji} ${this.stageConfig.name}\n아이템을 모아 단서를 풀어보세요!`, 4);
+    this.message.show(`🔍 ${this.stageConfig.name}\n수사 포인트를 찾아 단서를 모으세요!`, 4);
   }
 
   _placeCollectItems() {
@@ -110,59 +105,50 @@ export class QuizGameScene {
     this.hasAnyRevealed = false;
     this._cluePanelCache = null;
 
-    // Build clue reveal state: ITEMS_PER items per clue, each reveals a portion of text
-    const ITEMS_PER = 3;
+    // Each clue = one investigation point on the map (🔍)
     this.clueReveal = this.roundData.clues.map(clue => ({
       emoji: clue.emoji,
       text: clue.text,
       revealed: 0,
-      total: clue.text.replace(/\s/g, '').length, // count non-space chars
+      total: clue.text.length,
     }));
 
-    this.totalCollectItems = this.totalClues * ITEMS_PER;
+    this.totalCollectItems = this.totalClues;
 
     const margin = 120;
     const usableW = this.mapWidth - margin * 2;
     const usableH = this.mapHeight - margin * 2;
     const positions = [];
 
-    // Place ITEMS_PER items per clue, each with clue's emoji
     for (let ci = 0; ci < this.totalClues; ci++) {
       const clue = this.roundData.clues[ci];
-      for (let j = 0; j < ITEMS_PER; j++) {
-        let x, y, attempts = 0;
-        do {
-          x = margin + Math.random() * usableW;
-          y = margin + Math.random() * usableH;
-          attempts++;
-        } while (attempts < 50 && positions.some(p => {
-          const dx = p.x - x;
-          const dy = p.y - y;
-          return dx * dx + dy * dy < 100 * 100;
-        }));
-        positions.push({ x, y });
+      let x, y, attempts = 0;
+      do {
+        x = margin + Math.random() * usableW;
+        y = margin + Math.random() * usableH;
+        attempts++;
+      } while (attempts < 50 && positions.some(p => {
+        const dx = p.x - x;
+        const dy = p.y - y;
+        return dx * dx + dy * dy < 140 * 140;
+      }));
+      positions.push({ x, y });
 
-        const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
-        const itemDef = {
-          id: `clue_${ci}_${j}`,
-          emoji: clue.emoji,
-          name: `단서 ${ci + 1}`,
-          desc: `단서 조각을 찾았어요!`,
-          size: 38,
-          clueIndex: ci,
-        };
-        this.collectItems.push(new Item(x, y, itemDef, hideStyle));
-      }
+      const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
+      const itemDef = {
+        id: `clue_${ci}`,
+        emoji: '🔍',
+        name: `수사 포인트 ${ci + 1}`,
+        desc: clue.text,
+        size: 42,
+        clueIndex: ci,
+      };
+      this.collectItems.push(new Item(x, y, itemDef, hideStyle));
     }
 
-    // Place 1-2 CompanionNPCs on the map
+    // No companion NPCs in quiz mode (single companion only)
     this.companionNPCs = [];
-    const npcTypes = ['bori', 'jopssal', 'gosun'];
-    for (let i = npcTypes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [npcTypes[i], npcTypes[j]] = [npcTypes[j], npcTypes[i]];
-    }
-    const npcCount = 2 + Math.floor(Math.random() * 2); // 2-3
+    const npcCount = 0;
     for (let i = 0; i < npcCount && i < npcTypes.length; i++) {
       const nx = margin + Math.random() * usableW;
       const ny = margin + Math.random() * usableH;
@@ -239,27 +225,31 @@ export class QuizGameScene {
 
     const sx = this._toScreenX(item.x);
     const sy = this._toScreenY(item.y);
-    this.particles.createStars(sx, sy, 8);
+    this.particles.createStars(sx, sy, 12);
 
-    // Reveal more letters of the associated clue
+    // Investigation: instantly reveal the full clue
     const ci = item.clueIndex;
     if (ci != null && ci < this.clueReveal.length) {
       const cr = this.clueReveal[ci];
-      const itemsPerClue = Math.round(this.totalCollectItems / this.totalClues);
-      const charsPerItem = Math.ceil(cr.total / itemsPerClue);
-      const prevRevealed = cr.revealed;
-      cr.revealed = Math.min(cr.total, cr.revealed + charsPerItem);
+      cr.revealed = cr.total; // fully revealed immediately
+      this.cluesFullyRevealed++;
       this.hasAnyRevealed = true;
-      this._cluePanelCache = null; // invalidate cache
+      this._cluePanelCache = null;
 
-      if (cr.revealed >= cr.total && prevRevealed < cr.total) {
-        // Fully revealed!
-        this.cluesFullyRevealed++;
-        this.particles.addFloatingText(sx, sy - 25, `단서 ${ci + 1} 완성!`, '#FFD700');
-        this.particles.createStars(this.screenW / 2, this.screenH * 0.15, 10);
-        this.message.show(`🔑 단서 완성! "${cr.text}"`, 2.5);
-      } else {
-        this.particles.addFloatingText(sx, sy - 25, `단서 조각! (${this.collectedCount}/${this.totalCollectItems})`, '#4CAF50');
+      this.particles.addFloatingText(sx, sy - 30, `🔍 단서 발견!`, '#FFD700');
+      this.particles.createStars(this.screenW / 2, this.screenH * 0.15, 10);
+      this.message.show(`🔍 "${cr.text}"`, 3);
+
+      // Companion reacts with context
+      const lead = this.companions[0];
+      if (lead) {
+        const reactions = [
+          `흥미로운 단서야! ${cr.emoji}`,
+          `이 단서가 중요해! ${cr.emoji}`,
+          `점점 가까워지고 있어! ${cr.emoji}`,
+          `또 하나 찾았어! ${cr.emoji}`,
+        ];
+        lead.setSpeech(reactions[Math.floor(Math.random() * reactions.length)], 3);
       }
     }
   }
@@ -318,19 +308,17 @@ export class QuizGameScene {
     this.lisa.targetX = this.lisa.x;
     this.lisa.targetY = this.lisa.y;
     this._placeCollectItems();
-    // Reset companions (익돌이 + 아찌 쌍둥이)
-    this.companions = [
-      new Companion('ikdol', this.player, 0, 3),
-      new Companion('azzi_white', this.lisa, 1, 3),
-      new Companion('azzi_blue', this.lisa, 2, 3),
-    ];
+    // Rotate companion for this round
+    const compType = this.companionTypes[this.currentRound % this.companionTypes.length];
+    this.companions = [new Companion(compType, this.player, 0, 1)];
     // Reset collection tray for new round
     this.collectionTray = new CollectionTray(this.spriteCache);
     // Regenerate terrain for variety
     const terrainPreset = TERRAIN_PRESETS[this.stageConfig.terrain] || TERRAIN_PRESETS.forest;
     this.terrain = generateTerrain(terrainPreset, this.mapWidth, this.mapHeight);
     this.state = 'exploring';
-    this.message.show(`문제 ${this.currentRound + 1}/${this.totalRounds} - 새로운 수수께끼!\n아이템을 모아 단서를 풀어보세요!`, 3);
+    const compName = this.companions[0].config?.name || '탐정';
+    this.message.show(`🔍 사건 ${this.currentRound + 1}/${this.totalRounds}\n${compName}와 함께 수사 시작!`, 3);
   }
 
   _updateCompanions(dt) {
@@ -351,16 +339,16 @@ export class QuizGameScene {
         if (dist > DISCOVER_RADIUS * 2) {
           const dir = getDirectionHint(this.player.x, this.player.y, nearest.x, nearest.y);
           const remaining = this.totalCollectItems - this.collectedCount;
-          if (remaining <= 3) {
-            lead.setSpeech(`${dir}에 단서 조각이! 조금만 더!`, 4);
+          if (remaining === 1) {
+            lead.setSpeech(`${dir}쪽! 마지막 단서가 저기야!`, 4);
           } else {
-            lead.setSpeech(`${dir}에 단서 조각이 있는 것 같아!`, 4);
+            lead.setSpeech(`${dir}쪽에서 수상한 흔적이 느껴져!`, 4);
           }
         } else {
-          lead.setSpeech('가까이에 아이템이!', 3);
+          lead.setSpeech('🔍 가까이에 단서가 있어!', 3);
         }
       } else if (this.cluesFullyRevealed >= QUIZ_MIN_CLUES) {
-        lead.setSpeech('단서가 충분해! 맞춰보기!', 4);
+        lead.setSpeech('단서가 충분해! 범인을 맞춰보자!', 4);
       }
     }
   }
@@ -496,7 +484,7 @@ export class QuizGameScene {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFF';
-    ctx.fillText(`${this.stageConfig.emoji} 문제 ${this.currentRound + 1}/${this.totalRounds}`, 16, centerY);
+    ctx.fillText(`🔍 사건 ${this.currentRound + 1}/${this.totalRounds}`, 16, centerY);
 
     // Clue count on right
     ctx.textAlign = 'right';
@@ -534,10 +522,9 @@ export class QuizGameScene {
       ctx.fill();
     }
 
-    // Clue unlock markers on the bar
+    // Clue markers on the bar (one per clue)
     for (let i = 1; i <= this.totalClues; i++) {
-      const itemsPerClue = Math.round(this.totalCollectItems / this.totalClues);
-      const markerX = barX + (i * itemsPerClue / this.totalCollectItems) * barW;
+      const markerX = barX + (i / this.totalClues) * barW;
       ctx.fillStyle = i <= this.cluesFullyRevealed ? '#FFD700' : 'rgba(255,255,255,0.4)';
       ctx.beginPath();
       ctx.arc(markerX, barY + barH / 2, 4, 0, Math.PI * 2);
@@ -547,7 +534,7 @@ export class QuizGameScene {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#000';
-        ctx.fillText('🔑', markerX, barY + barH / 2);
+        ctx.fillText('🔍', markerX, barY + barH / 2);
       }
     }
   }
