@@ -632,8 +632,6 @@ export class QuizGameScene {
     ctx.restore();
   }
 
-
-
   _wrapText(ctx, text, maxWidth) {
     const chars = text.split('');
     const lines = [];

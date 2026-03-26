@@ -44,7 +44,6 @@ export class GameScene {
       const j = Math.floor(Math.random() * (i + 1));
       [this.companionTypes[i], this.companionTypes[j]] = [this.companionTypes[j], this.companionTypes[i]];
     }
-    this.companionRoundIndex = 0;
     this.companions = this._createCompanion(0);
     this.companionNPCs = [];
 
@@ -133,24 +132,6 @@ export class GameScene {
       ];
     }
     return [new Companion(compType, this.player, 0, 1)];
-  }
-
-  _placeCompanionNPCs() {
-    const margin = 200;
-    const npcTypes = ['bori', 'jopssal', 'gosun'];
-    // Shuffle so different companions appear each session
-    for (let i = npcTypes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [npcTypes[i], npcTypes[j]] = [npcTypes[j], npcTypes[i]];
-    }
-    const npcs = [];
-    const count = 2 + Math.floor(Math.random() * 2); // 2-3 NPCs
-    for (let i = 0; i < count && i < npcTypes.length; i++) {
-      const nx = margin + Math.random() * (this.mapWidth - margin * 2);
-      const ny = margin + Math.random() * (this.mapHeight - margin * 2);
-      npcs.push(new CompanionNPC(npcTypes[i], nx, ny));
-    }
-    return npcs;
   }
 
   // terrain is generated in constructor via generateTerrain()
