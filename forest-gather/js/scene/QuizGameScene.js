@@ -102,30 +102,46 @@ export class QuizGameScene {
     this.message.show(`🔍 ${this.stageConfig.name}\n수사 포인트를 찾아 단서를 모으세요!`, 4);
   }
 
+  _extractKeyword(text) {
+    // Pick the most distinctive word from clue text to mask
+    const words = text.split(' ');
+    const skip = new Set(['나는', '나의', '내', '나를', '나에게', '있어요', '해요', '돼요', '수', '때']);
+    const candidates = words.filter(w => !skip.has(w) && w.length >= 2);
+    // Prefer longest content word
+    candidates.sort((a, b) => b.length - a.length);
+    return candidates[0] || words[Math.floor(words.length / 2)] || words[0];
+  }
+
   _placeCollectItems() {
     this.collectItems = [];
     this.collectedCount = 0;
     this.cluesFullyRevealed = 0;
     this.hasAnyRevealed = false;
     this._cluePanelCache = null;
+    this.activeClueIndex = -1; // which clue sentence is currently being solved
 
-    // Each clue = one investigation point on the map (🔍)
-    this.clueReveal = this.roundData.clues.map(clue => ({
-      emoji: clue.emoji,
-      text: clue.text,
-      revealed: 0,
-      total: clue.text.length,
-    }));
+    // Build clue state with auto-extracted keywords
+    this.clueReveal = this.roundData.clues.map(clue => {
+      const keyword = this._extractKeyword(clue.text);
+      return {
+        emoji: clue.emoji,
+        text: clue.text,
+        keyword,
+        masked: clue.text.replace(keyword, '○'.repeat(keyword.length)),
+        sentenceFound: false,
+        wordFound: false,
+      };
+    });
 
-    this.totalCollectItems = this.totalClues;
+    // Place 🔍 investigation points: 2 per clue (sentence + word)
+    this.totalCollectItems = this.totalClues * 2;
 
     const margin = 120;
     const usableW = this.mapWidth - margin * 2;
     const usableH = this.mapHeight - margin * 2;
     const positions = [];
 
-    for (let ci = 0; ci < this.totalClues; ci++) {
-      const clue = this.roundData.clues[ci];
+    for (let i = 0; i < this.totalCollectItems; i++) {
       let x, y, attempts = 0;
       do {
         x = margin + Math.random() * usableW;
@@ -134,30 +150,21 @@ export class QuizGameScene {
       } while (attempts < 50 && positions.some(p => {
         const dx = p.x - x;
         const dy = p.y - y;
-        return dx * dx + dy * dy < 140 * 140;
+        return dx * dx + dy * dy < 100 * 100;
       }));
       positions.push({ x, y });
 
       const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
-      const itemDef = {
-        id: `clue_${ci}`,
+      this.collectItems.push(new Item(x, y, {
+        id: `investigate_${i}`,
         emoji: '🔍',
-        name: `수사 포인트 ${ci + 1}`,
-        desc: clue.text,
+        name: '수사 포인트',
+        desc: '무엇을 발견할까?',
         size: 42,
-        clueIndex: ci,
-      };
-      this.collectItems.push(new Item(x, y, itemDef, hideStyle));
+      }, hideStyle));
     }
 
-    // No companion NPCs in quiz mode (single companion only)
     this.companionNPCs = [];
-    const npcCount = 0;
-    for (let i = 0; i < npcCount && i < npcTypes.length; i++) {
-      const nx = margin + Math.random() * usableW;
-      const ny = margin + Math.random() * usableH;
-      this.companionNPCs.push(new CompanionNPC(npcTypes[i], nx, ny));
-    }
   }
 
   handleTap(x, y) {
@@ -224,36 +231,37 @@ export class QuizGameScene {
     item.discovered = true;
     this.collectedCount++;
 
-    // Add to collection tray
     this.collectionTray.addItem(item.emoji, item.sprite);
-
     const sx = this._toScreenX(item.x);
     const sy = this._toScreenY(item.y);
-    this.particles.createStars(sx, sy, 12);
+    this.particles.createStars(sx, sy, 10);
 
-    // Investigation: instantly reveal the full clue
-    const ci = item.clueIndex;
-    if (ci != null && ci < this.clueReveal.length) {
-      const cr = this.clueReveal[ci];
-      cr.revealed = cr.total; // fully revealed immediately
+    const lead = this.companions[0];
+
+    // Is there an active incomplete sentence?
+    if (this.activeClueIndex >= 0) {
+      // This 🔍 reveals a WORD to fill the blank
+      const cr = this.clueReveal[this.activeClueIndex];
+      cr.wordFound = true;
       this.cluesFullyRevealed++;
-      this.hasAnyRevealed = true;
+      this.activeClueIndex = -1;
       this._cluePanelCache = null;
 
-      this.particles.addFloatingText(sx, sy - 30, `🔍 단서 발견!`, '#FFD700');
-      this.particles.createStars(this.screenW / 2, this.screenH * 0.15, 10);
-      this.message.show(`🔍 "${cr.text}"`, 3);
+      this.particles.addFloatingText(sx, sy - 30, `"${cr.keyword}" 발견!`, '#4CAF50');
+      this.message.show(`✅ "${cr.text}"`, 3);
+      if (lead) lead.setSpeech(`"${cr.keyword}"! 문장이 완성됐어!`, 3);
+    } else {
+      // This 🔍 reveals a new MASKED SENTENCE
+      const nextClue = this.clueReveal.find(c => !c.sentenceFound);
+      if (nextClue) {
+        nextClue.sentenceFound = true;
+        this.activeClueIndex = this.clueReveal.indexOf(nextClue);
+        this.hasAnyRevealed = true;
+        this._cluePanelCache = null;
 
-      // Companion reacts with context
-      const lead = this.companions[0];
-      if (lead) {
-        const reactions = [
-          `흥미로운 단서야! ${cr.emoji}`,
-          `이 단서가 중요해! ${cr.emoji}`,
-          `점점 가까워지고 있어! ${cr.emoji}`,
-          `또 하나 찾았어! ${cr.emoji}`,
-        ];
-        lead.setSpeech(reactions[Math.floor(Math.random() * reactions.length)], 3);
+        this.particles.addFloatingText(sx, sy - 30, `🔍 새 단서!`, '#FFD700');
+        this.message.show(`🔍 "${nextClue.masked}"`, 3.5);
+        if (lead) lead.setSpeech(`${nextClue.emoji} 문장을 완성할 단어를 찾아보자!`, 4);
       }
     }
   }
@@ -353,17 +361,17 @@ export class QuizGameScene {
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist > DISCOVER_RADIUS * 2) {
           const dir = getDirectionHint(this.player.x, this.player.y, nearest.x, nearest.y);
-          const remaining = this.totalCollectItems - this.collectedCount;
-          if (remaining === 1) {
-            lead.setSpeech(`${dir}쪽! 마지막 단서가 저기야!`, 4);
+          if (this.activeClueIndex >= 0) {
+            const kw = this.clueReveal[this.activeClueIndex].keyword;
+            lead.setSpeech(`${dir}쪽! "${kw}"를 찾아야 해!`, 4);
           } else {
             lead.setSpeech(`${dir}쪽에서 수상한 흔적이 느껴져!`, 4);
           }
         } else {
-          lead.setSpeech('🔍 가까이에 단서가 있어!', 3);
+          lead.setSpeech('🔍 가까이에 뭔가 있어!', 3);
         }
       } else if (this.cluesFullyRevealed >= QUIZ_MIN_CLUES) {
-        lead.setSpeech('단서가 충분해! 범인을 맞춰보자!', 4);
+        lead.setSpeech('단서가 충분해! 맞춰보자!', 4);
       }
     }
   }
@@ -562,11 +570,11 @@ export class QuizGameScene {
 
     const allLines = [];
     for (const cr of this.clueReveal) {
-      if (cr.revealed === 0) continue;
-      const displayText = this._partialReveal(cr.text, cr.revealed, cr.total);
+      if (!cr.sentenceFound) continue;
+      const displayText = cr.wordFound ? cr.text : cr.masked;
       const fullText = `${cr.emoji} ${displayText}`;
       const wrapped = this._wrapText(ctx, fullText, maxPanelW - padding * 2);
-      allLines.push({ lines: wrapped, complete: cr.revealed >= cr.total });
+      allLines.push({ lines: wrapped, complete: cr.wordFound });
     }
 
     let totalLines = 0;
@@ -624,23 +632,7 @@ export class QuizGameScene {
     ctx.restore();
   }
 
-  /** Partially reveal text: show first N non-space chars, rest as ○ */
-  _partialReveal(text, revealed, total) {
-    let count = 0;
-    let result = '';
-    for (const ch of text) {
-      if (ch === ' ') {
-        result += ' ';
-      } else if (count < revealed) {
-        result += ch;
-        count++;
-      } else {
-        result += '○';
-        count++;
-      }
-    }
-    return result;
-  }
+
 
   _wrapText(ctx, text, maxWidth) {
     const chars = text.split('');
@@ -711,9 +703,9 @@ export class QuizGameScene {
     const clueY = h * 0.28;
     let clueLineIdx = 0;
     for (const cr of this.clueReveal) {
-      if (cr.revealed === 0) continue;
-      const display = cr.revealed >= cr.total ? cr.text : this._partialReveal(cr.text, cr.revealed, cr.total);
-      ctx.fillStyle = cr.revealed >= cr.total ? '#FFD700' : '#AAA';
+      if (!cr.sentenceFound) continue;
+      const display = cr.wordFound ? cr.text : cr.masked;
+      ctx.fillStyle = cr.wordFound ? '#FFD700' : '#AAA';
       ctx.fillText(`${cr.emoji} ${display}`, w / 2, clueY + clueLineIdx * 20);
       clueLineIdx++;
     }
