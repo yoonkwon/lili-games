@@ -38,15 +38,15 @@ export class GameScene {
     this.player = new Character(this.mapWidth / 2, this.mapHeight / 2, 'ria', { moveSpeed: PLAYER.moveSpeed, collectRadius: 0 });
     this.lisa = new Character(this.mapWidth / 2 + 30, this.mapHeight / 2 + 20, 'lisa', { moveSpeed: PLAYER.moveSpeed * 1.05, collectRadius: 0 });
 
-    // Companions - 익돌이(리아) + 아찌 쌍둥이(리사)
-    this.companions = [
-      new Companion('ikdol', this.player, 0, 3),
-      new Companion('azzi_white', this.lisa, 1, 3),
-      new Companion('azzi_blue', this.lisa, 2, 3),
-    ];
-
-    // Companion NPCs discoverable on the map
-    this.companionNPCs = this._placeCompanionNPCs();
+    // Single companion (shuffled, azzi = twin pair)
+    this.companionTypes = ['bori', 'jopssal', 'ikdol', 'gosun', 'azzi'];
+    for (let i = this.companionTypes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.companionTypes[i], this.companionTypes[j]] = [this.companionTypes[j], this.companionTypes[i]];
+    }
+    this.companionRoundIndex = 0;
+    this.companions = this._createCompanion(0);
+    this.companionNPCs = [];
 
     // Hint timer
     this.hintTimer = COMPANION_HINT_INTERVAL * 0.5;
@@ -122,6 +122,17 @@ export class GameScene {
       const hideStyle = HIDE_STYLES[Math.floor(Math.random() * HIDE_STYLES.length)];
       this.items.push(new Item(x, y, items[i], hideStyle));
     }
+  }
+
+  _createCompanion(roundIndex) {
+    const compType = this.companionTypes[roundIndex % this.companionTypes.length];
+    if (compType === 'azzi') {
+      return [
+        new Companion('azzi_white', this.player, 0, 2),
+        new Companion('azzi_blue', this.player, 1, 2),
+      ];
+    }
+    return [new Companion(compType, this.player, 0, 1)];
   }
 
   _placeCompanionNPCs() {
