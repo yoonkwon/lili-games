@@ -224,10 +224,6 @@
         initThumbnails();
     </script>
     <script>
-        // Lock to landscape
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-        }
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
                 // Check for SW update on page load
