@@ -44,10 +44,13 @@ export class GameEngine {
   }
 
   _resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    const style = getComputedStyle(document.body);
-    this.safeTop = parseInt(style.getPropertyValue('--sat')) || 0;
+    // Use canvas's CSS-computed size (respects safe-area via CSS)
+    this.canvas.width = this.canvas.clientWidth || window.innerWidth;
+    this.canvas.height = this.canvas.clientHeight || window.innerHeight;
+    this.safeTop = 0; // safe-area is handled by CSS positioning
+    this.safeBottom = 0;
+    this.safeLeft = 0;
+    this.safeRight = 0;
   }
 
   get width() { return this.canvas.width; }

@@ -14,12 +14,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             min-height: 100vh;
+            min-height: 100dvh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
             padding: 40px 20px;
+            padding-left: max(20px, env(safe-area-inset-left, 0px));
+            padding-right: max(20px, env(safe-area-inset-right, 0px));
+            padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
         }
         .header {
             text-align: center;
