@@ -44,13 +44,11 @@ export class GameEngine {
   }
 
   _resize() {
-    // Use canvas's CSS-computed size (respects safe-area via CSS)
+    // Canvas is CSS-positioned within safe-area, use its computed size
     this.canvas.width = this.canvas.clientWidth || window.innerWidth;
     this.canvas.height = this.canvas.clientHeight || window.innerHeight;
-    this.safeTop = 0; // safe-area is handled by CSS positioning
+    this.safeTop = 0;
     this.safeBottom = 0;
-    this.safeLeft = 0;
-    this.safeRight = 0;
   }
 
   get width() { return this.canvas.width; }
