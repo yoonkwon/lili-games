@@ -34,6 +34,9 @@ export class GameEngine {
 
     this._resize();
     window.addEventListener('resize', () => this._resize());
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => this._resize());
+    }
 
     // Input
     const input = new Input(this.canvas);
@@ -44,11 +47,21 @@ export class GameEngine {
   }
 
   _resize() {
-    // Canvas is CSS-positioned within safe-area, use its computed size
-    this.canvas.width = this.canvas.clientWidth || window.innerWidth;
-    this.canvas.height = this.canvas.clientHeight || window.innerHeight;
-    this.safeTop = 0;
-    this.safeBottom = 0;
+    // Let CSS layout settle, then read canvas's computed size
+    requestAnimationFrame(() => {
+      const w = this.canvas.clientWidth;
+      const h = this.canvas.clientHeight;
+      if (w > 0 && h > 0) {
+        this.canvas.width = w;
+        this.canvas.height = h;
+      } else {
+        // Fallback: use viewport minus safe-area estimates
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+      this.safeTop = 0;
+      this.safeBottom = 0;
+    });
   }
 
   get width() { return this.canvas.width; }
