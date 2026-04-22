@@ -119,37 +119,6 @@ export class GameScene {
         this.achievements = new AchievementManager();
         this._achNotification = null;  // { ach, timer }
         this._achNotifyDuration = 3;
-
-        // Load saved progress
-        this._loadProgress();
-    }
-
-    _loadProgress() {
-        try {
-            const saved = localStorage.getItem('chickenEgg_progress');
-            if (saved) {
-                const data = JSON.parse(saved);
-                this.basketEggs = data.basketEggs || 0;
-                this.totalEggs = data.totalEggs || 0;
-                this.goldenEggs = data.goldenEggs || 0;
-                this.unlockedHats = data.unlockedHats || [0];
-                if (this.unlockedHats.length > 1) {
-                    this.chicken.currentHat = this.unlockedHats[this.unlockedHats.length - 1];
-                }
-                localStorage.removeItem('chickenEgg_progress');
-            }
-        } catch (e) { /* ignore */ }
-    }
-
-    _saveProgress() {
-        try {
-            localStorage.setItem('chickenEgg_progress', JSON.stringify({
-                basketEggs: this.basketEggs,
-                totalEggs: this.totalEggs,
-                goldenEggs: this.goldenEggs,
-                unlockedHats: this.unlockedHats,
-            }));
-        } catch (e) { /* ignore */ }
     }
 
     getSaveData() {
@@ -451,14 +420,8 @@ export class GameScene {
             }
         }
 
-        // Auto-save every 10 eggs
-        if (this.basketEggs > 0 && this.basketEggs % 10 === 0) {
-            this._saveProgress();
-        }
-
         // Game over check
         if (this.hp <= 0) {
-            localStorage.removeItem('chickenEgg_progress');
             return 'gameover';
         }
 
@@ -483,7 +446,6 @@ export class GameScene {
         }
 
         if (this.basketEggs >= this.TARGET_EGGS) {
-            localStorage.removeItem('chickenEgg_progress');
             return 'ending';
         }
 

@@ -47,6 +47,7 @@ let gameScene = null;
 let endingScene = null;
 let gameOverScene = null;
 let lastSavedStage = -1;
+let lastSavedEggs = -1;
 
 // Scene transition
 let transition = { active: false, alpha: 0, phase: 'none', nextAction: null };
@@ -193,9 +194,11 @@ function gameLoop(timestamp) {
                 titleScene.update(dt);
             } else if (currentScene === 'game') {
                 const result = gameScene.update(dt, canvas.width, canvas.height);
-                // Auto-save on stage change
-                if (gameScene.currentStage !== lastSavedStage) {
+                // Auto-save on stage change or every 10 eggs
+                const eggMilestone = Math.floor(gameScene.basketEggs / 10) * 10;
+                if (gameScene.currentStage !== lastSavedStage || eggMilestone !== lastSavedEggs) {
                     lastSavedStage = gameScene.currentStage;
+                    lastSavedEggs = eggMilestone;
                     save.write(gameScene.getSaveData());
                 }
                 if (result === 'ending' && !transition.active) {
