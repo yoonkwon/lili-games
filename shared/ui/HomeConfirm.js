@@ -28,5 +28,5 @@ export function showHomeConfirm() {
   document.body.appendChild(overlay);
   document.getElementById('home-cancel').onclick = () => overlay.remove();
   document.getElementById('home-ok').onclick = () => { window.location.href = '../'; };
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('pointerdown', (e) => { if (e.target === overlay) overlay.remove(); });
 }
