@@ -235,7 +235,7 @@ export class GameScene {
     for (const mission of this.wordMissions) {
       if (this.completedWords.includes(mission.word)) continue;
 
-      const hasAll = mission.display.every(letter => discoveredIds.has(letter));
+      const hasAll = mission.letters.every(letter => discoveredIds.has(letter));
       if (hasAll) {
         this.wordReadyMission = mission;
         this.state = 'wordReady';

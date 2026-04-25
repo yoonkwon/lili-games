@@ -154,6 +154,7 @@ export const STAGES = [
 
 // Letter pools for word builder distractors
 export const HANGUL_LETTERS = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ','ㅏ','ㅓ','ㅗ','ㅜ','ㅡ','ㅣ'];
+export const HANGUL_SYLLABLES = ['가','구','노','두','라','로','마','무','사','소','자','조','코','타','파','푸','히','야','요','루'];
 export const ENGLISH_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 // How close the player needs to be to discover an item
@@ -1039,12 +1040,12 @@ export const QUIZ_STAGES = [
 // Word-building missions for hangul/english stages
 export const WORD_MISSIONS = {
   hangul: [
-    { word: '기린', emoji: '🦒', letters: ['ㄱ','ㅣ','ㄹ','ㅣ','ㄴ'], display: ['ㄱ','ㅣ','ㄹ','ㅣ','ㄴ'], funFact: '기린은 세상에서 가장 키가 큰 동물이에요! 키가 5.5m나 돼요!' },
-    { word: '나비', emoji: '🦋', letters: ['ㄴ','ㅏ','ㅂ','ㅣ'], display: ['ㄴ','ㅏ','ㅂ','ㅣ'], funFact: '나비는 발로 맛을 느낄 수 있어요! 신기하죠?' },
-    { word: '사자', emoji: '🦁', letters: ['ㅅ','ㅏ','ㅈ','ㅏ'], display: ['ㅅ','ㅏ','ㅈ','ㅏ'], funFact: '사자의 울음소리는 8km까지 들려요!' },
-    { word: '토끼', emoji: '🐰', letters: ['ㅌ','ㅗ','ㅋ','ㅣ'], display: ['ㅌ','ㅗ','ㅋ','ㅣ'], funFact: '토끼 이빨은 평생 계속 자라요!' },
-    { word: '하마', emoji: '🦛', letters: ['ㅎ','ㅏ','ㅁ','ㅏ'], display: ['ㅎ','ㅏ','ㅁ','ㅏ'], funFact: '하마는 물속에서 잠을 잘 수 있어요!' },
-    { word: '오리', emoji: '🦆', letters: ['ㅇ','ㅗ','ㄹ','ㅣ'], display: ['ㅇ','ㅗ','ㄹ','ㅣ'], funFact: '오리 발에는 물갈퀴가 있어서 수영을 잘해요!' },
+    { word: '기린', emoji: '🦒', letters: ['ㄱ','ㅣ','ㄹ','ㅣ','ㄴ'], display: ['기','린'], funFact: '기린은 세상에서 가장 키가 큰 동물이에요! 키가 5.5m나 돼요!' },
+    { word: '나비', emoji: '🦋', letters: ['ㄴ','ㅏ','ㅂ','ㅣ'], display: ['나','비'], funFact: '나비는 발로 맛을 느낄 수 있어요! 신기하죠?' },
+    { word: '사자', emoji: '🦁', letters: ['ㅅ','ㅏ','ㅈ','ㅏ'], display: ['사','자'], funFact: '사자의 울음소리는 8km까지 들려요!' },
+    { word: '토끼', emoji: '🐰', letters: ['ㅌ','ㅗ','ㅋ','ㅣ'], display: ['토','끼'], funFact: '토끼 이빨은 평생 계속 자라요!' },
+    { word: '하마', emoji: '🦛', letters: ['ㅎ','ㅏ','ㅁ','ㅏ'], display: ['하','마'], funFact: '하마는 물속에서 잠을 잘 수 있어요!' },
+    { word: '오리', emoji: '🦆', letters: ['ㅇ','ㅗ','ㄹ','ㅣ'], display: ['오','리'], funFact: '오리 발에는 물갈퀴가 있어서 수영을 잘해요!' },
   ],
   english: [
     { word: 'CAT', emoji: '🐱', letters: ['C','A','T'], display: ['C','A','T'], funFact: 'Cats sleep 16 hours a day! 고양이는 하루 16시간 자요!' },

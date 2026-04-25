@@ -2,7 +2,7 @@
  * WordBuilder - overlay UI for building words from collected letters.
  * Used in hangul/english stages.
  */
-import { HANGUL_LETTERS, ENGLISH_LETTERS } from '../config.js';
+import { HANGUL_LETTERS, HANGUL_SYLLABLES, ENGLISH_LETTERS } from '../config.js';
 
 const BTN_SIZE = 48;
 const BTN_GAP = 8;
@@ -38,12 +38,14 @@ export class WordBuilder {
   }
 
   _getDistractors(mission) {
-    // Add 2-3 random letters not in the mission
     const extras = [];
-    const isHangul = /[ㄱ-ㅣ]/.test(mission.display[0]);
-    const allLetters = isHangul ? HANGUL_LETTERS : ENGLISH_LETTERS;
+    const sample = mission.display[0];
+    let pool;
+    if (/[가-힣]/.test(sample)) pool = HANGUL_SYLLABLES;
+    else if (/[ㄱ-ㅣ]/.test(sample)) pool = HANGUL_LETTERS;
+    else pool = ENGLISH_LETTERS;
     const used = new Set(mission.display);
-    const available = allLetters.filter(l => !used.has(l));
+    const available = pool.filter(l => !used.has(l));
     const count = 2 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count && available.length > 0; i++) {
       const idx = Math.floor(Math.random() * available.length);
