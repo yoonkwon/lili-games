@@ -24,14 +24,23 @@ const ctx = canvas.getContext('2d');
 
 // Safe area inset (top) for notched devices
 let safeTop = 0;
+let viewW = window.innerWidth;
+let viewH = window.innerHeight;
+
 function updateSafeArea() {
     const style = getComputedStyle(document.body);
     safeTop = parseInt(style.getPropertyValue('--sat')) || 0;
 }
 
 function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Render at device-pixel density so HD displays don't blur the buffer.
+    // Game code keeps using logical (CSS) pixels via viewW/viewH; the DPR scale on ctx maps them to device pixels.
+    const dpr = window.devicePixelRatio || 1;
+    viewW = canvas.clientWidth || window.innerWidth;
+    viewH = canvas.clientHeight || window.innerHeight;
+    canvas.width = Math.floor(viewW * dpr);
+    canvas.height = Math.floor(viewH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     updateSafeArea();
 }
 resize();
@@ -72,8 +81,8 @@ input.onTap((x, y) => {
     // Handle pause toggle
     if (currentScene === 'game' && paused) {
         const bW = 220, bH = 55;
-        const bX = canvas.width / 2 - bW / 2;
-        const bY = canvas.height / 2 + 5;
+        const bX = viewW / 2 - bW / 2;
+        const bY = viewH / 2 + 5;
         // Resume button
         if (x >= bX && x <= bX + bW && y >= bY && y <= bY + bH) {
             paused = false;
@@ -101,7 +110,7 @@ input.onTap((x, y) => {
     if (currentScene === 'game') {
         // Pause button (top-right)
         const pbSize = 44;
-        const pbX = canvas.width - pbSize - 16;
+        const pbX = viewW - pbSize - 16;
         const pbY = safeTop + 20;
         if (x >= pbX && x <= pbX + pbSize && y >= pbY && y <= pbY + pbSize) {
             paused = true;
@@ -118,7 +127,7 @@ input.onTap((x, y) => {
             save.clear();
             const difficulty = titleScene.selectedDifficulty;
             startTransition(() => {
-                gameScene = new GameScene(canvas.width, canvas.height, safeTop, difficulty);
+                gameScene = new GameScene(viewW, viewH, safeTop, difficulty);
                 currentScene = 'game';
                 audio.play('cheer');
                 audio.playBgm();
@@ -127,7 +136,7 @@ input.onTap((x, y) => {
             const savedData = save.load();
             if (savedData) {
                 startTransition(() => {
-                    gameScene = new GameScene(canvas.width, canvas.height, safeTop, savedData.difficultyKey);
+                    gameScene = new GameScene(viewW, viewH, safeTop, savedData.difficultyKey);
                     gameScene.loadSaveData(savedData);
                     currentScene = 'game';
                     audio.play('cheer');
@@ -187,13 +196,13 @@ function gameLoop(timestamp) {
             }
         }
 
-        bg.update(dt, canvas.width);
+        bg.update(dt, viewW);
 
         if (!paused) {
             if (currentScene === 'title') {
                 titleScene.update(dt);
             } else if (currentScene === 'game') {
-                const result = gameScene.update(dt, canvas.width, canvas.height);
+                const result = gameScene.update(dt, viewW, viewH);
                 // Auto-save on stage change or every 10 eggs
                 const eggMilestone = Math.floor(gameScene.basketEggs / 10) * 10;
                 if (gameScene.currentStage !== lastSavedStage || eggMilestone !== lastSavedEggs) {
@@ -209,7 +218,7 @@ function gameLoop(timestamp) {
                     gameScene._checkAchievements();
                     const score = gameScene._calculateScore();
                     const stars = gameScene._getStarRating(score);
-                    endingScene = new EndingScene(canvas.width, canvas.height, {
+                    endingScene = new EndingScene(viewW, viewH, {
                             goldenEggs: gameScene.goldenEggs,
                             totalEggs: gameScene.totalEggs,
                             predatorsScared: gameScene.predatorsScared,
@@ -225,7 +234,7 @@ function gameLoop(timestamp) {
                     startTransition(() => {
                         audio.stopBgm();
                         const score = gameScene._calculateScore();
-                        gameOverScene = new GameOverScene(canvas.width, canvas.height, {
+                        gameOverScene = new GameOverScene(viewW, viewH, {
                             basketEggs: gameScene.basketEggs,
                             goldenEggs: gameScene.goldenEggs,
                             totalEggs: gameScene.totalEggs,
@@ -245,16 +254,16 @@ function gameLoop(timestamp) {
             }
         }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, viewW, viewH);
 
         if (currentScene === 'title') {
-            titleScene.draw(ctx, canvas.width, canvas.height, bg);
+            titleScene.draw(ctx, viewW, viewH, bg);
         } else if (currentScene === 'game') {
-            gameScene.draw(ctx, canvas.width, canvas.height, bg);
+            gameScene.draw(ctx, viewW, viewH, bg);
 
             // Pause button (top-right)
             const pbSize = 44;
-            const pbX = canvas.width - pbSize - 16;
+            const pbX = viewW - pbSize - 16;
             const pbY = safeTop + 20;
             ctx.save();
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -269,19 +278,19 @@ function gameLoop(timestamp) {
 
             // Pause overlay
             if (paused) {
-                _drawPauseOverlay(ctx, canvas.width, canvas.height);
+                _drawPauseOverlay(ctx, viewW, viewH);
             }
         } else if (currentScene === 'ending') {
-            endingScene.draw(ctx, canvas.width, canvas.height, bg);
+            endingScene.draw(ctx, viewW, viewH, bg);
         } else if (currentScene === 'gameover') {
-            gameOverScene.draw(ctx, canvas.width, canvas.height, bg);
+            gameOverScene.draw(ctx, viewW, viewH, bg);
         }
 
         // Scene transition overlay
         if (transition.active && transition.alpha > 0) {
             ctx.save();
             ctx.fillStyle = `rgba(0,0,0,${transition.alpha * 0.6})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, viewW, viewH);
             ctx.restore();
         }
     } catch (e) {

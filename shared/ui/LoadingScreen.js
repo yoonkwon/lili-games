@@ -15,7 +15,9 @@ export class LoadingScreen {
 
   draw(dt) {
     const { ctx, canvas } = this;
-    const w = canvas.width, h = canvas.height;
+    // Use CSS pixels — canvas.width may be DPR-scaled buffer size
+    const w = canvas.clientWidth || canvas.width;
+    const h = canvas.clientHeight || canvas.height;
     this.phase += dt;
 
     if (!this.cachedGrad || this.cachedH !== h) {
@@ -62,7 +64,7 @@ export class LoadingScreen {
         const { ctx, canvas } = this;
         ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
         ctx.fillStyle = '#FF6B6B';
-        ctx.fillText('\uB85C\uB529 \uC2E4\uD328', canvas.width / 2, canvas.height / 2 + 50);
+        ctx.fillText('\uB85C\uB529 \uC2E4\uD328', (canvas.clientWidth || canvas.width) / 2, (canvas.clientHeight || canvas.height) / 2 + 50);
       });
   }
 }

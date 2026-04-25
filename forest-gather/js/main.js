@@ -17,14 +17,23 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 let safeTop = 0;
+let viewW = window.innerWidth;
+let viewH = window.innerHeight;
+
 function updateSafeArea() {
   const style = getComputedStyle(document.body);
   safeTop = parseInt(style.getPropertyValue('--sat')) || 0;
 }
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // Render at device-pixel density so HD displays don't blur the buffer.
+  // Game code keeps using logical (CSS) pixels via viewW/viewH; the DPR scale on ctx maps them to device pixels.
+  const dpr = window.devicePixelRatio || 1;
+  viewW = canvas.clientWidth || window.innerWidth;
+  viewH = canvas.clientHeight || window.innerHeight;
+  canvas.width = Math.floor(viewW * dpr);
+  canvas.height = Math.floor(viewH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   updateSafeArea();
 }
 resize();
@@ -70,7 +79,7 @@ input.onTap((x, y) => {
   if (transition.active) return;
 
   if (currentScene === 'title') {
-    const result = titleScene.handleTap(x, y, canvas.width, canvas.height);
+    const result = titleScene.handleTap(x, y, viewW, viewH);
     if (result === 'start' || result === 'continue') {
       const type = titleScene.selectedType;
       const idx = titleScene.selectedStage;
@@ -79,7 +88,7 @@ input.onTap((x, y) => {
 
       if (type === 'quiz') {
         startTransition(() => {
-          gameScene = new QuizGameScene(canvas.width, canvas.height, safeTop, idx, spriteCache);
+          gameScene = new QuizGameScene(viewW, viewH, safeTop, idx, spriteCache);
           if (result === 'continue') {
             const save = loadSave();
             if (save) gameScene.loadSaveData(save);
@@ -89,7 +98,7 @@ input.onTap((x, y) => {
         });
       } else {
         startTransition(() => {
-          gameScene = new GameScene(canvas.width, canvas.height, safeTop, idx, spriteCache);
+          gameScene = new GameScene(viewW, viewH, safeTop, idx, spriteCache);
           if (result === 'continue') {
             const save = loadSave();
             if (save) gameScene.loadSaveData(save);
@@ -114,7 +123,7 @@ input.onTap((x, y) => {
       clearSave();
 
       startTransition(() => {
-        stageClearScene = new RoundClearScene(canvas.width, canvas.height, stats);
+        stageClearScene = new RoundClearScene(viewW, viewH, stats);
         currentScene = 'stageClear';
       });
     }
@@ -133,7 +142,7 @@ input.onTap((x, y) => {
         stats.discovered = stats.solvedRounds;
         stats.total = stats.totalRounds;
         stats.items = [];
-        stageClearScene = new RoundClearScene(canvas.width, canvas.height, stats);
+        stageClearScene = new RoundClearScene(viewW, viewH, stats);
         currentScene = 'stageClear';
       });
     }
@@ -144,7 +153,7 @@ input.onTap((x, y) => {
         const nextIdx = gameScene.stageIndex + 1;
         if (nextIdx < STAGES.length) {
           startTransition(() => {
-            gameScene = new GameScene(canvas.width, canvas.height, safeTop, nextIdx, spriteCache);
+            gameScene = new GameScene(viewW, viewH, safeTop, nextIdx, spriteCache);
             currentScene = 'game';
           });
         } else {
@@ -154,7 +163,7 @@ input.onTap((x, y) => {
         const nextIdx = gameScene.quizIndex + 1;
         if (nextIdx < QUIZ_STAGES.length) {
           startTransition(() => {
-            gameScene = new QuizGameScene(canvas.width, canvas.height, safeTop, nextIdx, spriteCache);
+            gameScene = new QuizGameScene(viewW, viewH, safeTop, nextIdx, spriteCache);
             currentScene = 'quiz';
           });
         } else {
@@ -200,27 +209,27 @@ function gameLoop(timestamp) {
     if (currentScene === 'title') {
       titleScene.update(dt);
     } else if (currentScene === 'game' || currentScene === 'quiz') {
-      gameScene.update(dt, canvas.width, canvas.height);
+      gameScene.update(dt, viewW, viewH);
     } else if (currentScene === 'stageClear') {
       stageClearScene.update(dt);
     }
 
     // Draw
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, viewW, viewH);
 
     if (currentScene === 'title') {
-      titleScene.draw(ctx, canvas.width, canvas.height);
+      titleScene.draw(ctx, viewW, viewH);
     } else if (currentScene === 'game' || currentScene === 'quiz') {
-      gameScene.draw(ctx, canvas.width, canvas.height);
+      gameScene.draw(ctx, viewW, viewH);
     } else if (currentScene === 'stageClear') {
-      stageClearScene.draw(ctx, canvas.width, canvas.height);
+      stageClearScene.draw(ctx, viewW, viewH);
     }
 
     // Transition overlay
     if (transition.active && transition.alpha > 0) {
       ctx.save();
       ctx.fillStyle = `rgba(0,0,0,${transition.alpha * 0.6})`;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, viewW, viewH);
       ctx.restore();
     }
   } catch (e) {

@@ -35,11 +35,13 @@ export class SpriteCache {
   draw(ctx, name, x, y, scale = 1, flipX = false) {
     const sprite = this.cache.get(name);
     if (!sprite) return;
+    const dw = sprite._displayW || sprite.width;
+    const dh = sprite._displayH || sprite.height;
     ctx.save();
     ctx.translate(x, y);
     if (flipX) ctx.scale(-1, 1);
     if (scale !== 1) ctx.scale(scale, scale);
-    ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+    ctx.drawImage(sprite, -dw / 2, -dh / 2, dw, dh);
     ctx.restore();
   }
 
@@ -57,17 +59,19 @@ export class SpriteCache {
   }
 
   _loadCharacterPNG(name, pngPath, bodyColor, bodyDark, hairColor, hairStyle) {
-    // Render procedural fallback first
     this._renderGirl(name, bodyColor, bodyDark, hairColor, hairStyle);
-    // Then try to load PNG asset, resized to sprite dimensions
     const img = new Image();
     img.onload = () => {
-      // Resize to ~48x64 sprite size while preserving aspect ratio
-      const targetH = 64;
+      // Cache at high resolution (3x display size) so DPR upscale stays sharp.
+      // displayW/H mark the intended on-screen size; SpriteCache.draw uses them to scale at draw time.
+      const displayH = 64;
+      const cacheH = displayH * 3;
       const aspect = img.width / img.height;
-      const targetW = Math.round(targetH * aspect);
-      const [c, cctx] = this._mk(targetW, targetH);
-      cctx.drawImage(img, 0, 0, targetW, targetH);
+      const cacheW = Math.round(cacheH * aspect);
+      const [c, cctx] = this._mk(cacheW, cacheH);
+      cctx.drawImage(img, 0, 0, cacheW, cacheH);
+      c._displayW = Math.round(displayH * aspect);
+      c._displayH = displayH;
       this.cache.set(`${name}-idle`, c);
     };
     img.src = pngPath;

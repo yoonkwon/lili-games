@@ -16,13 +16,13 @@ export class Input {
       }
     });
 
-    // Default: Space key triggers tap at center
+    // Default: Space key triggers tap at center (in CSS pixels — canvas.width may be DPR-scaled)
     const tapKey = options.tapKey || 'Space';
     document.addEventListener('keydown', (e) => {
       if (e.code === tapKey) {
         e.preventDefault();
         if (this.tapCallback) {
-          this.tapCallback(canvas.width / 2, canvas.height / 2);
+          this.tapCallback(canvas.clientWidth / 2, canvas.clientHeight / 2);
         }
       }
     });

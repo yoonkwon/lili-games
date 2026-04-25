@@ -47,25 +47,24 @@ export class GameEngine {
   }
 
   _resize() {
-    // Let CSS layout settle, then read canvas's computed size
+    // Render at device-pixel density so HD displays don't blur the buffer.
+    // Scenes keep using logical (CSS) pixels via this.width/height; the DPR scale on ctx maps them to device pixels.
     requestAnimationFrame(() => {
-      const w = this.canvas.clientWidth;
-      const h = this.canvas.clientHeight;
-      if (w > 0 && h > 0) {
-        this.canvas.width = w;
-        this.canvas.height = h;
-      } else {
-        // Fallback: use viewport minus safe-area estimates
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-      }
+      const dpr = window.devicePixelRatio || 1;
+      const w = this.canvas.clientWidth || window.innerWidth;
+      const h = this.canvas.clientHeight || window.innerHeight;
+      this._viewW = w;
+      this._viewH = h;
+      this.canvas.width = Math.floor(w * dpr);
+      this.canvas.height = Math.floor(h * dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       this.safeTop = 0;
       this.safeBottom = 0;
     });
   }
 
-  get width() { return this.canvas.width; }
-  get height() { return this.canvas.height; }
+  get width() { return this._viewW || this.canvas.width; }
+  get height() { return this._viewH || this.canvas.height; }
 
   registerScene(name, scene) {
     this.scenes[name] = scene;
