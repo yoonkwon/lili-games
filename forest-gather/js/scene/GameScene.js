@@ -14,6 +14,12 @@ import { CollectionTray } from '../ui/CollectionTray.js';
 import { WordBuilder } from '../ui/WordBuilder.js';
 import { drawWrappedText, generateTerrain, drawTerrain, findNearestUndiscovered, getDirectionHint, updateCompanions, drawMiniMap, updateCamera, drawSpriteOrEmoji, updateBuddy } from './sceneUtils.js';
 
+const POPUP_CARD_H = 280;
+const POPUP_BTN_W = 140;
+const POPUP_BTN_H = 42;
+const POPUP_BTN_BOTTOM_MARGIN = 12;
+const POPUP_CENTER_Y_RATIO = 0.4;
+
 export class GameScene {
   constructor(w, h, safeTop, stageIndex, spriteCache) {
     this.spriteCache = spriteCache;
@@ -137,46 +143,12 @@ export class GameScene {
   // terrain is generated in constructor via generateTerrain()
 
   handleTap(x, y) {
-    // If popup is showing, handle quiz or confirm
     if (this.state === 'popup') {
       if (this.popupAnim < 0.8) return null;
-      const cardH = 280;
-      const popupCenterY = this.screenH * 0.4;
-
-      if (this.popupQuiz) {
-        // Quiz mode: two choice buttons
-        const btnW = 120, btnH = 40, gap = 12;
-        const totalW = btnW * 2 + gap;
-        const btnY = popupCenterY + cardH / 2 - btnH - 14;
-        for (let i = 0; i < this.popupQuiz.choices.length; i++) {
-          const bx = this.screenW / 2 - totalW / 2 + i * (btnW + gap);
-          if (x >= bx && x <= bx + btnW && y >= btnY && y <= btnY + btnH) {
-            if (i === this.popupQuiz.correctIndex) {
-              this.particles.createStars(this.screenW / 2, popupCenterY, 8);
-              this.message.show('정답! 🎉', 1.5);
-              this.popup = null;
-              this.popupQuiz = null;
-              this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
-              if (this.state === 'complete') return 'stageClear';
-              this._checkWordMissions();
-              this._checkCompanionQuest();
-            } else {
-              this.popupShake = 0.5;
-              this.message.show('다시 생각해보자! 🤔', 1.5);
-            }
-            return null;
-          }
-        }
-        return null;
-      }
-
-      // No quiz — confirm button fallback
-      const btnW = 140, btnH = 42;
-      const btnX = this.screenW / 2 - btnW / 2;
-      const btnY = popupCenterY + cardH / 2 - btnH - 12;
-      if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+      const btnX = this.screenW / 2 - POPUP_BTN_W / 2;
+      const btnY = this.screenH * POPUP_CENTER_Y_RATIO + POPUP_CARD_H / 2 - POPUP_BTN_H - POPUP_BTN_BOTTOM_MARGIN;
+      if (x >= btnX && x <= btnX + POPUP_BTN_W && y >= btnY && y <= btnY + POPUP_BTN_H) {
         this.popup = null;
-        this.popupQuiz = null;
         this.state = this.discoveredCount >= this.totalItems ? 'complete' : 'exploring';
         if (this.state === 'complete') return 'stageClear';
         this._checkWordMissions();
@@ -250,14 +222,9 @@ export class GameScene {
     // Check companion quest progress
     this._checkCompanionQuest();
 
-    // Show popup with optional mini quiz
     this.popup = item;
     this.popupAnim = 0;
-    this.popupShake = 0;
-    this.popupQuiz = this._generateMiniQuiz(item);
     this.state = 'popup';
-
-    // Check word missions after popup dismiss is handled in handleTap
   }
 
   _checkWordMissions() {
@@ -312,9 +279,7 @@ export class GameScene {
     this.viewW = w / this.gameScale;
     this.viewH = h / this.gameScale;
     this.gameTime += dt;
-    if (this.popupShake > 0) this.popupShake = Math.max(0, this.popupShake - dt * 3);
 
-    // Player
     this.player.update(dt, this.mapWidth, this.mapHeight);
 
     // Lisa follows Ria
@@ -525,86 +490,52 @@ export class GameScene {
     ctx.fillStyle = `rgba(0,0,0,${anim * 0.5})`;
     ctx.fillRect(0, 0, w, h);
 
-    // Popup card (with shake on wrong answer)
-    const shakeX = this.popupShake > 0 ? Math.sin(this.gameTime * 40) * 6 * this.popupShake : 0;
-    ctx.translate(w / 2 + shakeX, h * 0.4);
+    ctx.translate(w / 2, h * POPUP_CENTER_Y_RATIO);
     ctx.scale(scale, scale);
 
     const cardW = Math.min(320, w * 0.85);
-    const cardH = 280;
 
-    // Card background
     ctx.fillStyle = '#FFF';
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 20);
+    ctx.roundRect(-cardW / 2, -POPUP_CARD_H / 2, cardW, POPUP_CARD_H, 20);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // "New Discovery!" banner
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
-    ctx.roundRect(-cardW / 2, -cardH / 2, cardW, 44, [20, 20, 0, 0]);
+    ctx.roundRect(-cardW / 2, -POPUP_CARD_H / 2, cardW, 44, [20, 20, 0, 0]);
     ctx.fill();
 
     ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#5D4037';
-    ctx.fillText(`🎉 새로운 발견! (${this.discoveredCount}/${this.totalItems})`, 0, -cardH / 2 + 22);
+    ctx.fillText(`🎉 새로운 발견! (${this.discoveredCount}/${this.totalItems})`, 0, -POPUP_CARD_H / 2 + 22);
 
-    // Big emoji or sprite
-    drawSpriteOrEmoji(ctx, this.spriteCache, this.popup.sprite, this.popup.emoji, 0, -cardH / 2 + 100, this.popup.displaySize * 2);
+    drawSpriteOrEmoji(ctx, this.spriteCache, this.popup.sprite, this.popup.emoji, 0, -POPUP_CARD_H / 2 + 100, this.popup.displaySize * 2);
 
-    // Name
     ctx.font = 'Bold 22px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.fillStyle = '#333';
-    ctx.fillText(this.popup.name, 0, -cardH / 2 + 155);
+    ctx.fillText(this.popup.name, 0, -POPUP_CARD_H / 2 + 155);
 
-    // Description
     ctx.font = '15px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
     ctx.fillStyle = '#666';
-    this._drawWrappedText(ctx, this.popup.desc, 0, -cardH / 2 + 190, cardW - 40, 20);
+    this._drawWrappedText(ctx, this.popup.desc, 0, -POPUP_CARD_H / 2 + 190, cardW - 40, 20);
 
-    // Buttons (only when animation is done)
     if (anim >= 0.8) {
-      if (this.popupQuiz) {
-        // Quiz: show question + two choice buttons
-        ctx.font = 'Bold 14px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-        ctx.fillStyle = '#FF6F00';
-        ctx.fillText(this.popupQuiz.question, 0, cardH / 2 - 68);
-
-        const btnW = 120, btnH = 40, gap = 12;
-        const totalW = btnW * 2 + gap;
-        for (let i = 0; i < 2; i++) {
-          const bx = -totalW / 2 + i * (btnW + gap);
-          const by = cardH / 2 - btnH - 14;
-          ctx.fillStyle = 'rgba(76,175,80,0.15)';
-          ctx.strokeStyle = '#4CAF50';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.roundRect(bx, by, btnW, btnH, 12);
-          ctx.fill();
-          ctx.stroke();
-          ctx.font = 'Bold 24px sans-serif';
-          ctx.fillStyle = '#333';
-          ctx.fillText(this.popupQuiz.choices[i], bx + btnW / 2, by + btnH / 2);
-        }
-      } else {
-        // No quiz: confirm button
-        const btnW = 140, btnH = 42;
-        const btnGrad = ctx.createLinearGradient(0, cardH / 2 - btnH - 12, 0, cardH / 2 - 12);
-        btnGrad.addColorStop(0, '#4CAF50');
-        btnGrad.addColorStop(1, '#388E3C');
-        ctx.fillStyle = btnGrad;
-        ctx.beginPath();
-        ctx.roundRect(-btnW / 2, cardH / 2 - btnH - 12, btnW, btnH, 14);
-        ctx.fill();
-        ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
-        ctx.fillStyle = '#FFF';
-        ctx.fillText('확인 ✨', 0, cardH / 2 - btnH / 2 - 12);
-      }
+      const btnTopY = POPUP_CARD_H / 2 - POPUP_BTN_H - POPUP_BTN_BOTTOM_MARGIN;
+      const btnGrad = ctx.createLinearGradient(0, btnTopY, 0, btnTopY + POPUP_BTN_H);
+      btnGrad.addColorStop(0, '#4CAF50');
+      btnGrad.addColorStop(1, '#388E3C');
+      ctx.fillStyle = btnGrad;
+      ctx.beginPath();
+      ctx.roundRect(-POPUP_BTN_W / 2, btnTopY, POPUP_BTN_W, POPUP_BTN_H, 14);
+      ctx.fill();
+      ctx.font = 'Bold 18px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
+      ctx.fillStyle = '#FFF';
+      ctx.fillText('확인 ✨', 0, btnTopY + POPUP_BTN_H / 2);
     }
 
     ctx.restore();
@@ -672,42 +603,6 @@ export class GameScene {
       discovered: this.discoveredCount,
       total: this.totalItems,
       items: this.items.map(i => i.emoji),
-    };
-  }
-
-  // ── Mini quiz generation for discovery popups ──
-
-  _generateMiniQuiz(item) {
-    // Only generate quiz for Korean/English stages with enough items
-    const stageId = this.stageConfig.id;
-    if (stageId !== 'hangul' && stageId !== 'english' && stageId !== 'numbers') return null;
-    // 30% chance to skip quiz (variety)
-    if (Math.random() < 0.3) return null;
-
-    const allItems = this.stageConfig.items;
-    const others = allItems.filter(i => i.id !== item.id);
-    if (others.length === 0) return null;
-
-    const wrong = others[Math.floor(Math.random() * others.length)];
-    const correctIndex = Math.random() < 0.5 ? 0 : 1;
-
-    // Question based on stage type
-    let question;
-    const name = item.name.split(' ')[0]; // e.g., "기역" from "기역 (ㄱ)"
-    if (stageId === 'hangul') {
-      question = `방금 찾은 글자는?`;
-    } else if (stageId === 'english') {
-      question = `Which letter did you find?`;
-    } else {
-      question = `방금 찾은 숫자는?`;
-    }
-
-    return {
-      question,
-      choices: correctIndex === 0
-        ? [item.emoji, wrong.emoji]
-        : [wrong.emoji, item.emoji],
-      correctIndex,
     };
   }
 

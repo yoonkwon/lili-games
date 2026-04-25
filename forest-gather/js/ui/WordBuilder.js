@@ -86,18 +86,10 @@ export class WordBuilder {
       return 'consumed';
     }
 
-    // Pool letter buttons (bottom area)
-    const poolY = h * 0.62;
-    const btnSize = BTN_SIZE;
-    const gap = BTN_GAP;
-    const totalPoolW = this.pool.length * (btnSize + gap) - gap;
-    const poolStartX = (w - totalPoolW) / 2;
-
     for (let i = 0; i < this.pool.length; i++) {
-      if (this.pool[i] === null) continue; // already used
-      const bx = poolStartX + i * (btnSize + gap);
-      const by = poolY;
-      if (x >= bx && x <= bx + btnSize && y >= by && y <= by + btnSize) {
+      if (this.pool[i] === null) continue;
+      const { bx, by } = this._poolBtnPos(i, w, h);
+      if (x >= bx && x <= bx + BTN_SIZE && y >= by && y <= by + BTN_SIZE) {
         this._placeLetterInSlot(i);
         return 'consumed';
       }
@@ -124,6 +116,19 @@ export class WordBuilder {
     }
 
     return 'consumed'; // consume all taps when overlay is active
+  }
+
+  _poolBtnPos(i, w, h) {
+    const perRow = Math.max(1, Math.floor((w - 40 + BTN_GAP) / (BTN_SIZE + BTN_GAP)));
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    const rowItems = Math.min(perRow, this.pool.length - row * perRow);
+    const rowW = rowItems * (BTN_SIZE + BTN_GAP) - BTN_GAP;
+    const rowStartX = (w - rowW) / 2;
+    return {
+      bx: rowStartX + col * (BTN_SIZE + BTN_GAP),
+      by: h * 0.62 + row * (BTN_SIZE + BTN_GAP),
+    };
   }
 
   _placeLetterInSlot(poolIdx) {
@@ -251,39 +256,21 @@ export class WordBuilder {
     }
 
     // Pool buttons
-    const poolY = h * 0.62;
-    const btnSize = BTN_SIZE;
-    const gap = BTN_GAP;
-    const totalPoolW = this.pool.length * (btnSize + gap) - gap;
-    const poolStartX = (w - totalPoolW) / 2;
-
-    // Wrap pool if too wide
-    const maxRowW = w - 40;
-    const perRow = Math.floor((maxRowW + gap) / (btnSize + gap));
-
     for (let i = 0; i < this.pool.length; i++) {
       if (this.pool[i] === null) continue;
-
-      const row = Math.floor(i / perRow);
-      const col = i % perRow;
-      const rowItems = Math.min(perRow, this.pool.length - row * perRow);
-      const rowW = rowItems * (btnSize + gap) - gap;
-      const rowStartX = (w - rowW) / 2;
-
-      const bx = rowStartX + col * (btnSize + gap);
-      const by = poolY + row * (btnSize + gap);
+      const { bx, by } = this._poolBtnPos(i, w, h);
 
       ctx.fillStyle = 'rgba(100,181,246,0.3)';
       ctx.strokeStyle = 'rgba(100,181,246,0.6)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(bx, by, btnSize, btnSize, 10);
+      ctx.roundRect(bx, by, BTN_SIZE, BTN_SIZE, 10);
       ctx.fill();
       ctx.stroke();
 
       ctx.font = 'Bold 26px "Segoe UI", "Apple SD Gothic Neo", sans-serif';
       ctx.fillStyle = '#FFF';
-      ctx.fillText(this.pool[i], bx + btnSize / 2, by + btnSize / 2);
+      ctx.fillText(this.pool[i], bx + BTN_SIZE / 2, by + BTN_SIZE / 2);
     }
 
     // Success overlay
