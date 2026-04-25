@@ -96,14 +96,20 @@ export class GameScene {
   }
 
   _setupInput() {
-    // We attach to document to track dragging even outside canvas
+    // Document-level listeners so dragging continues outside the canvas.
+    // Canvas is offset by safe-area insets, so subtract its rect for canvas-local coords.
+    // Rect is cached at pointerdown and reused during pointermove to avoid per-event layout reads.
+    const canvas = document.querySelector('canvas');
+    let canvasLeft = 0;
+
     this._onPointerDown = (e) => {
       this._pointerDown = true;
-      this.momTargetX = e.clientX;
+      canvasLeft = canvas.getBoundingClientRect().left;
+      this.momTargetX = e.clientX - canvasLeft;
     };
     this._onPointerMove = (e) => {
       if (this._pointerDown) {
-        this.momTargetX = e.clientX;
+        this.momTargetX = e.clientX - canvasLeft;
       }
     };
     this._onPointerUp = () => { this._pointerDown = false; };

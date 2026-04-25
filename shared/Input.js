@@ -10,7 +10,9 @@ export class Input {
     canvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       if (this.tapCallback) {
-        this.tapCallback(e.clientX, e.clientY);
+        // clientX/Y are viewport coords; canvas is offset by safe-area insets, so subtract its rect
+        const rect = canvas.getBoundingClientRect();
+        this.tapCallback(e.clientX - rect.left, e.clientY - rect.top);
       }
     });
 
