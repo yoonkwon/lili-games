@@ -80,6 +80,9 @@ export function createCharacterRenderer(assetPrefix, charName, sparkleEmoji, vil
     else if (emotion === 'angry') img = assets.babyAngry;
     else img = assets.baby;
 
+    // Fall back to neutral baby if the emotion-specific asset is missing —
+    // keeps art style consistent rather than mixing in stale fallback designs.
+    if (!img) img = assets.baby;
     if (!img) return;
 
     const drawSize = size * 2;
