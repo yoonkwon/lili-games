@@ -268,6 +268,122 @@ async function renderForestGather(canvasId, dpr) {
   ctx.fillText('🌟', w * 0.5, h * 0.35);
 }
 
+// ── Popcorn Bori ──
+function renderPopcornThumb(ctx, w, h) {
+  // Warm cinema gradient
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#3a1f0a');
+  g.addColorStop(0.5, '#7a3a14');
+  g.addColorStop(1, '#FFD93D');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // Polka dots
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 14; i++) {
+    const dx = (i * 53) % w;
+    const dy = (i * 31) % h;
+    ctx.beginPath();
+    ctx.arc(dx, dy, 6 + (i % 3) * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Floor
+  ctx.fillStyle = '#5C2E0E';
+  ctx.fillRect(0, h * 0.78, w, h * 0.22);
+  ctx.fillStyle = '#FFD93D';
+  ctx.fillRect(0, h * 0.78 - 3, w, 3);
+
+  // Mini popcorn machine on the right
+  const mx = w * 0.66;
+  const my = h * 0.5;
+  const mw = w * 0.32;
+  const mh = mw * 1.3;
+
+  // Roof stripes
+  const roofH = mh * 0.16;
+  const stripes = 5;
+  const sw = mw / stripes;
+  for (let i = 0; i < stripes; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#E63946' : '#F8F0E3';
+    ctx.beginPath();
+    ctx.moveTo(mx - mw / 2 + i * sw, my - mh / 2);
+    ctx.lineTo(mx - mw / 2 + (i + 1) * sw, my - mh / 2);
+    ctx.lineTo(mx - mw / 2 + (i + 1) * sw - sw * 0.3, my - mh / 2 + roofH);
+    ctx.lineTo(mx - mw / 2 + i * sw + sw * 0.3, my - mh / 2 + roofH);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Glass
+  ctx.fillStyle = 'rgba(220, 240, 255, 0.5)';
+  ctx.beginPath();
+  ctx.roundRect(mx - mw * 0.42, my - mh / 2 + roofH + 4, mw * 0.84, mh * 0.5, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#7B4019'; ctx.lineWidth = 2; ctx.stroke();
+  // Kettle inside
+  ctx.fillStyle = '#2a2a2a';
+  ctx.beginPath();
+  ctx.roundRect(mx - mw * 0.3, my, mw * 0.6, mh * 0.16, 4);
+  ctx.fill();
+  // Yellow band
+  ctx.fillStyle = '#FFD93D';
+  ctx.fillRect(mx - mw / 2, my + mh * 0.3, mw, mh * 0.12);
+  ctx.fillStyle = '#E63946';
+  ctx.fillRect(mx - mw / 2, my + mh * 0.42, mw, mh * 0.08);
+
+  // Bori on the left (simplified)
+  const bx = w * 0.27;
+  const by = h * 0.55;
+  // Body
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath(); ctx.ellipse(bx, by + 18, 32, 26, 0, 0, Math.PI * 2); ctx.fill();
+  // Mane
+  ctx.beginPath(); ctx.ellipse(bx, by - 5, 30, 22, 0, 0, Math.PI * 2); ctx.fill();
+  // Head
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.ellipse(bx, by - 8, 22, 21, 0, 0, Math.PI * 2); ctx.fill();
+  // Ears
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.moveTo(bx + s * 14, by - 22);
+    ctx.lineTo(bx + s * 19, by - 30);
+    ctx.lineTo(bx + s * 21, by - 18);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Eyes (happy)
+  ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(bx - 7, by - 11, 4, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+  ctx.beginPath(); ctx.arc(bx + 7, by - 11, 4, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+  // Nose
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath(); ctx.ellipse(bx, by - 2, 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+  // Smile
+  ctx.strokeStyle = '#FF6B7A'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(bx, by + 2, 5, 0.2, Math.PI - 0.2); ctx.stroke();
+
+  // Floating colored popcorns
+  const popColors = ['#FFE082', '#FFB3C1', '#A5D6A7', '#90CAF9', '#C39BD3', '#FF8FB1'];
+  const poses = [[w * 0.5, h * 0.18], [w * 0.78, h * 0.24], [w * 0.18, h * 0.18], [w * 0.42, h * 0.36], [w * 0.6, h * 0.34], [w * 0.85, h * 0.45]];
+  poses.forEach((p, i) => {
+    const [px, py] = p;
+    const col = popColors[i % popColors.length];
+    // 5-lobed popcorn
+    for (let l = 0; l < 5; l++) {
+      const a = (l / 5) * Math.PI * 2;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(px + Math.cos(a) * 6, py + Math.sin(a) * 6, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.arc(px - 2, py - 3, 2, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
 // ── Main init ──
 export function initThumbnails() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -294,6 +410,14 @@ export function initThumbnails() {
     'snow-white-baby/assets/snow-white-mom.png', 'snow-white-baby/assets/baby-snow-white-happy.png', snowWhiteExtras);
   renderBabyGame('thumb-mermaid', mermaidBg,
     'mermaid-baby/assets/mermaid-mom.png', 'mermaid-baby/assets/baby-mermaid-happy.png', mermaidExtras);
+
+  // Popcorn Bori
+  const popcornCanvas = document.getElementById('thumb-popcorn');
+  if (popcornCanvas) {
+    const ctx = setupCanvas(popcornCanvas, dpr);
+    const w = popcornCanvas.width / dpr, h = popcornCanvas.height / dpr;
+    renderPopcornThumb(ctx, w, h);
+  }
   renderBabyGame('thumb-our-mom', ourMomBg,
     'our-mom-baby/assets/mom.png', 'our-mom-baby/assets/baby-ria-happy.png', ourMomExtras);
 }
